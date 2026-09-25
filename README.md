@@ -4,7 +4,7 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v1.0.0** · [lines thread](https://llllllll.co/t/rotatable-a-reactable-emulator/75521) · [github](https://github.com/wildseyed/rotatable)
+**v1.0.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
 ## install
 
