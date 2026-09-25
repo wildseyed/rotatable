@@ -1,6 +1,6 @@
 -- rotatable
 -- v1.0.0 @wildseyed
--- llllllll.co/t/75521
+-- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
 -- the tangible table synth,
