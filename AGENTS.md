@@ -99,3 +99,12 @@ tools/              deploy.py, api.py, djset.py, seqjam.py
 
 The repo root IS the norns script (community-publish layout, required for
 maiden `;install`): `rotatable.lua` + `lib/` at root.
+
+## Git branching convention
+
+- `main` = development branch (all project files: docs, plans, tools).
+- `release` = **default branch, orphan, lean** — only `rotatable.lua`, `lib/`,
+  `README.md`, `.gitignore`. This is what users get via `;install`.
+- Publish flow: commit dev work to `main`; when releasing, update `release`
+  with just the script files (checkout release, copy from main, commit, push,
+  tag). Never commit `.device/` or `reference/` anywhere (gitignored).
