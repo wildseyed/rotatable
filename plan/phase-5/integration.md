@@ -8,7 +8,7 @@
   browser marks loaded sample (`>`); loop one-shots loop rhythmically
 - [x] Usage docs: `README.md` (controls, slots, install, dev pointers)
 - [ ] Owner feel-check pass (slots timing, panels, general playability)
-- [ ] Remaining backlog: label collision avoidance, LINK ring clutter,
+- [ ] Remaining backlog: LINK ring clutter,
   LFO→param scaling (engine-side), pingpong/reverb delay subtypes,
   oneshot/pitchlock loop subtypes, waveshaper/sampler/audio-in/tonality/
   song-settings (the deferred 6 types), LFO tempo-sync, delay tempo-quantize

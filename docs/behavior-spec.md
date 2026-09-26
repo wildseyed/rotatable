@@ -226,3 +226,33 @@ double-tap-hold + drag = rotate, two-finger rotate.
   original object model is (fiducial ID → type, x, y, angle) streamed
   continuously; maps trivially onto our encoder-driven virtual objects.
 - Sound on Sound Reactable Mobile review; YouTube @ReactableSystems.
+
+## 9. v2 decisions (2026-09-26, owner-approved)
+
+1. **Sampler**: single-sample melodic player — one WAV pitched across notes
+   (Phasor+BufRd, reuses the loop browser). Instrument + Drum subtypes. No
+   SoundFont/multi-zone in v2.
+2. **Audio-in**: include; line-in only (shield has no mic); rotation = input
+   gain.
+3. **MIDI-in**: include; device + channel via norns params; rotation =
+   transpose (±24 st); notes land on the closest connectable object.
+4. **Song Settings**: skipped as an object. Tempo stays in params
+   (`rot_tempo`); patch selector redundant with patch slots; background N/A.
+5. **Waveshaper**: all three subtypes (resampler, compressor, distortion).
+6. **Tonality**: constrains sequencer note output, random sequencer, sampler
+   notes, and suboscillators (follow-tonality toggle). Oscillator main
+   rotation stays continuous.
+7. **Tempo sync**: hybrid — engine-side tempo control bus for LFO sync, delay
+   tempo-quantize, loop bar-entry; sequencer keeps its Lua metro on the same
+   BPM param (single source of truth).
+8. **LFO→param scaling**: per-target scale table, engine-side; bipolar around
+   current value for pitch-like params, unipolar for amp/dry-wet.
+9. **Sequencer**: 6 rotation-switched preset slots per object + random
+   subtype (with Tonality = "automatic solos"). Poly tenori grid deferred.
+10. **Connection model**: v1 model kept; edge rules documented (nearest-effect
+    wins, chains order by distance-to-output, hardlink pins control targets).
+    No fan-out limit.
+11. **v1 leftovers**: oneshot loop subtype, pingpong + reverb delay subtypes,
+    LINK ring declutter all in. **Pitchlock loop subtype out** (real
+    time-stretch = phase vocoder, poor cost/benefit in v2).
+12. **Label collisions**: resolved 2026-09-26 (v1.x, renderer label queue).

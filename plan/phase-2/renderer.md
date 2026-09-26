@@ -9,4 +9,4 @@
 - [x] Object glyph renderer: square=generator, octagon≈rounded-square=effect, circle=controller, star=global; rotation tick; label when zoom ≥30
 - [x] Connection line renderer: audio=solid, control=hand-dotted; proximity computation in `lib/world.lua`
 - [x] REPL test harness `T.add/move/rot/clear` for driving the world from deploy.py
-- [ ] Polish backlog: cap output-point size at high zoom; label collision avoidance
+- [x] Polish backlog: cap output-point size at high zoom; label collision avoidance

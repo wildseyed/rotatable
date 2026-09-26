@@ -3,29 +3,31 @@
 Resolve before building, same as Phase 0 did for v1. Each item needs a decision
 recorded in docs/behavior-spec.md §7 (gap items) or docs/interaction-design.md.
 
+**All decisions recorded in `docs/behavior-spec.md` §9 (2026-09-26, owner-approved).**
+
 ## Object-level decisions
-- [ ] **Sampler**: original used SoundFont 2 — no SF2 player in scsynth. Decide:
-  simple multi-zone WAV sampler (our own format), single-sample melodic player,
-  or skip sampler in v2?
-- [ ] **Audio-in**: norns line/mic in — gain staging, monitoring etiquette
-  (feedback risk on built-in mic? shield has no mic — line in only)
-- [ ] **MIDI-in**: which norns MIDI device mapping; rotation = transpose;
-  where do notes land (closest object, per spec)
-- [ ] **Tonality**: global scale quantizer — affects what exactly in v1 core
-  (osc freq quantize? sequencer note output? both, toggleable?)
-- [ ] **Song settings**: tempo already in params; what else survives v2
-  (patch selector redundant with our slots?)
-- [ ] **Waveshaper**: resampler/compressor/distortion subtypes — all three or subset?
+- [x] **Sampler**: single-sample melodic player (one WAV, Phasor+BufRd, reuses
+  browser); Instrument + Drum subtypes; no SF2/multi-zone in v2
+- [x] **Audio-in**: in — line-in only (no mic on shield), rotation = input gain
+- [x] **MIDI-in**: in — device/channel via params, rotation = transpose ±24 st,
+  notes → closest connectable object
+- [x] **Tonality**: quantizes sequencer notes, random sequencer, sampler,
+  suboscillators (toggle); osc main rotation stays continuous
+- [x] **Song settings**: skipped as object — tempo in params, patch selector
+  redundant with slots, background N/A
+- [x] **Waveshaper**: all three subtypes (resampler, compressor, distortion)
 
 ## Subsystem decisions
-- [ ] **Tempo sync architecture**: Lua metro (current, sequencers) vs engine-side
-  clock — needed for LFO tempo-sync + delay tempo-quantization
-- [ ] **LFO→param scaling**: engine-side modulation ranges (currently LFO maps
-  raw 0..depth onto amp; spec §7.5) — bipolar? per-target scale table?
-- [ ] **Sequencer**: poly subtype worth it at 128×64? random subtype + tonality
-  ("automatic solos")? 6 preset slots per sequencer (rotation) — implement?
-- [ ] **Connection model v2**: fan-out limits, effect chain ordering edge cases,
-  control-connection retargeting when hardlinked
-- [ ] **v1 leftovers**: oneshot/pitchlock loop subtypes; pingpong/reverb delay
-  subtypes; label collisions; LINK ring clutter
-- [ ] **Owner feel-check findings** from v1 play sessions — collect and rank
+- [x] **Tempo sync architecture**: hybrid — engine tempo control bus for
+  LFO/delay/loop sync; Lua metro keeps sequencer on the same BPM param
+- [x] **LFO→param scaling**: per-target scale table engine-side; bipolar for
+  pitch-like params, unipolar for amp/dry-wet
+- [x] **Sequencer**: 6 preset slots (rotation) + random subtype in; poly
+  tenori grid deferred
+- [x] **Connection model v2**: v1 model kept, edge rules documented; no
+  fan-out limit
+- [x] **v1 leftovers**: oneshot loop, pingpong/reverb delay, LINK ring
+  declutter in; **pitchlock out** (phase vocoder cost/benefit); label
+  collisions already done (2026-09-26)
+- [ ] **Owner feel-check findings** from v1 play sessions — none reported yet;
+  collect during v2 dev

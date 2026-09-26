@@ -33,6 +33,41 @@ local function draw_star(sx, sy, r)
   screen.stroke()
 end
 
+-- label de-collision: labels queue up during the frame, then draw selected
+-- first and skip any that would overlap an already-drawn label
+local label_queue = nil
+
+function Render.begin_labels()
+  label_queue = {}
+end
+
+function Render.flush_labels()
+  if not label_queue then return end
+  table.sort(label_queue, function(a, b)
+    return (a.sel and 1 or 0) > (b.sel and 1 or 0)
+  end)
+  local boxes = {}
+  screen.level(4)
+  for _, l in ipairs(label_queue) do
+    local w = screen.text_extents(l.text)
+    local x0, x1 = l.x - w / 2 - 1, l.x + w / 2 + 1
+    local y0, y1 = l.y - 7, l.y + 1
+    local hit = false
+    for _, b in ipairs(boxes) do
+      if x0 < b[3] and x1 > b[1] and y0 < b[4] and y1 > b[2] then
+        hit = true
+        break
+      end
+    end
+    if l.sel or not hit then
+      screen.move(l.x, l.y)
+      screen.text_center(l.text)
+      boxes[#boxes + 1] = { x0, y0, x1, y1 }
+    end
+  end
+  label_queue = nil
+end
+
 -- connection lines: audio = solid, control = dotted (hand-drawn dots)
 -- muted = dim, hardlink = bright double line
 local function draw_connection(cam, w2s, world, conn)
@@ -97,11 +132,10 @@ function Render.object(cam, w2s, o, types, selected)
   screen.move(sx, sy)
   screen.line(sx + r * math.cos(o.angle), sy + r * math.sin(o.angle))
   screen.stroke()
-  -- label (only when zoomed in enough to read)
-  if cam.zoom >= 30 then
-    screen.level(4)
-    screen.move(sx, sy + r + 6)
-    screen.text_center(types[o.type].label)
+  -- label queues up (collision-resolved at flush) when zoomed in enough to read
+  if cam.zoom >= 30 and label_queue then
+    label_queue[#label_queue + 1] =
+      { x = sx, y = sy + r + 6, text = types[o.type].label, sel = selected }
   end
 end
 

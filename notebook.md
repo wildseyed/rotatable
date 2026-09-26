@@ -74,9 +74,23 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
 - 2026-09-25: **Patch slots (owner feature)** — 8-slot ring at r=1.18;
   long-press K3 = store/delete, short = recall. 40 drum one-shots pulled from
   archive.org into `dust/audio/rotatable-drums/`.
+- 2026-09-25: **v2 plan drafted** — phases 6–9: design decisions first (sampler/SF2 problem, tonality reach, tempo-sync architecture, LFO scaling), then engine v2, UI/panels v2, release v2.0.0. Same methodology as v1: decisions phase before code.
 - 2026-09-25: **Published** — repo restructured to community layout (script at root), v1.0.0 pushed + tagged to github.com/wildseyed/rotatable; script header points to lines thread llllllll.co/t/75521; catalog PR opened: monome/norns-community#409. `.gitignore` shields `.device/` + `reference/`.
 - 2026-09-25: **Lean release branch (owner)** — verified no secrets ever tracked (password/IP only in gitignored `.device/`). Dev files live on `main`; default branch is orphan `release` with only rotatable.lua, lib/, README.md, .gitignore — that's what `;install` clones. (Published + this entry were lost in the orphan checkout and are restored here.)
 - 2026-09-25: **Scope-sensitive delete (owner request)** — K1+K2 in L2 removes selected block (existed); K1+K2 at L1 arms table-clear with status-line confirm (K3 yes / K2 no). Verified: arm/cancel/confirm. Rejected: trash icons (screen cost), extra nav layer (complexity), long-press (slot conflict). Future option: drag-off-rim removal. Multi-circuit demo patch (3 independent chains) saved to slot 1.
 - 2026-09-25: **E1 object-hop in MOVE mode (owner feature)** — cycles selection through objects, centering the camera on each; status hint "E1 hop". Verified: hop cycles all objects both directions, camera follows. Also: REST API completed with `/set /load /step` direct-manipulation endpoints; `tools/djset.py` + `tools/seqjam.py` performance scripts exist (lessons: discover fresh ids from /state, deploy-reload wipes table).
 - 2026-09-25: **Phase 5 polish done** — CPU avg 16%/peak 17%; overlap fixes;
   README.md. v1 complete pending owner feel-check.
+- 2026-09-26: **Phase 2 backlog cleared** — label collision avoidance landed
+  (labels queue per frame in `lib/render.lua`, selected object's label draws
+  first, overlapping labels skipped; verified on device via REST API scenes).
+  Output-point cap turned out already satisfied (`clamp(0.03*zoom, 2, 5)` in
+  `draw_output`) — confirmed at max zoom 480 with a screenshot. Removed the
+  now-done label item from the phase-5/phase-8 backlogs.
+- 2026-09-26: **Phase 6 done — v2 decisions all owner-approved** → recorded in
+  `docs/behavior-spec.md` §9. Headlines: sampler = single-sample melodic (no
+  SF2); song-settings object dropped; waveshaper all 3 subtypes; tonality =
+  spec-faithful set (seq/random/sampler/subosc, osc rotation free); tempo
+  sync = hybrid engine tempo bus + Lua metro sequencer; sequencer = 6 presets
+  + random (poly deferred); pitchlock loop OUT; v2 ships 13 of the original
+  14 types. Phase-7/8/9 plan files aligned.

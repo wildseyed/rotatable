@@ -20,7 +20,7 @@ add new files as work evolves, and keep this index stable.*
 - [x] **Published** (2026-09-25): v1.0.0 on GitHub (main + lean release branch), lines thread, catalog PR monome/norns-community#409 (discussion → GitHub Discussions)
 
 ### v2 (planned 2026-09-25)
-- [ ] **Phase 6 — v2 design decisions** → [decisions](plan/phase-6/decisions.md) — no code; resolve scope questions first (sampler format, tonality reach, tempo-sync architecture…)
+- [x] **Phase 6 — v2 design decisions** → [decisions](plan/phase-6/decisions.md) — all resolved 2026-09-26 → `docs/behavior-spec.md` §9; feel-check findings still welcome
 - [ ] **Phase 7 — Engine v2** → [engine-v2](plan/phase-7/engine-v2.md) — new synths, tempo clock, modulation scaling
 - [ ] **Phase 8 — UI & panels v2** → [ui-v2](plan/phase-8/ui-v2.md) — 14-type place menu, remaining panels, visual polish
 - [ ] **Phase 9 — Integration & release v2.0.0** → [release-v2](plan/phase-9/release-v2.md)
