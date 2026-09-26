@@ -55,14 +55,20 @@ distinct line styles, output point pulsing at tempo.
   object selected (so you can immediately position it). K2 cancels.
 
 ### L2 — OBJECT (one object selected, highlighted + name shown)
-Three modes, cycled by **K3** (except in LINK, where K3 acts); mode shown in
-status line:
+Three modes, cycled forward by **K3** and backward by **K2** (K2 from MOVE
+exits to L1); mode shown in status line:
 
 | Mode | E1 | E2 | E3 |
 |---|---|---|---|
-| **MOVE** (default) | hop selection, center camera | object X | object Y |
-| **ROTATE** | — | rotation = primary param | right-dot param (amplitude / dry-wet / feedback / depth) |
-| **LINK** | — | choose target (cycle objects by proximity) | — |
+| **MOVE** (default) | hop selection | glide X (physics) | glide Y (physics) |
+| **ROTATE** | hop selection | rotation = primary param | right-dot param (amplitude / dry-wet / feedback / depth) |
+| **LINK** | hop selection | choose target (cycle objects by proximity) | — |
+
+- E1 **hops selection in every L2 mode**, centering the camera (owner,
+  2026-09-25/26).
+- MOVE uses velocity+friction physics: encoder turns add impulse, blocks
+  glide with accel/decel and a soft wall at the rim; connections form/break
+  live during the glide (owner, 2026-09-26).
 
 - MOVE is where patching happens: proximity connections form/break live and
   are drawn as they change.

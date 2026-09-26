@@ -1,5 +1,5 @@
 -- rotatable
--- v1.0.1 @wildseyed
+-- v1.1.0 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -65,6 +65,10 @@ T = {
   end,
   dump_str = function()
     return UI.level() .. " | " .. UI.status() .. " | objs=" .. #World.objects
+  end,
+  pos = function()
+    local o = UI.selected()
+    return o and string.format("%.3f,%.3f", o.x, o.y) or "none"
   end,
   amps = function()
     return string.format("amp_l=%.5f amp_r=%.5f", amp_l, amp_r)
@@ -146,6 +150,7 @@ function init()
   amp_poll_r:start()
 
   redraw_metro = metro.init(function()
+    if UI.tick() then dirty = true end
     if dirty then redraw() end
   end, 1/15, -1)
   redraw_metro:start()
