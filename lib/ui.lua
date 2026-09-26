@@ -30,6 +30,8 @@ local SLOT_LONG = 0.8       -- s; long-press threshold for slot store/delete
 
 function UI.init(ctx)
   World, cam, w2s, mark_dirty = ctx.world, ctx.cam, ctx.w2s, ctx.mark_dirty
+  -- include() instances are per-includer on norns: initialize OUR copy too
+  Slots.init(World, Audio)
 end
 
 function UI.level() return level end
