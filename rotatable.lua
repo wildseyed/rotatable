@@ -49,7 +49,9 @@ T = {
   end,
   clear = function()
     Audio.reset()
-    World.objects = {}; World.hardlinks = {}; World.recompute(); dirty = true
+    World.objects = {}; World.hardlinks = {}; World.recompute()
+    UI.deselect()
+    dirty = true
   end,
   remove = function(id) World.remove(id); dirty = true end,
   mute = function(a, b) local m = World.toggle_mute(a, b); dirty = true; return m end,
