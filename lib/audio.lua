@@ -58,11 +58,10 @@ function Audio.sync_object(o)
   if o.type == "oscillator" then nodes[o.id].freq = v end
 end
 
--- LFO target param: amp (generators), drywet (modulator), amp elsewhere
+-- LFO target: all targets take the dedicated \mod arg (engine applies it
+-- to amp / dry-wet internally; user .set calls can't break the mapping)
 local function lfo_target_param(t)
-  if World.TYPES[t.type].category == "generator" then return "amp" end
-  if t.type == "modulator" then return "drywet" end
-  return "amp"
+  return "mod"
 end
 
 -- diff World.connections against `nodes`, issue connect/disconnect/mute

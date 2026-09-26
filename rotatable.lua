@@ -1,5 +1,5 @@
 -- rotatable
--- v1.0.0 @wildseyed
+-- v1.0.1 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -201,6 +201,7 @@ end
 local function draw_objects()
   Render.connections(cam, w2s, World)
   local sel = UI.selected()
+  Render.begin_labels()
   for _, o in ipairs(World.objects) do
     Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id)
   end
@@ -212,6 +213,7 @@ local function draw_objects()
     screen.circle(sx, sy, 10)
     screen.stroke()
   end
+  Render.flush_labels()
 end
 
 local function draw_reticle()
