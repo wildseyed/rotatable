@@ -156,7 +156,7 @@ end
 -- MOVE physics: encoder turns add velocity; UI.tick integrates with friction
 -- so blocks glide with accel/decel (owner, 2026-09-26)
 local vel_x, vel_y = 0, 0
-local FRICTION = 0.88      -- per 1/15 s frame
+local FRICTION = 0.92      -- per 1/15 s frame; higher = longer glide
 local VEL_EPS = 0.0005
 
 local function zoom_scale() return 48 / cam.zoom end
@@ -168,10 +168,18 @@ function reset_move_physics()
   vel_x, vel_y = 0, 0
 end
 
+-- drop any selection/mode state (used by table-clear and the T harness)
+function UI.deselect()
+  selected = nil
+  level = "L1"
+  mode = "MOVE"
+  reset_move_physics()
+  clear_armed = false
+end
+
 -- called from the redraw metro; returns true while a move is animating
 function UI.tick()
-  if level ~= "L2" or mode ~= "MOVE" or not selected then return false end
-  if math.abs(vel_x) < VEL_EPS and math.abs(vel_y) < VEL_EPS then
+  if level ~= "L2" or mode ~= "MOVE" or not selected then return false end  if math.abs(vel_x) < VEL_EPS and math.abs(vel_y) < VEL_EPS then
     vel_x, vel_y = 0, 0
     return false
   end
@@ -217,7 +225,7 @@ function UI.enc(n, d)
       if mode == "MOVE" then reset_move_physics() end
     elseif mode == "MOVE" then
       -- accel/decel glide: encoders add velocity, UI.tick integrates
-      local imp = d * 0.003 * (48 / cam.zoom) -- lower sensitivity than v1 instant-move
+      local imp = d * 0.002 * (48 / cam.zoom) -- impulse per tick; keep low for visible ramp
       if n == 2 then vel_x = clamp_vel(vel_x + imp)
       elseif n == 3 then vel_y = clamp_vel(vel_y + imp) end
     elseif mode == "ROTATE" then
@@ -310,7 +318,7 @@ function UI.key(n, z)
         World.objects = {}
         World.hardlinks = {}
         World.recompute()
-        clear_armed = false
+        UI.deselect()
       elseif k1_down then
         if level == "L1" then
           level = "L0"; menu_idx = 1
