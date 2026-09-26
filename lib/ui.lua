@@ -133,11 +133,12 @@ local function enter_l2(o)
   selected = o
   level = "L2"
   mode = "MOVE"
+  reset_move_physics()
   rebuild_link_candidates()
 end
 
--- E1 in MOVE mode: hop selection to the next/previous object (by id),
--- centering the camera on it (owner feature 2026-09-25)
+-- E1 in any L2 mode: hop selection to the next/previous object (by id),
+-- centering the camera on it (owner feature 2026-09-25, generalized 2026-09-26)
 local function cycle_selected(d)
   local n = #World.objects
   if n == 0 then return end
@@ -148,6 +149,42 @@ local function cycle_selected(d)
   selected = World.objects[((i - 1 + d) % n) + 1]
   cam.x, cam.y = selected.x, selected.y
   rebuild_link_candidates()
+end
+
+-- MOVE physics: encoder turns add velocity; UI.tick integrates with friction
+-- so blocks glide with accel/decel (owner, 2026-09-26)
+local vel_x, vel_y = 0, 0
+local FRICTION = 0.88      -- per 1/15 s frame
+local VEL_EPS = 0.0005
+
+local function zoom_scale() return 48 / cam.zoom end
+local function clamp_vel(v)
+  local m = 0.04 * zoom_scale()
+  return util.clamp(v, -m, m)
+end
+function reset_move_physics()
+  vel_x, vel_y = 0, 0
+end
+
+-- called from the redraw metro; returns true while a move is animating
+function UI.tick()
+  if level ~= "L2" or mode ~= "MOVE" or not selected then return false end
+  if math.abs(vel_x) < VEL_EPS and math.abs(vel_y) < VEL_EPS then
+    vel_x, vel_y = 0, 0
+    return false
+  end
+  local nx = selected.x + vel_x
+  local ny = selected.y + vel_y
+  local r = math.sqrt(nx * nx + ny * ny)
+  if r > 0.95 then -- soft wall at the rim
+    local s = 0.95 / r
+    nx, ny = nx * s, ny * s
+    vel_x, vel_y = 0, 0
+  end
+  selected.x, selected.y = nx, ny
+  vel_x, vel_y = vel_x * FRICTION, vel_y * FRICTION
+  World.recompute()
+  return true
 end
 
 local function cycle_mode(dir)
@@ -172,12 +209,15 @@ function UI.enc(n, d)
       menu_idx = util.clamp(menu_idx + d, 1, #items)
     end
   elseif level == "L2" and selected then
-    local step = 0.01 * (48 / cam.zoom)
-    if mode == "MOVE" then
-      if n == 1 then cycle_selected(d > 0 and 1 or -1)
-      elseif n == 2 then selected.x = selected.x + d * step
-      elseif n == 3 then selected.y = selected.y + d * step end
-      World.recompute()
+    -- E1 hops selection in every L2 mode (owner, 2026-09-26)
+    if n == 1 then
+      cycle_selected(d > 0 and 1 or -1)
+      if mode == "MOVE" then reset_move_physics() end
+    elseif mode == "MOVE" then
+      -- accel/decel glide: encoders add velocity, UI.tick integrates
+      local imp = d * 0.003 * (48 / cam.zoom) -- lower sensitivity than v1 instant-move
+      if n == 2 then vel_x = clamp_vel(vel_x + imp)
+      elseif n == 3 then vel_y = clamp_vel(vel_y + imp) end
     elseif mode == "ROTATE" then
       if k1_down then
         if n == 2 then World.cycle_subtype(selected, d > 0 and 1 or -1) end
@@ -248,7 +288,13 @@ function UI.key(n, z)
     elseif k1_down and level == "L1" and #World.objects > 0 then
       clear_armed = true
     elseif level == "L3" then level = "L2"
-    elseif level == "L2" then level = "L1"; selected = nil
+    elseif level == "L2" then
+      -- back walks through modes in reverse before leaving to NAV (owner, 2026-09-26)
+      if mode == "MOVE" then
+        level = "L1"; selected = nil
+      else
+        cycle_mode(-1)
+      end
     elseif level == "L0" then level = "L1"
     end
   elseif n == 3 then

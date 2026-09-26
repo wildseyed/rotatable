@@ -4,7 +4,7 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v1.0.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v1.1.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
 ## install
 
@@ -50,11 +50,14 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 
 **L2 modes**
 
-- **MOVE**: E2/E3 drag the object (connections form/break live);
-  **E1 hops selection between objects, centering the camera on each**
+- **MOVE**: E2/E3 glide the object with accel/decel physics (connections
+  form/break live as it slides)
 - **ROTATE**: E2 = main param, E3 = secondary param, `K1+E2` = subtype
 - **LINK**: E2 cycles targets by proximity; `K3` toggles hardlink
   (permanent, bright line); `K1+K3` mutes the connection (dimmed)
+- **E1 hops selection between objects in every L2 mode**, centering the
+  camera on each
+- `K2` walks back through modes (LINK → ROTATE → MOVE → NAV)
 
 ## object reference
 
