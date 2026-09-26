@@ -15,7 +15,7 @@ Engine_Rotatable : CroneEngine {
 		nodes = IdentityDictionary.new;
 
 		SynthDef(\rot_osc, { arg in=0, out=0, gate=1, freq=220, amp=0.8, select=0,
-			a=0.01, d=0.1, s=0.7, r=0.3;
+			a=0.01, d=0.1, s=0.7, r=0.3, mod=0;
 			var sig, env;
 			freq = Lag.kr(freq, 0.05);
 			sig = SelectX.ar(Lag.kr(select, 0.05), [
@@ -25,19 +25,20 @@ Engine_Rotatable : CroneEngine {
 				LPF.ar(WhiteNoise.ar, (freq * 8).clip(100, 18000))
 			]);
 			env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
-			Out.ar(out, sig * env * Lag.kr(amp, 0.05));
+			// mod = LFO control-bus input (dedicated arg: .set never breaks its mapping)
+			Out.ar(out, sig * env * Lag.kr(amp, 0.05) * (1 - mod));
 		}).add;
 
 		// Phasor+BufRd: always looping, no trigger edge to miss.
 		// (oneshot/pitchlock subtypes arrive in a later iteration)
-		SynthDef(\rot_loop, { arg in=0, out=0, buf=0, rate=1, amp=0.8;
+		SynthDef(\rot_loop, { arg in=0, out=0, buf=0, rate=1, amp=0.8, mod=0;
 			var frames = BufFrames.kr(buf).max(1);
 			var pos = Phasor.ar(0, Lag.kr(rate, 0.05) * BufRateScale.kr(buf), 0, frames);
 			var sig = BufRd.ar(1, buf, pos, 1);
-			Out.ar(out, sig * Lag.kr(amp, 0.05));
+			Out.ar(out, sig * Lag.kr(amp, 0.05) * (1 - mod));
 		}).add;
 
-		SynthDef(\rot_filter, { arg in=0, out=0, select=0, cutoff=1200, rq=0.5, amp=1;
+		SynthDef(\rot_filter, { arg in=0, out=0, select=0, cutoff=1200, rq=0.5, amp=1, mod=0;
 			var sig = In.ar(in, 1);
 			cutoff = Lag.kr(cutoff, 0.05).clip(40, 12000);
 			rq = Lag.kr(rq, 0.1).clip(0.05, 1);
@@ -46,26 +47,26 @@ Engine_Rotatable : CroneEngine {
 				BPF.ar(sig, cutoff, rq),
 				RHPF.ar(sig, cutoff, rq)
 			]);
-			Out.ar(out, sig * Lag.kr(amp, 0.05));
+			Out.ar(out, sig * Lag.kr(amp, 0.05) * (1 - mod));
 		}).add;
 
-		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1;
+		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1, mod=0;
 			var dry = In.ar(in, 1);
 			var fb = LocalIn.ar(1);
 			var wet = DelayC.ar(dry + (fb * Lag.kr(feedback, 0.1).clip(0, 0.99)), 2, Lag.kr(time, 0.2));
 			LocalOut.ar(wet);
-			Out.ar(out, (dry + wet) * Lag.kr(amp, 0.05));
+			Out.ar(out, (dry + wet) * Lag.kr(amp, 0.05) * (1 - mod));
 		}).add;
 
 		// select: 0 ring, 1 chorus, 2 flanger
-		SynthDef(\rot_mod, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1;
+		SynthDef(\rot_mod, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1, mod=0;
 			var dry = In.ar(in, 1);
 			var m = Lag.kr(main, 0.05);
 			var ring = dry * SinOsc.ar(m.linexp(0, 1, 10, 2000));
 			var chorus = DelayL.ar(dry, 0.05, SinOsc.kr(m.linexp(0, 1, 0.1, 8), 0, 0.002, 0.005));
 			var flang = DelayL.ar(dry, 0.02, SinOsc.kr(m.linexp(0, 1, 0.05, 2), 0, 0.001, 0.0025));
 			var wet = SelectX.ar(Lag.kr(select, 0.05), [ring, chorus, flang]);
-			var dw = Lag.kr(drywet, 0.05);
+			var dw = Lag.kr(drywet, 0.05) * (1 - mod);
 			Out.ar(out, (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05));
 		}).add;
 
@@ -135,17 +136,18 @@ Engine_Rotatable : CroneEngine {
 				src[\synth].set(\out, if(msg[2] == 1, silentBus, src[\out]));
 			};
 		});
-		// control connect: target param mapped to controller's control bus
+		// control connect: LFO bus mapped onto the dedicated \mod arg
+		// (mapping a user-set arg breaks on every .set; \mod is touch-free)
 		this.addCommand("connect_control", "iis", { arg msg;
 			var src = nodes[msg[1]], dst = nodes[msg[2]];
 			if (src.notNil and: { dst.notNil and: { src[\bus].notNil and: { dst[\synth].notNil } } }) {
-				dst[\synth].map(msg[3].asSymbol, src[\bus]);
+				dst[\synth].map(\mod, src[\bus]);
 			};
 		});
 		this.addCommand("disconnect_control", "is", { arg msg;
 			var dst = nodes[msg[1]];
 			if (dst.notNil and: { dst[\synth].notNil }) {
-				dst[\synth].unmap(msg[2].asSymbol);
+				dst[\synth].set(\mod, 0);
 			};
 		});
 		this.addCommand("set", "isf", { arg msg;
