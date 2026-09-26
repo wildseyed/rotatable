@@ -72,6 +72,9 @@ T = {
     local o = UI.selected()
     return o and string.format("%.3f,%.3f", o.x, o.y) or "none"
   end,
+  cam = function()
+    return string.format("%.3f,%.3f z%.0f", cam.x, cam.y, cam.zoom)
+  end,
   amps = function()
     return string.format("amp_l=%.5f amp_r=%.5f", amp_l, amp_r)
   end,

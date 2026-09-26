@@ -139,8 +139,14 @@ local function enter_l2(o)
   rebuild_link_candidates()
 end
 
+-- camera easing: hops set a target, UI.tick flies the camera there
+-- (owner, 2026-09-26: instant teleport felt wrong)
+local cam_target = nil
+local CAM_EASE = 0.18     -- fraction of remaining distance per 1/15 s frame
+local CAM_EPS = 0.002
+
 -- E1 in any L2 mode: hop selection to the next/previous object (by id),
--- centering the camera on it (owner feature 2026-09-25, generalized 2026-09-26)
+-- easing the camera onto it (owner feature 2026-09-25, generalized 2026-09-26)
 local function cycle_selected(d)
   local n = #World.objects
   if n == 0 then return end
@@ -149,7 +155,7 @@ local function cycle_selected(d)
     if selected and o.id == selected.id then i = j end
   end
   selected = World.objects[((i - 1 + d) % n) + 1]
-  cam.x, cam.y = selected.x, selected.y
+  cam_target = { x = selected.x, y = selected.y }
   rebuild_link_candidates()
 end
 
@@ -179,9 +185,23 @@ end
 
 -- called from the redraw metro; returns true while a move is animating
 function UI.tick()
-  if level ~= "L2" or mode ~= "MOVE" or not selected then return false end  if math.abs(vel_x) < VEL_EPS and math.abs(vel_y) < VEL_EPS then
+  local moving = false
+  -- camera ease toward hop target
+  if cam_target then
+    local dx, dy = cam_target.x - cam.x, cam_target.y - cam.y
+    if math.abs(dx) < CAM_EPS and math.abs(dy) < CAM_EPS then
+      cam.x, cam.y = cam_target.x, cam_target.y
+      cam_target = nil
+    else
+      cam.x, cam.y = cam.x + dx * CAM_EASE, cam.y + dy * CAM_EASE
+      moving = true
+    end
+  end
+  -- block glide physics
+  if level ~= "L2" or mode ~= "MOVE" or not selected then return moving end
+  if math.abs(vel_x) < VEL_EPS and math.abs(vel_y) < VEL_EPS then
     vel_x, vel_y = 0, 0
-    return false
+    return moving
   end
   local nx = selected.x + vel_x
   local ny = selected.y + vel_y
@@ -209,8 +229,10 @@ function UI.enc(n, d)
     if n == 1 then
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
     elseif n == 2 then
+      cam_target = nil
       cam.x = cam.x + d * 0.01 * (48 / cam.zoom)
     elseif n == 3 then
+      cam_target = nil
       cam.y = cam.y + d * 0.01 * (48 / cam.zoom)
     end
   elseif level == "L0" then
@@ -225,7 +247,7 @@ function UI.enc(n, d)
       if mode == "MOVE" then reset_move_physics() end
     elseif mode == "MOVE" then
       -- accel/decel glide: encoders add velocity, UI.tick integrates
-      local imp = d * 0.002 * (48 / cam.zoom) -- impulse per tick; keep low for visible ramp
+      local imp = d * 0.0007 * (48 / cam.zoom) -- 3x less sensitive (owner, 2026-09-26)
       if n == 2 then vel_x = clamp_vel(vel_x + imp)
       elseif n == 3 then vel_y = clamp_vel(vel_y + imp) end
     elseif mode == "ROTATE" then
