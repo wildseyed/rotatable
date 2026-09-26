@@ -6,16 +6,24 @@ add new files as work evolves, and keep this index stable.*
 
 ## Milestones
 
+### v1 (complete)
 - [x] **Phase 0 — Groundwork** → `plan/phase-0/`
   - [x] [behavior-spec](plan/phase-0/behavior-spec.md) — manual + research → `docs/behavior-spec.md`
   - [x] [interaction-design](plan/phase-0/interaction-design.md) — **approved 2026-09-24** → `docs/interaction-design.md` v2
-- [~] **Phase 1 — Dev loop & hello world** → [dev-loop](plan/phase-1/dev-loop.md) — deploy/load/screenshot verified on device; only encoder-feel tuning (owner, on hardware) remains
+- [x] **Phase 1 — Dev loop & hello world** → [dev-loop](plan/phase-1/dev-loop.md) — deploy/load/screenshot verified on device
 - [x] **Phase 2 — Table renderer & navigation (Lua)** → [renderer](plan/phase-2/renderer.md) — verified on device; 2 polish items parked
 - [x] **Phase 3 — Interaction hierarchy (Lua)** → [interaction](plan/phase-3/interaction.md) — all modes verified on device via REPL-driven tests
 - [x] **Phase 4 — Audio engine (SuperCollider)** → [engine](plan/phase-4/engine.md) — verified via device polls; loop player & mod character untested; owner listening check pending
 - [x] **Panels: sequencer step editor + loop sample browser** (owner-prioritized gap, 2026-09-25) — built and verified
 - [x] **Patch slots** → [patch-slots](plan/phase-5/patch-slots.md) — implemented & REPL-verified; owner feel-check pending
 - [x] **Phase 5 — Integration & polish** → [integration](plan/phase-5/integration.md) — CPU 16%, polish fixes, README; owner feel-check pending; v2 backlog listed
+- [x] **Published** (2026-09-25): v1.0.0 on GitHub (main + lean release branch), lines thread, catalog PR monome/norns-community#409 (discussion → GitHub Discussions)
+
+### v2 (planned 2026-09-25)
+- [ ] **Phase 6 — v2 design decisions** → [decisions](plan/phase-6/decisions.md) — no code; resolve scope questions first (sampler format, tonality reach, tempo-sync architecture…)
+- [ ] **Phase 7 — Engine v2** → [engine-v2](plan/phase-7/engine-v2.md) — new synths, tempo clock, modulation scaling
+- [ ] **Phase 8 — UI & panels v2** → [ui-v2](plan/phase-8/ui-v2.md) — 14-type place menu, remaining panels, visual polish
+- [ ] **Phase 9 — Integration & release v2.0.0** → [release-v2](plan/phase-9/release-v2.md)
 
 ## Parking lot (undecided / later)
 
