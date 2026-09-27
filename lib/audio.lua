@@ -1,30 +1,55 @@
--- audio.lua — glue: world state -> Engine_Rotatable commands (phase 4)
+-- audio.lua — glue: world state -> Engine_Rotatable commands (phase 4 + v2)
 -- hooks World.add/remove/recompute/toggle_mute; engine-side stays the source
 -- of truth for routing, lua mirrors it in `nodes`.
 
 local Audio = {}
 
 local World
+local Tonality = include('lib/tonality')
 
-local HAS_SYNTH = { oscillator = true, loop = true, filter = true,
-  delay = true, modulator = true, lfo = true }
+local HAS_SYNTH = { oscillator = true, loop = true, sampler = true,
+  input = true, filter = true, delay = true, modulator = true,
+  waveshaper = true, lfo = true }
 
--- id -> { type=, out=dst_id|"output"|nil, kind=, muted=, cparam=, freq= }
+-- id -> { type=, out=dst_id|"output"|nil, kind=, muted=, cparam=, freq=,
+--         lvl_slot= }
 local nodes = {}
+
+-- mirror of the engine's level-poll slot pool: the engine pops from the end
+-- of its free list per addNode (audio defs only, not lfo) and pushes back on
+-- freeNode; adds/removes arrive in the same order we issue them, so this
+-- stays in sync. poll name for an object is "lvl_" .. slot.
+local lvl_pool = {}
+for i = 1, 16 do lvl_pool[i] = i end
+
+-- poll name for an object's level meter, or nil (lfo/no-synth/pool exhausted)
+function Audio.lvl_poll(id)
+  local n = nodes[id]
+  return n and n.lvl_slot and ("lvl_" .. n.lvl_slot) or nil
+end
 
 -- angle -> primary param (rotation = primary, behavior-spec §3)
 local function primary(o)
   local f = o.angle / (2 * math.pi)
   if o.type == "oscillator" then return "freq", 55 * (2 ^ (f * 4))       -- 55..880 Hz
   elseif o.type == "loop" then return "rate", 0.25 * (2 ^ (f * 4))        -- 0.25..4
+  elseif o.type == "sampler" then return "freq", 55 * (2 ^ (f * 4))       -- 55..880 Hz
+  elseif o.type == "input" then return "gain", f
   elseif o.type == "filter" then return "cutoff", 40 * (300 ^ f)          -- 40..12000 Hz
   elseif o.type == "delay" then return "time", 0.01 * (200 ^ f)           -- 0.01..2 s
   elseif o.type == "modulator" then return "main", f
+  elseif o.type == "waveshaper" then return "main", f
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
   elseif o.type == "sequencer" then return "preset", 1 + math.floor(f * 5.999)
+  elseif o.type == "tonality" then return "root", math.floor(f * 12)
   elseif o.type == "output" then return "volume", f
   end
 end
+
+-- engine params pushed verbatim from o.params (everything not type-special)
+local PASS_PARAMS = { freq = true, amp = true, cutoff = true, time = true,
+  feedback = true, main = true, drywet = true, depth = true, gain = true,
+  base = true, sync = true, sweep = true, mult = true }
 
 -- push an object's params/subtype/angle to the engine
 function Audio.sync_object(o)
@@ -34,32 +59,39 @@ function Audio.sync_object(o)
     engine.set(o.id, "volume", v)
     return
   end
-  if not HAS_SYNTH[o.type] then return end
+  if not HAS_SYNTH[o.type] then
+    -- tonality: root lives in o.params for lib/tonality
+    if o.type == "tonality" and k then o.params[k] = v end
+    return
+  end
   engine.set(o.id, "select", o.subtype - 1)
-  if k then engine.set(o.id, k, v) end
+  if k then
+    engine.set(o.id, k, v)
+    if o.params[k] ~= nil then o.params[k] = v end
+  end
   for p, val in pairs(o.params) do
     if p ~= k then
       if o.type == "filter" and p == "res" then
         engine.set(o.id, "rq", 1.05 - util.clamp(val, 0, 1))
       elseif o.type == "loop" and p == "speed" then
         if k ~= "rate" then engine.set(o.id, "rate", val) end
-      elseif p == "freq" or p == "amp" or p == "cutoff" or p == "time"
-        or p == "feedback" or p == "main" or p == "drywet" or p == "depth" then
+      elseif PASS_PARAMS[p] then
         engine.set(o.id, p, val)
       end
     end
   end
-  if o.type == "oscillator" or o.type == "loop" then
+  if o.type == "oscillator" or o.type == "loop" or o.type == "sampler" then
     engine.set(o.id, "a", o.env.a)
     engine.set(o.id, "d", o.env.d)
     engine.set(o.id, "s", o.env.s)
     engine.set(o.id, "r", o.env.r)
   end
-  if o.type == "oscillator" then nodes[o.id].freq = v end
+  if o.type == "oscillator" or o.type == "sampler" then nodes[o.id].freq = v end
 end
 
--- LFO target: all targets take the dedicated \mod arg (engine applies it
--- to amp / dry-wet internally; user .set calls can't break the mapping)
+-- LFO target: all targets take the dedicated \mod arg (bipolar -1..1);
+-- each engine synth applies its own scale (pitch-like bipolar, amp/dry-wet
+-- unipolar — spec §9 decision 8); user .set calls can't break the mapping
 local function lfo_target_param(t)
   return "mod"
 end
@@ -118,21 +150,40 @@ function Audio.sync_connections()
 end
 
 function Audio.on_add(o)
-  nodes[o.id] = { type = o.type }
+  local n = { type = o.type }
+  if HAS_SYNTH[o.type] and o.type ~= "lfo" then
+    n.lvl_slot = table.remove(lvl_pool) -- engine pops the same end
+  end
+  nodes[o.id] = n
   engine.add(o.id, o.type, o.subtype - 1)
   Audio.sync_object(o)
+  -- World.add recomputes (and syncs) BEFORE this engine node existed:
+  -- routes pointing AT the new object were silently rejected engine-side
+  -- while the mirror marked them done. Drop those memos so they re-issue
+  -- now that the node exists.
+  for id, m in pairs(nodes) do
+    if m.out == o.id then m.out, m.kind = nil, nil end
+  end
   Audio.sync_connections()
 end
 
 function Audio.on_remove(id)
+  local n = nodes[id]
+  if n and n.lvl_slot then table.insert(lvl_pool, n.lvl_slot) end
   nodes[id] = nil
   engine.remove(id)
   Audio.sync_connections()
 end
 
 function Audio.reset()
-  for id in pairs(nodes) do engine.remove(id) end
+  -- mirror the engine: each remove pushes the slot back onto its free list
+  local back = {}
+  for id, n in pairs(nodes) do
+    engine.remove(id)
+    if n.lvl_slot then table.insert(back, n.lvl_slot) end
+  end
   nodes = {}
+  for _, s in ipairs(back) do table.insert(lvl_pool, s) end
 end
 
 -- hook points: wrap World functions rather than editing its logic
@@ -163,17 +214,23 @@ function Audio.init(world)
 end
 
 -- sequencer clock tick: plays the object's own 16-step pattern
--- (edited in the L3 steps panel). triggers connected oscillators.
+-- (edited in the L3 steps panel). triggers connected oscillators/samplers.
+-- "random" subtype ignores the pattern's pitch and improvises (quantized to
+-- the table's tonality when a tonality object is present).
 function Audio.seq_tick(step)
+  local ton = Tonality.current(World)
   for id, n in pairs(nodes) do
     if n.type == "sequencer" and n.kind == "control" and n.out and not n.muted then
       local o = World.get(id)
       local t = nodes[n.out]
       if o and o.steps and o.steps[step].on
-        and t and t.type == "oscillator" and t.freq then
+        and t and (t.type == "oscillator" or t.type == "sampler") and t.freq then
         local st = o.steps[step]
+        local pitch = st.pitch
+        if o.subtype == 3 then pitch = math.random(-12, 24) end -- random subtype
+        if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
         engine.set(n.out, "amp", st.vel)
-        engine.trigger(n.out, t.freq * (2 ^ (st.pitch / 12)))
+        engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
       end
     end
   end

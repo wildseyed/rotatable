@@ -1,5 +1,6 @@
 -- world.lua — table world model: objects + proximity connections
--- v1 scope: core 8 object types (owner decision 2026-09-24)
+-- v2: 13 of the original 14 types (phase-6 decisions; song settings dropped,
+-- pitchlock dropped, MIDI-in still pending)
 
 local World = {}
 
@@ -13,23 +14,35 @@ World.TYPES = {
     subtypes = { "sine", "saw", "square", "noise" },
     params = { freq = 220, amp = 0.8 } },
   loop = { category = "generator", label = "LOOP",
-    subtypes = { "loop", "oneshot", "pitchlock" },
-    params = { speed = 1.0, amp = 0.8 } },
+    subtypes = { "loop", "oneshot" }, -- pitchlock dropped (phase-6)
+    params = { speed = 1.0, amp = 0.8, sync = 0 } }, -- sync: 0 immediate, 1 quarter, 2 bar
+  sampler = { category = "generator", label = "SMP",
+    subtypes = { "instrument", "drum" },
+    params = { freq = 220, base = 261.6256, amp = 0.8 } }, -- base = sample's natural pitch
+  input = { category = "generator", label = "IN",
+    subtypes = { "line" },
+    params = { gain = 0.8 } },
   filter = { category = "effect", label = "FLT",
     subtypes = { "lp", "bp", "hp" },
     params = { cutoff = 1200, res = 0.3 } },
   delay = { category = "effect", label = "DLY",
     subtypes = { "feedback", "pingpong", "reverb" },
-    params = { time = 0.3, feedback = 0.4 } },
+    params = { time = 0.3, feedback = 0.4, sync = 0, sweep = 0.2 } },
   modulator = { category = "effect", label = "MOD",
     subtypes = { "ring", "chorus", "flanger" },
     params = { main = 0.5, drywet = 0.5 } },
+  waveshaper = { category = "effect", label = "SHP",
+    subtypes = { "resampler", "compressor", "distortion" },
+    params = { main = 0.5, drywet = 0.5 } },
   lfo = { category = "controller", label = "LFO",
     subtypes = { "sine", "saw", "square", "random" },
-    params = { freq = 2.0, depth = 0.5 } },
+    params = { freq = 2.0, depth = 0.5, sync = 0, mult = 8 } }, -- mult: period in 32nd notes
   sequencer = { category = "controller", label = "SEQ",
     subtypes = { "mono", "poly", "random" },
     params = { preset = 1 } },
+  tonality = { category = "global", label = "TON",
+    subtypes = { "major", "minor", "pentatonic", "chromatic" },
+    params = { root = 0 } }, -- root: semitones from C
   output = { category = "global", label = "OUT",
     subtypes = { "master" },
     params = { volume = 0.8 } },
@@ -38,13 +51,13 @@ World.TYPES = {
 -- canonical object-type order for the place menu, grouped by category
 World.MENU = {
   { header = "GENERATORS" },
-  "oscillator", "loop",
+  "oscillator", "loop", "sampler", "input",
   { header = "EFFECTS" },
-  "filter", "delay", "modulator",
+  "filter", "delay", "modulator", "waveshaper",
   { header = "CONTROLLERS" },
   "lfo", "sequencer",
   { header = "GLOBALS" },
-  "output",
+  "tonality", "output",
 }
 
 World.objects = {}
@@ -84,7 +97,7 @@ function World.add(type, x, y, angle)
         pitch = on and PENTA_ST[(i - 1) / 2 + 1] or 0,
         vel = 0.8 }
     end
-  elseif type == "loop" then
+  elseif type == "loop" or type == "sampler" then
     o.sample = nil -- path of loaded WAV (browser panel)
   end
   next_id = next_id + 1

@@ -3,9 +3,10 @@
 *Running project notes. Plan: `plan.md` + `plan/phase-N/`. Session archives:
 `prompt-archive/`. Project guide: `AGENTS.md`.*
 
-**STATUS (2026-09-25): v1 feature-complete.** All 6 plan phases done; instrument
-plays on the device. Pending: owner hands-on feel-check. v2 backlog in
-`plan/phase-5/integration.md`.
+**STATUS (2026-09-26): v2 phase 7 (engine v2) done & device-verified.** All 13
+object types have synths; tempo bus, LFO sync, delay/loop subtypes, sampler,
+tonality, per-object level polls all work on hardware. CPU 23% with a full
+patch. Next: phase 8 (UI & panels v2). Pending: owner hands-on feel-check.
 
 ---
 
@@ -94,3 +95,25 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   sync = hybrid engine tempo bus + Lua metro sequencer; sequencer = 6 presets
   + random (poly deferred); pitchlock loop OUT; v2 ships 13 of the original
   14 types. Phase-7/8/9 plan files aligned.
+- 2026-09-26: **Phase 7 done — engine v2 verified on device.** Tempo control
+  bus (`engine.tempo`), LFO tempo-sync + bipolar per-target mod scaling,
+  delay pingpong/reverb/quantize/sweep, loop oneshot, waveshaper, audio-in,
+  melodic sampler (instrument/drum), tonality quantizer (`lib/tonality.lua`),
+  loop bar-entry sync, 16-slot per-object level-poll pool. All 13 types in
+  `World.TYPES`. CPU with full 13-object patch: avg 23.3% / peak 24.1%.
+  Big gotcha: `t_` trigger args hoist to the FRONT of the control list —
+  index-based probing lies; PlayBuf+t_trig won over Changed/Sweep edge
+  hacks after a long trigger-debug saga (see plan/phase-7 for the rest).
+- 2026-09-27: **8 patch slots populated + two routing bugs fixed.** Slots:
+  1 KIT-808 (3 drum samplers + 3 sequencers), 2 ACID (saw+LP+minor tonality
+  +synced LFO), 3 DUB (looped kick + synced feedback delay), 4 PING (rim
+  sampler + pingpong delay + sequencer), 5 SOLO (random sequencer + square
+  +pentatonic tonality), 6 CRUSH (snare loop + resampler + HP + random LFO),
+  7 WASH (line-in + compressor + reverb; silent without external signal),
+  8 CHOIR (2 detuned sines + chorus + reverb + slow vibrato LFO). Slot
+  persistence itself was never broken (tab.save roundtrip + reload verified)
+  — but populating exposed: (a) phase-7 regression `in=nil` on all effect
+  synths (bus allocated after args array), (b) World.add internal recompute
+  racing `Audio.on_add` so routes to newly-added objects never reached the
+  engine (mirror lied). Both fixed (AGENTS.md gotchas 9-11). Also: T.link
+  (hardlink) + T.load now sets o.sample for slot persistence.

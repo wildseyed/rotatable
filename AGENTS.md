@@ -78,7 +78,20 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   `norns-sclang norns-crone norns-matron`; subset restarts wedge jackd.
   (4) PlayBuf needs a trigger edge (easy to miss at synth start); Phasor+BufRd
   avoids the whole problem. (5) Default `buf=0` poisons BufRateScale with NaN —
-  always start buffer synths on a real silent buffer.
+  always start buffer synths on a real silent buffer. (6) `t_` trigger args
+  are hoisted to the FRONT of the SynthDef control list — never probe
+  controls by assumed index. (7) One-shots: PlayBuf+`t_trig` (single-pair
+  set) is the only reliable retrigger; Changed.kr(control) and Phasor/Sweep
+  edge tricks fail or wrap. (8) Matron discovers engine polls only at engine
+  load — register poll pools (e.g. `lvl_1..16`) in `alloc`, not per-object.
+  (9) Allocate `Bus.audio` BEFORE building the Synth args array — `[\in, bus]`
+  with a nil bus silently gives effects `in=0` (they read the hardware out
+  bus instead of their input; whole effect chains go dead). (10) `World.add`
+  recomputes connections internally BEFORE `Audio.on_add` creates the engine
+  node, so routes pointing at the new object are silently rejected while the
+  lua mirror marks them done — `on_add` drops memos targeting the new node
+  so they re-issue. (11) matron's ws REPL evaluates per LINE: no multi-line
+  chunks, no locals spanning lines — batch as single-line statements.
 
 ## Repo layout
 

@@ -1,12 +1,18 @@
-// Engine_Rotatable.sc — reactable emulator engine (phase 4)
+// Engine_Rotatable.sc — reactable emulator engine (phase 4 + v2/phase 7)
 // one group + synth + private inBus per object; sources retarget their out bus.
 // control connections: controller writes a control bus, target param is .map'ed.
+// v2: tempo control bus (bpm) consumed by LFO sync / delay quantize / loop
+// bar-entry; mod bus is bipolar (-1..1) and each target synth applies its own
+// scale (pitch-like params bipolar, amp/dry-wet unipolar).
 
 Engine_Rotatable : CroneEngine {
 	var <silentBus, <masterBus, <master;
 	var <silentBuf; // 1s mono silence; default buf for loop player (avoids NaN rate)
+	var <tempoBus; // control bus holding current bpm (set via "tempo" command)
 	var nodeGroup; // all object synths live here, before the master synth
-	var nodes; // id -> (group, synth, bus, type, out, muted)
+	var nodes; // id -> (group, synth, bus, type, out, muted, lvlSlot)
+	var lvlSlots, lvlFree; // fixed pool of 16 level buses; polls are registered
+		// at alloc time because matron only discovers polls at engine load
 
 	*new { arg context, doneCallback; ^super.new(context, doneCallback); }
 
@@ -14,10 +20,11 @@ Engine_Rotatable : CroneEngine {
 		var s = context.server;
 		nodes = IdentityDictionary.new;
 
+		// mod is bipolar (-1..1); pitch-like target: +-1 octave around current
 		SynthDef(\rot_osc, { arg in=0, out=0, gate=1, freq=220, amp=0.8, select=0,
-			a=0.01, d=0.1, s=0.7, r=0.3, mod=0;
-			var sig, env;
-			freq = Lag.kr(freq, 0.05);
+			a=0.01, d=0.1, s=0.7, r=0.3, mod=0, lvl=0;
+			var sig, env, outSig;
+			freq = Lag.kr(freq, 0.05) * (2 ** mod.clip(-1, 1));
 			sig = SelectX.ar(Lag.kr(select, 0.05), [
 				SinOsc.ar(freq),
 				Saw.ar(freq),
@@ -26,59 +33,155 @@ Engine_Rotatable : CroneEngine {
 			]);
 			env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
 			// mod = LFO control-bus input (dedicated arg: .set never breaks its mapping)
-			Out.ar(out, sig * env * Lag.kr(amp, 0.05) * (1 - mod));
+			outSig = sig * env * Lag.kr(amp, 0.05);
+			Out.ar(out, outSig);
+			Out.kr(lvl, Amplitude.kr(outSig, 0.01, 0.15));
 		}).add;
 
-		// Phasor+BufRd: always looping, no trigger edge to miss.
-		// (oneshot/pitchlock subtypes arrive in a later iteration)
-		SynthDef(\rot_loop, { arg in=0, out=0, buf=0, rate=1, amp=0.8, mod=0;
+		// Phasor+BufRd for the looping subtype: no trigger edge to miss.
+		// select: 0 loop, 1 oneshot (PlayBuf fired by t_trig; silent after end).
+		// bar-entry sync: sync arg (0 immediate, 1 quarter, 2 bar) waits for the
+		// next tempo-grid boundary before (re)starting the phasor.
+		// tbus = index of the engine tempo control bus (bpm).
+		SynthDef(\rot_loop, { arg in=0, out=0, buf=0, rate=1, amp=0.8, select=0,
+			gate=1, sync=0, tbus=0, mod=0, lvl=0, t_trig=0;
 			var frames = BufFrames.kr(buf).max(1);
-			var pos = Phasor.ar(0, Lag.kr(rate, 0.05) * BufRateScale.kr(buf), 0, frames);
-			var sig = BufRd.ar(1, buf, pos, 1);
-			Out.ar(out, sig * Lag.kr(amp, 0.05) * (1 - mod));
+			var bpm = In.kr(tbus).max(1);
+			var beat = 60 / bpm;
+			var grid = Select.kr(sync.clip(0, 2).round, [0, beat, beat * 4]);
+			var onGrid = grid > 0;
+			var trig = Impulse.kr(0) + Changed.kr(buf);
+			var sweep = Sweep.kr(trig);
+			// one kr tick at each grid crossing after trig (never at time 0)
+			var crossed = onGrid * ((sweep % grid) <= ControlDur.ir) * (sweep > ControlDur.ir);
+			var start = Select.kr(onGrid, [trig.clip(0, 1), crossed]);
+			var rateM = Lag.kr(rate, 0.05) * (2 ** mod.clip(-1, 1));
+			var oneshot = select.round.clip(0, 1);
+			var posLoop = Phasor.ar(start, rateM * BufRateScale.kr(buf), 0, frames);
+			// PlayBuf + t_trig: the norns-canonical one-shot (fires once per
+			// trigger pulse, outputs silence after the sample ends)
+			var sigLoop = BufRd.ar(1, buf, posLoop, 1);
+			var sigOnce = PlayBuf.ar(1, buf, rateM * BufRateScale.kr(buf), t_trig, 0, 0, 0);
+			var sig = Select.ar(oneshot, [sigLoop, sigOnce]);
+			sig = sig * Lag.kr(amp, 0.05);
+			Out.ar(out, sig);
+			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
 		}).add;
 
-		SynthDef(\rot_filter, { arg in=0, out=0, select=0, cutoff=1200, rq=0.5, amp=1, mod=0;
+		SynthDef(\rot_filter, { arg in=0, out=0, select=0, cutoff=1200, rq=0.5, amp=1, mod=0, lvl=0;
 			var sig = In.ar(in, 1);
-			cutoff = Lag.kr(cutoff, 0.05).clip(40, 12000);
+			cutoff = (Lag.kr(cutoff, 0.05) * (2 ** mod.clip(-1, 1))).clip(40, 12000);
 			rq = Lag.kr(rq, 0.1).clip(0.05, 1);
 			sig = SelectX.ar(Lag.kr(select, 0.05), [
 				RLPF.ar(sig, cutoff, rq),
 				BPF.ar(sig, cutoff, rq),
 				RHPF.ar(sig, cutoff, rq)
 			]);
-			Out.ar(out, sig * Lag.kr(amp, 0.05) * (1 - mod));
+			sig = sig * Lag.kr(amp, 0.05);
+			Out.ar(out, sig);
+			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
 		}).add;
 
-		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1, mod=0;
+		// select: 0 feedback, 1 pingpong (cross-feedback dual tap), 2 reverb.
+		// sync=1 quantizes time to 32nd notes off the tempo bus; sweep = time
+		// glide (seconds of lag on time changes).
+		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1,
+			select=0, sync=0, sweep=0.2, tbus=0, mod=0, lvl=0;
 			var dry = In.ar(in, 1);
-			var fb = LocalIn.ar(1);
-			var wet = DelayC.ar(dry + (fb * Lag.kr(feedback, 0.1).clip(0, 0.99)), 2, Lag.kr(time, 0.2));
-			LocalOut.ar(wet);
-			Out.ar(out, (dry + wet) * Lag.kr(amp, 0.05) * (1 - mod));
+			var bpm = In.kr(tbus).max(1);
+			var t, fb, local, wet1, ppA, ppB, pingpong, reverb, wet;
+			t = Lag.kr(time, sweep.clip(0.01, 2));
+			t = t * (2 ** (mod.clip(-1, 1) * 0.5)); // bipolar, +-half octave
+			t = Select.kr(sync.clip(0, 1).round,
+				[t, (t / (60 / bpm / 8)).round(1) * (60 / bpm / 8)]);
+			t = t.clip(0.01, 2);
+			fb = Lag.kr(feedback, 0.1).clip(0, 0.99);
+			local = LocalIn.ar(3); // ch0: feedback loop; ch1-2: pingpong cross
+			wet1 = DelayC.ar(dry + (local[0] * fb), 2, t);
+			ppA = DelayC.ar(dry + local[2], 2, t);
+			ppB = DelayC.ar(dry + local[1], 2, t * 0.75);
+			LocalOut.ar([wet1, ppA * fb, ppB * fb]);
+			pingpong = (ppA + ppB) * 0.5;
+			reverb = FreeVerb.ar(dry, 0.6, fb, 0.5);
+			wet = Select.ar(select.clip(0, 2).round, [wet1, pingpong, reverb]);
+			wet = (dry + wet) * Lag.kr(amp, 0.05);
+			Out.ar(out, wet);
+			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
 		}).add;
 
 		// select: 0 ring, 1 chorus, 2 flanger
-		SynthDef(\rot_mod, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1, mod=0;
+		// mod target = dry-wet, unipolar: (1 - mod01)
+		SynthDef(\rot_mod, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1, mod=0, lvl=0;
 			var dry = In.ar(in, 1);
 			var m = Lag.kr(main, 0.05);
 			var ring = dry * SinOsc.ar(m.linexp(0, 1, 10, 2000));
 			var chorus = DelayL.ar(dry, 0.05, SinOsc.kr(m.linexp(0, 1, 0.1, 8), 0, 0.002, 0.005));
 			var flang = DelayL.ar(dry, 0.02, SinOsc.kr(m.linexp(0, 1, 0.05, 2), 0, 0.001, 0.0025));
 			var wet = SelectX.ar(Lag.kr(select, 0.05), [ring, chorus, flang]);
-			var dw = Lag.kr(drywet, 0.05) * (1 - mod);
-			Out.ar(out, (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05));
+			var dw = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			wet = (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05);
+			Out.ar(out, wet);
+			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
 		}).add;
 
-		// control-rate: unipolar 0..depth (tremolo / wetness wobble style)
-		SynthDef(\rot_lfo, { arg out=0, select=0, freq=2, depth=0.5;
+		// control-rate, bipolar -depth..depth (targets scale it themselves).
+		// sync=1: freq locks to the tempo grid; mult = period in 32nd notes.
+		SynthDef(\rot_lfo, { arg out=0, select=0, freq=2, depth=0.5, sync=0, mult=8, tbus=0;
+			var bpm = In.kr(tbus).max(1);
+			var syncedFreq = 8 * bpm / 60 / mult.clip(1, 128);
+			var f = Select.kr(sync.clip(0, 1).round, [freq, syncedFreq]);
 			var sig = SelectX.kr(Lag.kr(select, 0.05), [
-				SinOsc.kr(freq),
-				LFSaw.kr(freq),
-				LFPulse.kr(freq, 0, 0.5),
-				LFNoise0.kr(freq)
+				SinOsc.kr(f),
+				LFSaw.kr(f),
+				LFPulse.kr(f, 0, 0.5),
+				LFNoise0.kr(f)
 			]);
-			Out.kr(out, (sig * 0.5 + 0.5) * Lag.kr(depth, 0.05));
+			Out.kr(out, sig * Lag.kr(depth, 0.05));
+		}).add;
+
+		// select: 0 resampler (downsample+bitcrush), 1 compressor, 2 distortion.
+		// main = effect intensity, drywet = mix. mod -> dry-wet (unipolar).
+		SynthDef(\rot_shaper, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1, mod=0, lvl=0;
+			var dry = In.ar(in, 1);
+			var m = Lag.kr(main, 0.05);
+			var resamp, comp, dist, wet, dw;
+			resamp = Latch.ar(dry, Impulse.ar(m.linexp(0, 1, 400, 16000)));
+			resamp = (resamp * m.linexp(0, 1, 16, 4)).round / m.linexp(0, 1, 16, 4);
+			comp = Compander.ar(dry, dry, 0.5, 1, m.linlin(0, 1, 1, 0.05).clip(0.05, 1), 0.01, 0.1);
+			dist = (dry * m.linexp(0, 1, 1, 30)).tanh;
+			wet = SelectX.ar(Lag.kr(select, 0.05), [resamp, comp, dist]);
+			dw = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			wet = (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05);
+			Out.ar(out, wet);
+			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
+		}).add;
+
+		// line in (shield has no mic); rotation = gain. mod -> gain (unipolar).
+		SynthDef(\rot_input, { arg in=0, out=0, gain=0.8, mod=0, lvl=0;
+			var sig = SoundIn.ar([0, 1]).sum * 0.5;
+			var g = (Lag.kr(gain, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			sig = sig * g;
+			Out.ar(out, sig);
+			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
+		}).add;
+
+		// single-sample melodic player (phase-6 decision: no SF2/multi-zone).
+		// one WAV pitched via Phasor+BufRd; base = the sample's natural pitch.
+		// select: 0 instrument (gated ADSR), 1 drum (one-shot, full length).
+		// notes arrive via the trigger command (freq + gate edge).
+		SynthDef(\rot_sampler, { arg in=0, out=0, buf=0, freq=220, base=261.6256,
+			gate=1, amp=0.8, select=0, a=0.005, d=0.1, s=0.9, r=0.2, mod=0, lvl=0, t_trig=0;
+			var frames = BufFrames.kr(buf).max(1);
+			var rate = (Lag.kr(freq, 0.03) * (2 ** mod.clip(-1, 1))) / base.max(1);
+			var oneshot = select.round.clip(0, 1);
+			// PlayBuf + t_trig: norns-canonical one-shot, silent after sample end
+			var sig = PlayBuf.ar(1, buf, rate * BufRateScale.kr(buf), t_trig, 0, 0, 0);
+			var envGated = EnvGen.kr(Env.adsr(a, d, s, r), gate.clip(0, 1));
+			var envDrum = EnvGen.kr(Env.perc(0.005, (frames / BufSampleRate.kr(buf)).max(0.05), 1, -4), t_trig);
+			var env = Select.kr(oneshot, [envGated, envDrum]);
+			sig = sig * env * Lag.kr(amp, 0.05);
+			Out.ar(out, sig);
+			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
 		}).add;
 
 		SynthDef(\rot_out, { arg in=0, out=0, volume=0.8;
@@ -93,12 +196,22 @@ Engine_Rotatable : CroneEngine {
 
 		silentBus = Bus.audio(s, 1);
 		masterBus = Bus.audio(s, 1);
+		tempoBus = Bus.control(s, 1);
+		tempoBus.set(120);
 		// context.xg runs before crone's monitor synths, so amp polls see us.
 		// audio buses are zeroed each control block, so every source synth
 		// must execute before the master reads masterBus: nodeGroup first.
 		nodeGroup = Group.new(context.xg, \addToTail);
 		master = Synth(\rot_out, [\in, masterBus, \out, context.out_b.index],
 			context.xg, \addToTail);
+
+		// per-object level polls: fixed pool (matron discovers polls only at
+		// engine load, so runtime addPoll is invisible to lua)
+		lvlSlots = 16.collect { Bus.control(s, 1) };
+		lvlFree = (1..16).asList;
+		16.do { arg i;
+			this.addPoll("lvl_" ++ (i + 1), { lvlSlots[i].getSynchronous });
+		};
 
 		this.addCommand("add", "isi", { arg msg;
 			this.addNode(msg[1], msg[2].asSymbol, msg[3]);
@@ -160,12 +273,19 @@ Engine_Rotatable : CroneEngine {
 				};
 			};
 		});
-		// sequencer note: force-retrigger gate (negative gate = release+retrigger)
+		// sequencer note: sampler/loop one-shots fire PlayBuf via t_trig
+		// (single-pair set, auto-clearing trigger arg); oscillators retrigger
+		// via the classic gate -1 -> 1 edge.
 		this.addCommand("trigger", "if", { arg msg;
 			var node = nodes[msg[1]];
 			if (node.notNil and: { node[\synth].notNil }) {
-				node[\synth].set(\gate, -1);
-				node[\synth].set(\freq, msg[2], \gate, 1);
+				if (node[\type] == \sampler or: { node[\type] == \loop }) {
+					node[\synth].set(\freq, msg[2]);
+					node[\synth].set(\t_trig, 1);
+				} {
+					node[\synth].set(\gate, -1);
+					node[\synth].set(\freq, msg[2], \gate, 1);
+				};
 			};
 		});
 		this.addCommand("loadbuf", "is", { arg msg;
@@ -180,6 +300,10 @@ Engine_Rotatable : CroneEngine {
 		});
 		this.addCommand("volume", "f", { arg msg;
 			master.set(\volume, msg[1]);
+		});
+		// single source of truth for bpm (lua rot_tempo param pushes here)
+		this.addCommand("tempo", "f", { arg msg;
+			tempoBus.set(msg[1]);
 		});
 		// debug: recreate the master synth
 		this.addCommand("remaster", "", { arg msg;
@@ -206,37 +330,53 @@ Engine_Rotatable : CroneEngine {
 				("PROBE no node " ++ msg[1]).postln;
 			};
 		});
+		// debug: post rot_sampler SynthDesc control layout (name + default)
+		this.addCommand("definfo", "", { arg msg;
+			SynthDescLib.global[\rot_sampler].controls.do { arg c;
+				("DEF " ++ c.name ++ " = " ++ c.defaultValue).postln;
+			};
+		});
 	}
 
 	addNode { arg id, type, subtype;
-		var def, bus, synth;
+		var def, bus, synth, slot;
 		this.freeNode(id);
 		def = switch(type,
 			\oscillator, { \rot_osc },
 			\loop, { \rot_loop },
+			\sampler, { \rot_sampler },
+			\input, { \rot_input },
 			\filter, { \rot_filter },
 			\delay, { \rot_delay },
 			\modulator, { \rot_mod },
+			\waveshaper, { \rot_shaper },
 			\lfo, { \rot_lfo },
 			{ nil });
 		if (def.isNil) {
-			// sequencer (lua-driven) and output (master synth) need no node
+			// sequencer (lua-driven), tonality (lua-side) and output (master
+			// synth) need no node
 			nodes[id] = (type: type, synth: nil, bus: nil, out: nil, muted: 0);
 		} {
 			if (def == \rot_lfo) {
 				bus = Bus.control(context.server, 1);
-				synth = Synth(def, [\out, bus, \select, subtype], nodeGroup, \addToTail);
+				synth = Synth(def, [\out, bus, \select, subtype, \tbus, tempoBus.index],
+					nodeGroup, \addToTail);
 			} {
-				bus = Bus.audio(context.server, 1);
-				if (def == \rot_loop) {
-					synth = Synth(def, [\in, bus, \out, silentBus, \buf, silentBuf],
-						nodeGroup, \addToTail);
-				} {
-					synth = Synth(def, [\in, bus, \out, silentBus, \select, subtype],
-						nodeGroup, \addToTail);
+				var args;
+				bus = Bus.audio(context.server, 1); // before args: \in needs it
+				args = [\in, bus, \out, silentBus, \select, subtype];
+				slot = if(lvlFree.size > 0, { lvlFree.pop }, { nil });
+				if (def == \rot_loop or: { def == \rot_sampler }) {
+					args = args ++ [\buf, silentBuf];
 				};
+				if (def == \rot_loop or: { def == \rot_delay }) {
+					args = args ++ [\tbus, tempoBus.index];
+				};
+				if (slot.notNil) { args = args ++ [\lvl, lvlSlots[slot - 1]] };
+				synth = Synth(def, args, nodeGroup, \addToTail);
 			};
-			nodes[id] = (type: type, synth: synth, bus: bus, out: silentBus, muted: 0);
+			nodes[id] = (type: type, synth: synth, bus: bus, lvlSlot: slot,
+				out: silentBus, muted: 0);
 		};
 	}
 
@@ -245,6 +385,10 @@ Engine_Rotatable : CroneEngine {
 		if (node.notNil) {
 			if (node[\synth].notNil) { node[\synth].free };
 			if (node[\bus].notNil) { node[\bus].free };
+			if (node[\lvlSlot].notNil) {
+				lvlSlots[node[\lvlSlot] - 1].set(0);
+				lvlFree.add(node[\lvlSlot]);
+			};
 			nodes.removeAt(id);
 		};
 	}
@@ -253,8 +397,10 @@ Engine_Rotatable : CroneEngine {
 		nodes.keys.do { arg id; this.freeNode(id) };
 		master.free;
 		nodeGroup.free;
+		lvlSlots.do { arg b; b.free };
 		silentBus.free;
 		masterBus.free;
+		tempoBus.free;
 		silentBuf.free;
 	}
 }

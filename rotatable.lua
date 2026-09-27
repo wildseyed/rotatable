@@ -54,6 +54,9 @@ T = {
     dirty = true
   end,
   remove = function(id) World.remove(id); dirty = true end,
+  link = function(a, b)
+    local r = World.toggle_hardlink(a, b); dirty = true; return r
+  end,
   mute = function(a, b) local m = World.toggle_mute(a, b); dirty = true; return m end,
   key = function(n, z) UI.key(n, z); dirty = true end,
   enc = function(n, d) UI.enc(n, d); dirty = true end,
@@ -93,8 +96,11 @@ T = {
     Audio.sync_object(o); dirty = true
   end,
   load = function(id, path)
+    local o = World.get(id)
+    if o then o.sample = path end -- persist with patch slots
     engine.loadbuf(id, path)
   end,
+  lvl = function(id) return Audio.lvl_poll(id) end,
   step = function(id, s, on, pitch, vel)
     local o = World.get(id)
     if not o or not o.steps then return end
@@ -136,6 +142,7 @@ function init()
   params:add_number("rot_tempo", "tempo", 40, 240, 120)
   params:set_action("rot_tempo", function(v)
     seq_metro.time = 60 / v / 4 -- 16th notes
+    engine.tempo(v) -- engine tempo bus: LFO sync, delay quantize, loop bar-entry
   end)
 
   -- sequencer clock: pentatonic pattern, every other step on
