@@ -14,7 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REMOTE = "/home/we/dust/code/rotatable"
 # publish layout: script lives at repo root; only these sync to the device
 SYNC_FILES = ["rotatable.lua"]
-SYNC_DIRS = ["lib"]
+SYNC_DIRS = ["lib", "presets"]
 
 def creds():
     with open(os.path.join(ROOT, ".device/norns-ip-address")) as f:

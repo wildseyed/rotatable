@@ -47,6 +47,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | L0 PLACE | the object menu | E2 scroll; `K3` place at reticle; `K2` cancel |
 | L2 OBJECT | one block selected | `K3` cycles MOVE → ROTATE → LINK; `K1+K3` dive into config; `K1+K2` delete block |
 | L3 CONFIG | a block's panels | E1 page, E2/E3 edit; `K2` back |
+| SYSTEM | master menu | **hold `K1+K2+K3` for 1 s** to open; E2 scroll, `K3` select, `K2` close |
 
 **L2 modes**
 
@@ -91,6 +92,24 @@ pan outside the table edge: 8 numbered slots in a ring.
   sequences, samples, links, tempo)
 - **short press K3** occupied slot → recall
 - **long-press K3** occupied slot → delete
+
+slots persist as files (`~/dust/data/rotatable/slots/`) — they survive
+restarts and reinstalls.
+
+**factory presets** — the SYSTEM menu (`K1+K2+K3` held 1 s) has
+`RESTORE PRESETS`, which overwrites all 8 slots with the bundled factory
+set (with a confirm). the eight:
+
+| slot | name | what's in it |
+|---|---|---|
+| 1 | KIT-808 | kick/snare/hat drum samplers, each with its own 16-step sequencer (hardlinked), 124 BPM |
+| 2 | ACID | saw osc → resonant LP, minor tonality snapping the sequencer, tempo-synced LFO on cutoff, 128 BPM |
+| 3 | DUB | looped kick as pulsing bass → tempo-quantized feedback delay, slow LFO on delay time, 90 BPM |
+| 4 | PING | rim sampler → pingpong delay, syncopated sequencer, 100 BPM |
+| 5 | SOLO | random sequencer → square osc → chorus, pentatonic tonality ("automatic solos"), 112 BPM |
+| 6 | CRUSH | snare-stutter loop → bitcrusher → HP filter, random LFO on dry-wet, 96 BPM |
+| 7 | WASH | line in → compressor → reverb — run external gear through the table |
+| 8 | CHOIR | two sines a fifth apart → chorus → reverb, slow synced vibrato, 60 BPM |
 
 ## dev
 

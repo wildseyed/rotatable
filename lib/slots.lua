@@ -25,6 +25,33 @@ function Slots.path(i)
   return DIR .. i .. ".lua"
 end
 
+-- factory presets bundled in the repo (presets/ deploys to the code dir)
+Slots.FACTORY_DIR = _path.code .. "rotatable/presets/slots/"
+-- slot files store absolute sample paths; rewrite them to the bundled copies
+local FACTORY_SAMPLE_SRC = "/home/we/dust/audio/rotatable%-drums/"
+local FACTORY_SAMPLE_DST = _path.code .. "rotatable/presets/audio/"
+
+function Slots.factory_available()
+  return util.file_exists(Slots.FACTORY_DIR .. "1.lua")
+end
+
+-- overwrite all 8 slots with the bundled factory presets; returns count
+function Slots.restore_factory()
+  local n = 0
+  for i = 1, Slots.N do
+    local src = Slots.FACTORY_DIR .. i .. ".lua"
+    local f = io.open(src, "r")
+    if f then
+      local body = f:read("*a")
+      f:close()
+      body = body:gsub(FACTORY_SAMPLE_SRC, FACTORY_SAMPLE_DST)
+      local out = io.open(Slots.path(i), "w")
+      if out then out:write(body); out:close(); n = n + 1 end
+    end
+  end
+  return n
+end
+
 function Slots.occupied(i)
   return util.file_exists(Slots.path(i))
 end

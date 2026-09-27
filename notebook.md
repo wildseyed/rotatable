@@ -117,3 +117,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   racing `Audio.on_add` so routes to newly-added objects never reached the
   engine (mirror lied). Both fixed (AGENTS.md gotchas 9-11). Also: T.link
   (hardlink) + T.load now sets o.sample for slot persistence.
+- 2026-09-27: **SYSTEM master menu + factory presets (phase 8 start)** — plan:
+  `plan/phase-8/system-menu.md`. Hold K1+K2+K3 for 1 s → SYSTEM overlay
+  (E2 scroll, K3 select, K2 close); first entries RESTORE PRESETS
+  (overwrite-with-confirm) + ABOUT. `Slots.restore_factory()` rewrites
+  absolute sample paths to bundled `presets/audio/`. README documents the
+  gesture + the 8 factory patches. BLOCKED: device went offline before the
+  preset files could be pulled into `presets/` — needs the norns powered on
+  to finish (pull, deploy, gesture test).

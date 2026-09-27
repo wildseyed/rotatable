@@ -23,10 +23,19 @@ local field_idx = 1         -- L3 field within page
 local step_idx = 1          -- L3 steps page: selected step 1..16
 local browser = { files = nil, idx = 1 } -- L3 browser page (lazy scan)
 local k1_down = false
+local k2_down = false
+local k3_down = false
 local clear_armed = false   -- K1+K2 at L1 arms table-clear; K3 confirms, K2 cancels
 local k3_slot_press = nil   -- util.time() of K3 press when armed on a slot
 local slot_cand = nil       -- slot index near reticle at L1 (nil = none)
 local SLOT_LONG = 0.8       -- s; long-press threshold for slot store/delete
+-- SYSTEM master menu: hold K1+K2+K3 for MASTER_LONG seconds (owner, 2026-09-27)
+local master_t = nil        -- util.time() when the third key came down
+local MASTER_LONG = 1.0
+local sys_idx = 1
+local sys_confirm = nil     -- "restore" while the restore confirm is showing
+local sys_msg = nil         -- transient bottom-line message
+local SYS_ITEMS = { "RESTORE PRESETS", "ABOUT" }
 
 function UI.init(ctx)
   World, cam, w2s, mark_dirty = ctx.world, ctx.cam, ctx.w2s, ctx.mark_dirty
@@ -185,6 +194,16 @@ end
 
 -- called from the redraw metro; returns true while a move is animating
 function UI.tick()
+  -- SYSTEM menu: all three keys held past the threshold
+  if master_t and util.time() - master_t >= MASTER_LONG then
+    master_t = nil
+    level = "SYS"
+    sys_idx = 1
+    sys_confirm = nil
+    sys_msg = nil
+    selected = nil
+    return true
+  end
   local moving = false
   -- camera ease toward hop target
   if cam_target then
@@ -225,6 +244,14 @@ local function cycle_mode(dir)
 end
 
 function UI.enc(n, d)
+  if level == "SYS" then
+    if n == 2 then
+      sys_idx = util.clamp(sys_idx + d, 1, #SYS_ITEMS)
+      sys_msg = nil
+    end
+    dirty()
+    return
+  end
   if level == "L1" then
     if n == 1 then
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
@@ -305,11 +332,50 @@ function UI.enc(n, d)
   dirty()
 end
 
+-- third key down while the other two are held: start the SYSTEM-menu timer
+-- and neutralize whatever the two-key combos already did
+local function master_check()
+  if k1_down and k2_down and k3_down and not master_t then
+    master_t = util.time()
+    clear_armed = false
+    k3_slot_press = nil -- a slot press superseded by the gesture must not
+    slot_cand = nil     -- fire store/recall on release
+    if level == "L0" then level = "L1" end
+  end
+end
+
 function UI.key(n, z)
   if n == 1 then
     -- K1 = held shift only; its short tap belongs to the norns system menu
     k1_down = (z == 1)
-  elseif n == 2 and z == 1 then
+    if z == 0 then master_t = nil end
+  elseif n == 2 then
+    k2_down = (z == 1)
+    if z == 1 then master_check() else master_t = nil end
+  elseif n == 3 then
+    k3_down = (z == 1)
+    if z == 1 then master_check() else master_t = nil end
+  end
+  -- SYSTEM level: E2 scroll / K3 select / K2 close; swallow everything else
+  if level == "SYS" then
+    if n == 2 and z == 1 then
+      if sys_confirm then sys_confirm = nil else level = "L1" end
+    elseif n == 3 and z == 1 then
+      if sys_confirm == "restore" then
+        sys_msg = "restored " .. Slots.restore_factory() .. " presets"
+        sys_confirm = nil
+      elseif SYS_ITEMS[sys_idx] == "RESTORE PRESETS" then
+        sys_confirm = "restore"
+      elseif SYS_ITEMS[sys_idx] == "ABOUT" then
+        sys_msg = "rotatable v2-dev | " .. (Slots.factory_available() and
+          "8 factory presets" or "no presets bundled")
+      end
+    end
+    dirty()
+    return
+  end
+  if master_t then dirty() return end -- all three held: suppress combos
+  if n == 2 and z == 1 then
     -- K2 = BACK (K1+K2 = delete at current scope: object in L2, table at L1)
     if clear_armed then
       clear_armed = false -- cancel
@@ -560,13 +626,58 @@ local function draw_l3()
   end
 end
 
+-- SYSTEM master menu (K1+K2+K3 long-hold)
+local function draw_sys()
+  screen.level(0)
+  screen.rect(14, 2, 100, 60)
+  screen.fill()
+  screen.level(8)
+  screen.rect(14, 2, 100, 60)
+  screen.stroke()
+  screen.level(3)
+  screen.move(18, 12)
+  screen.text("SYSTEM")
+  if sys_confirm == "restore" then
+    screen.level(10)
+    screen.move(18, 28)
+    screen.text("restore presets?")
+    screen.level(3)
+    screen.move(18, 38)
+    screen.text("replaces all 8 slots")
+    screen.level(10)
+    screen.move(18, 52)
+    screen.text("K3 yes   K2 no")
+  else
+    local y = 26
+    for i, item in ipairs(SYS_ITEMS) do
+      if i == sys_idx then
+        screen.level(15)
+        screen.rect(16, y - 5, 96, 7)
+        screen.fill()
+        screen.level(0)
+      else
+        screen.level(10)
+      end
+      screen.move(18, y)
+      screen.text(item)
+      y = y + 10
+    end
+    if sys_msg then
+      screen.level(6)
+      screen.move(18, 56)
+      screen.text(sys_msg)
+    end
+  end
+end
+
 function UI.draw_overlay()
   if level == "L0" then draw_menu()
+  elseif level == "SYS" then draw_sys()
   elseif level == "L3" and selected then draw_l3() end
 end
 
 function UI.overlay_open()
-  return level == "L0" or (level == "L3" and selected ~= nil)
+  return level == "L0" or level == "SYS" or (level == "L3" and selected ~= nil)
 end
 
 function UI.link_candidate()
@@ -604,6 +715,8 @@ function UI.status()
     local e1 = mode == "MOVE" and " E1 hop" or ""
     return mode .. " " .. World.TYPES[selected.type].label .. "#" .. selected.id ..
       extra .. " |" .. e1 .. " K3 " .. act .. " ^K3 " .. sact .. " K2 back"
+  elseif level == "SYS" then
+    return "SYSTEM  E2 scroll | K3 select K2 back"
   elseif level == "L3" and selected then
     return "CONFIG  E1 page E2/E3 edit | K2 back"
   end
