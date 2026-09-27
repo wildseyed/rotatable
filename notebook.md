@@ -140,3 +140,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   screenshots: all four pages render/edit correctly, engine pushes flow
   through PASS_PARAMS, sampler loads 606 wavs from dust/audio, osc→output
   amp check OK, ACID factory slot recalls clean.
+- 2026-09-27: **Subtype cycling from L3 config pages** (owner-reported gap:
+  no way off sine while editing the envelope). `K1+E2` now cycles subtypes
+  on every L3 page, same as in ROTATE — header already shows the subtype
+  name. Device-verified: full cycle saw→square→noise→sine→saw both
+  directions from the env page. OSC gap audit vs spec §3.1: rotation still
+  doesn't retrigger the amplitude envelope (seq-only), no semitone/octave
+  glyph display, suboscillators blocked on SynthDef work, user-drawn
+  waveform parked.

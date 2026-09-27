@@ -345,6 +345,12 @@ function UI.enc(n, d)
       end
     end
   elseif level == "L3" and selected then
+    if k1_down and n == 2 then
+      -- subtype cycling from any config page (same as K1+E2 in ROTATE)
+      World.cycle_subtype(selected, d > 0 and 1 or -1)
+      dirty()
+      return
+    end
     local pages = pages_for(selected)
     local page = pages[page_idx]
     if n == 1 then

@@ -61,8 +61,9 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 - `K2` walks back through modes (LINK → ROTATE → MOVE → NAV)
 
 > **subtype cycling**: most objects have several flavors (sine/saw/square/
-> noise, lp/bp/hp, ring/chorus/flanger…). in ROTATE mode, hold `K1` and
-> turn `E2` to cycle them — the subtype name shows in the status line.
+> noise, lp/bp/hp, ring/chorus/flanger…). hold `K1` and turn `E2` to cycle
+> them — works in ROTATE mode and on every config (L3) page; the subtype
+> name shows in the status line / panel header.
 
 ## object reference
 
