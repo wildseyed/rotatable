@@ -122,6 +122,6 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   (E2 scroll, K3 select, K2 close); first entries RESTORE PRESETS
   (overwrite-with-confirm) + ABOUT. `Slots.restore_factory()` rewrites
   absolute sample paths to bundled `presets/audio/`. README documents the
-  gesture + the 8 factory patches. BLOCKED: device went offline before the
-  preset files could be pulled into `presets/` — needs the norns powered on
-  to finish (pull, deploy, gesture test).
+  gesture + the 8 factory patches. Device-verified 2026-09-27 evening:
+  gesture, cancel, restore (deleted 7.lua came back), recall from bundled
+  sample path, gesture regressions all pass. Committed 680f2fa.
