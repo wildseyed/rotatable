@@ -125,3 +125,6 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   gesture + the 8 factory patches. Device-verified 2026-09-27 evening:
   gesture, cancel, restore (deleted 7.lua came back), recall from bundled
   sample path, gesture regressions all pass. Committed 680f2fa.
+  Follow-up bug: gesture timer armed only on K2/K3 events — physical K1-last
+  presses never fired it (scripted tests always sent K1 first). Fixed +
+  owner-verified on hardware (5cd47fe).
