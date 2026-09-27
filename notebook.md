@@ -3,10 +3,11 @@
 *Running project notes. Plan: `plan.md` + `plan/phase-N/`. Session archives:
 `prompt-archive/`. Project guide: `AGENTS.md`.*
 
-**STATUS (2026-09-26): v2 phase 7 (engine v2) done & device-verified.** All 13
-object types have synths; tempo bus, LFO sync, delay/loop subtypes, sampler,
-tonality, per-object level polls all work on hardware. CPU 23% with a full
-patch. Next: phase 8 (UI & panels v2). Pending: owner hands-on feel-check.
+**STATUS (2026-09-27): v2 phase 7 done, phase 8 in progress.** Engine v2
+verified on hardware; 8 factory presets bundled + SYSTEM menu shipped. Phase 8
+plan (`plan/phase-8/ui-v2.md`) is batch-ordered for fresh-session execution:
+batch 1 = sync/sample UI gaps, batch 2 = sequencer depth, batch 3 = MIDI +
+polish; subosc/tonality-editor/waveform-draw parked pending owner design.
 
 ---
 

@@ -1,37 +1,46 @@
 # Phase 8 — UI & panels v2 (Lua)
 
-Depends: phase-7 (or parallel where independent). Phase-6 decisions in
-`docs/behavior-spec.md` §9.
+Depends: phase-7 (**done**). Phase-6 decisions in `docs/behavior-spec.md` §9.
+Sub-part `system-menu.md` (SYSTEM menu + factory presets) is **done**.
 
-- [ ] Place menu with all 13 types (windowed scroll already works; verify feel)
-- [ ] Suboscillators panel (oscillator: 4 subs × waveform/amp/detune/offset +
-  follow-tonality toggle)
+## Execution order (agreed with owner 2026-09-27)
+
+Each batch is independently shippable: implement → deploy → device-verify via
+the REST API/REPL harness (AGENTS.md "Testing / deployment") → tick boxes →
+notebook entry → commit.
+
+**Batch 1 — sync & sample gaps** (presets ACID/DUB/CHOIR depend on these):
+- [ ] Sync settings L3 page, one shared pattern: LFO `sync`+`mult` (32nd-note
+  period), delay `sync` (32nd quantize) + `sweep`, loop `sync`
+  (immediate/quarter/bar)
+- [ ] Sampler browser page (reuse loop browser; swap `pages_for` gate at
+  `lib/ui.lua:103` to include sampler) + sampler `base` pitch control
+  (settings page or ROTATE E3)
+- [ ] Steps editor pitch range ±24 (UI currently clamps ±12)
+- [ ] README: subtype cycling (K1+E2 in ROTATE) callout
+
+**Batch 2 — sequencer depth:**
+- [ ] Sequencer preset slots: rotation switches 6 stored patterns per object
+  (today rotation writes an inert `preset` param)
 - [ ] Sequencer pages: velocity page, step-duration page (multiples of 32nd)
-- [ ] Sequencer preset slots (rotation switches 6 stored patterns per object;
-  today rotation writes an inert `preset` param — audit 2026-09-27)
 - [ ] Sequencer random subtype UI (poly grid deferred per phase-6)
-- [ ] Settings pages: loop (sync immediate/quarter/bar + gain), delay (sweep),
-  modulator (extras)
-- [ ] Sampler browser (reuse loop browser; instrument/drum subtype toggle) —
-  currently no on-device way to load a sample into a sampler at all
-- [ ] MIDI-in: device select + channel in params; note routing to closest object
-- [ ] Tonality UI: preset ring around the star? edit notes on-object (design needed)
-- [ ] ~~Song settings~~ — dropped per phase-6 (tempo stays in params)
-- [ ] Waveform draw for oscillator (user waveforms) — feasible? gesture = draw
-  with encoders on a page
-- [ ] Visual polish: LINK ring clutter,
-  connection animation (signal flow dashes), tempo pulse at output point
 
-## UI-reachability gaps (audit 2026-09-27, owner request)
+**Batch 3 — MIDI + polish:**
+- [ ] MIDI-in: device select + channel in params; note routing to closest
+  object; rotation = transpose ±24 st (spec §9.3)
+- [ ] Place menu with all 13 types: verify feel (works; check windowed scroll)
+- [ ] Visual polish: LINK ring clutter, connection animation (signal-flow
+  dashes), tempo pulse at output point
+- [ ] Per-object VU meters from `lvl_N` polls (`Audio.lvl_poll(id)`)
 
-Engine + `params` support these; the keys can't reach them. Presets ACID /
-DUB / CHOIR already rely on them, so they're un-rebuildable on-device.
+**Needs an owner design session first — do NOT implement in batch flow:**
+- Suboscillators panel — blocked on ENGINE work: `rot_osc` has no sub-oscs;
+  adding 4 subs × (waveform/amp/detune/offset) + follow-tonality toggle is a
+  SynthDef change first, panel second. Decide scope with owner.
+- Tonality UI beyond subtype/root (note editing on-object) — "design needed"
+  per spec §9.6; current subtype-cycling + root rotation is functional.
+- Oscillator waveform-draw page — feasibility unknown; park unless owner
+  prioritizes.
 
-- [ ] **Sync settings page** (one shared L3 pattern): LFO `sync` + `mult`
-  (period in 32nd notes); delay `sync` (32nd quantize) — sweep already
-  covered by the delay settings page above; loop `sync` likewise
-- [ ] **Sampler `base`** pitch (sample's natural pitch) — settings page or
-  ROTATE E3 slot for sampler
-- [ ] **Steps editor pitch range** UI ±12 vs engine ±24 — align to ±24
-- [ ] README: call out that subtypes cycle with K1+E2 in ROTATE (RANDOM
-  etc. were undiscoverable — owner feedback)
+Reference: per-type panel list in `docs/interaction-design.md` §5; original
+panels in `docs/behavior-spec.md` §3 table.

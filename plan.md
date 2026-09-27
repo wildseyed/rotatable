@@ -21,8 +21,8 @@ add new files as work evolves, and keep this index stable.*
 
 ### v2 (planned 2026-09-25)
 - [x] **Phase 6 — v2 design decisions** → [decisions](plan/phase-6/decisions.md) — all resolved 2026-09-26 → `docs/behavior-spec.md` §9; feel-check findings still welcome
-- [ ] **Phase 7 — Engine v2** → [engine-v2](plan/phase-7/engine-v2.md) — new synths, tempo clock, modulation scaling
-- [ ] **Phase 8 — UI & panels v2** → [ui-v2](plan/phase-8/ui-v2.md) — 14-type place menu, remaining panels, visual polish
+- [x] **Phase 7 — Engine v2** → [engine-v2](plan/phase-7/engine-v2.md) — done 2026-09-26, device-verified; CPU 23% with 13 objects
+- [ ] **Phase 8 — UI & panels v2** → [ui-v2](plan/phase-8/ui-v2.md) — 13-type place menu, remaining panels, visual polish. Sub-part: [system-menu](plan/phase-8/system-menu.md) — **done 2026-09-27** (SYSTEM menu + factory presets)
 - [ ] **Phase 9 — Integration & release v2.0.0** → [release-v2](plan/phase-9/release-v2.md)
 
 ## Parking lot (undecided / later)
