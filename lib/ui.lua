@@ -348,7 +348,8 @@ function UI.key(n, z)
   if n == 1 then
     -- K1 = held shift only; its short tap belongs to the norns system menu
     k1_down = (z == 1)
-    if z == 0 then master_t = nil end
+    -- K1 may be the LAST key of the three down (owner physical press 2026-09-27)
+    if z == 1 then master_check() else master_t = nil end
   elseif n == 2 then
     k2_down = (z == 1)
     if z == 1 then master_check() else master_t = nil end
