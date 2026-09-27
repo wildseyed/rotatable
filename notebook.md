@@ -148,3 +148,16 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   doesn't retrigger the amplitude envelope (seq-only), no semitone/octave
   glyph display, suboscillators blocked on SynthDef work, user-drawn
   waveform parked.
+- 2026-09-27: **Subtype pictograms on glyphs** (owner request: reactable-style
+  mode display on the blocks). `lib/render.lua`: `sub_mark()` draws a small
+  per-subtype vector mark on the player-facing rim (0.68r along the rotation
+  angle, orbits with the block); rotation tick shortened to a 0.35r center
+  stub so the two don't collide. Marks for osc/lfo (sine/saw/square/noise),
+  loop (ring/play triangle), sampler (note/X), filter (lp/bp/hp slopes),
+  delay (arc/two dots/concentric arcs), modulator (ring+dot/twin arcs/X),
+  waveshaper (staircase/</>/jagged), sequencer (dot row/grid/scatter);
+  input/tonality/output unmarked. Shown when glyph r >= 3.5px (zoom ~44+);
+  selected block's label now includes the subtype name. Device-verified with
+  a 6-type matrix at multiple zooms. Test gotcha re-confirmed: T.clear()
+  doesn't reset next_id — always read ids from /state (two silent no-op
+  /set rounds before catching it).
