@@ -93,14 +93,62 @@ local function rebuild_link_candidates()
   link_idx = 1
 end
 
+-- L3 "set" page (phase 8 batch 1): one shared pattern for tempo-sync and
+-- pitch settings. Fields per type: lfo sync+mult, delay sync+sweep,
+-- loop sync, sampler base pitch.
+local SET_FIELDS = {
+  lfo = {
+    { k = "sync", min = 0, max = 1, step = 1 },
+    { k = "mult", min = 1, max = 128, step = 1 },
+  },
+  delay = {
+    { k = "sync", min = 0, max = 1, step = 1 },
+    { k = "sweep", min = 0.01, max = 2, step = 0.02 },
+  },
+  loop = {
+    { k = "sync", min = 0, max = 2, step = 1 }, -- 0 immediate, 1 quarter, 2 bar
+  },
+  sampler = {
+    { k = "base", min = -48, max = 48, step = 1 }, -- semitones from C4
+  },
+}
+
+local C4 = 261.6256 -- sampler base reference pitch (params.base is in Hz)
+local NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }
+
+local function base_semis(o)
+  return math.floor(12 * math.log((o.params.base or C4) / C4) / math.log(2) + 0.5)
+end
+
+local function set_field_str(o, f)
+  local v = o.params[f.k]
+  if f.k == "sync" then
+    if o.type == "loop" then
+      return ({ "immed", "quarter", "bar" })[util.clamp(math.floor(v + 0.5), 0, 2) + 1]
+    end
+    return v >= 0.5 and "on" or "off"
+  elseif f.k == "mult" then
+    return string.format("%d 32nds", math.floor(v + 0.5))
+  elseif f.k == "sweep" then
+    return string.format("%.2f s", v)
+  elseif f.k == "base" then
+    local st = base_semis(o)
+    return string.format("%s%d (%d Hz)",
+      NOTE_NAMES[(st % 12) + 1], 4 + math.floor(st / 12), math.floor(v + 0.5))
+  end
+  return tostring(v)
+end
+
 -- L3 pages per object: envelope always; 2d for two-param effects;
--- steps editor for sequencer; sample browser for loop
+-- steps editor for sequencer; sample browser for loop+sampler;
+-- settings page for syncable types + sampler
 local function pages_for(o)
   local p = { "env" }
   local c = World.TYPES[o.type].category
   if c == "effect" then table.insert(p, 1, "2d") end
   if o.type == "sequencer" then table.insert(p, 1, "steps") end
-  if o.type == "loop" then table.insert(p, 1, "browser") end
+  if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
+  if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
   return p
 end
 
@@ -314,7 +362,21 @@ function UI.enc(n, d)
         if k1_down then
           st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
         else
-          st.pitch = util.clamp(st.pitch + d, -12, 12)
+          st.pitch = util.clamp(st.pitch + d, -24, 24)
+        end
+      end
+    elseif page == "set" then
+      local fields = SET_FIELDS[selected.type]
+      if n == 2 then
+        field_idx = util.clamp(field_idx + d, 1, #fields)
+      elseif n == 3 then
+        local f = fields[field_idx]
+        if f.k == "base" then
+          local st = util.clamp(base_semis(selected) + d, f.min, f.max)
+          selected.params.base = C4 * (2 ^ (st / 12))
+        else
+          selected.params[f.k] =
+            util.clamp(selected.params[f.k] + d * f.step, f.min, f.max)
         end
       end
     elseif page == "browser" then
@@ -551,7 +613,7 @@ local function draw_l3()
       screen.text(f)
     end
   elseif page == "steps" then
-    -- 16 steps: bar height = pitch (-12..+12 around midline), brightness = vel
+    -- 16 steps: bar height = pitch (-24..+24 around midline), brightness = vel
     local x0, mid = 14, 36
     screen.level(3)
     screen.move(x0, mid) screen.line(118, mid)
@@ -559,7 +621,7 @@ local function draw_l3()
     for i = 1, 16 do
       local st = selected.steps[i]
       local x = x0 + (i - 1) * 7
-      local h = util.clamp(st.pitch, -12, 12) / 12 * 16
+      local h = util.clamp(st.pitch, -24, 24) / 24 * 16
       local lvl = st.on and (2 + math.floor(st.vel * 12)) or 2
       if i == step_idx then lvl = 15 end
       screen.level(lvl)
@@ -581,6 +643,27 @@ local function draw_l3()
     screen.move(12, 60)
     screen.text(string.format("st%d %s %+d vel %.2f", step_idx,
       st.on and "ON" or "off", st.pitch, st.vel))
+  elseif page == "set" then
+    local fields = SET_FIELDS[selected.type]
+    local y = 24
+    for i, f in ipairs(fields) do
+      if i == field_idx then
+        screen.level(15)
+        screen.rect(10, y - 6, 106, 9)
+        screen.fill()
+        screen.level(0)
+      else
+        screen.level(10)
+      end
+      screen.move(14, y)
+      screen.text(f.k)
+      screen.move(50, y)
+      screen.text(set_field_str(selected, f))
+      y = y + 11
+    end
+    screen.level(3)
+    screen.move(12, 60)
+    screen.text("E2 field  E3 edit")
   elseif page == "browser" then
     if browser.files == nil then browser.files = scan_audio_files() end
     local n = #browser.files

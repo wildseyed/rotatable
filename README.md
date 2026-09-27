@@ -60,6 +60,10 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
   camera on each
 - `K2` walks back through modes (LINK → ROTATE → MOVE → NAV)
 
+> **subtype cycling**: most objects have several flavors (sine/saw/square/
+> noise, lp/bp/hp, ring/chorus/flanger…). in ROTATE mode, hold `K1` and
+> turn `E2` to cycle them — the subtype name shows in the status line.
+
 ## object reference
 
 | object | role | rotation (E2) | E3 | subtypes (K1+E2) |
@@ -77,9 +81,14 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 
 - **2D** (effects): E2/E3 = X/Y on the control surface
 - **env** (all): ADSR — E2 picks a stage, E3 adjusts
-- **steps** (sequencer): E2 step, E3 pitch (−12..+12), `K1+E3` velocity,
+- **set** (lfo, delay, loop, sampler): tempo-sync & pitch settings —
+  E2 picks a field, E3 adjusts. lfo: `sync` on/off + `mult` (period in
+  32nd notes); delay: `sync` (32nd-note quantize) + `sweep` (time glide);
+  loop: `sync` immediate/quarter/bar (grid entry on load); sampler: `base`
+  (the sample's natural pitch, in semitones from C4)
+- **steps** (sequencer): E2 step, E3 pitch (−24..+24), `K1+E3` velocity,
   `K3` toggles the step
-- **browser** (loop): E2 scrolls `dust/audio`, `K3` loads;
+- **browser** (loop, sampler): E2 scrolls `dust/audio`, `K3` loads;
   `>` marks the loaded file
 
 tempo lives in PARAMETERS (40–240 BPM).

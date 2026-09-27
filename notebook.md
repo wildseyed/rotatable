@@ -129,3 +129,14 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   Follow-up bug: gesture timer armed only on K2/K3 events — physical K1-last
   presses never fired it (scripted tests always sent K1 first). Fixed +
   owner-verified on hardware (5cd47fe).
+- 2026-09-27: **Phase 8 batch 1 done — sync & sample gaps, device-verified.**
+  New shared L3 "set" page (`lib/ui.lua`): per-type fields — LFO sync on/off
+  + mult (32nd-note period), delay sync (32nd quantize) + sweep (time glide),
+  loop sync immediate/quarter/bar, sampler base pitch (semitones from C4,
+  shown as note name + Hz). Sampler gets the sample browser (pages_for gate
+  now loop+sampler; load path was already generic). Steps editor pitch now
+  ±24 (was ±12; T.step already allowed it). README: subtype-cycling callout,
+  set-page docs, browser/steps fixes. Verified via REST harness +
+  screenshots: all four pages render/edit correctly, engine pushes flow
+  through PASS_PARAMS, sampler loads 606 wavs from dust/audio, osc→output
+  amp check OK, ACID factory slot recalls clean.

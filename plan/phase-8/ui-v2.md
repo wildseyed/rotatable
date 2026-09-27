@@ -10,14 +10,14 @@ the REST API/REPL harness (AGENTS.md "Testing / deployment") → tick boxes →
 notebook entry → commit.
 
 **Batch 1 — sync & sample gaps** (presets ACID/DUB/CHOIR depend on these):
-- [ ] Sync settings L3 page, one shared pattern: LFO `sync`+`mult` (32nd-note
+- [x] Sync settings L3 page, one shared pattern: LFO `sync`+`mult` (32nd-note
   period), delay `sync` (32nd quantize) + `sweep`, loop `sync`
   (immediate/quarter/bar)
-- [ ] Sampler browser page (reuse loop browser; swap `pages_for` gate at
+- [x] Sampler browser page (reuse loop browser; swap `pages_for` gate at
   `lib/ui.lua:103` to include sampler) + sampler `base` pitch control
   (settings page or ROTATE E3)
-- [ ] Steps editor pitch range ±24 (UI currently clamps ±12)
-- [ ] README: subtype cycling (K1+E2 in ROTATE) callout
+- [x] Steps editor pitch range ±24 (UI currently clamps ±12)
+- [x] README: subtype cycling (K1+E2 in ROTATE) callout
 
 **Batch 2 — sequencer depth:**
 - [ ] Sequencer preset slots: rotation switches 6 stored patterns per object
