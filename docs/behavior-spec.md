@@ -257,10 +257,11 @@ double-tap-hold + drag = rotate, two-finger rotate.
     time-stretch = phase vocoder, poor cost/benefit in v2).
 12. **Label collisions**: resolved 2026-09-26 (v1.x, renderer label queue).
 13. **Effect envelopes** (filter-freq/feedback/dry-wet ADSR panels from the
-    original): deferred — needs SynthDef + sequencer-trigger plumbing; scope
-    with the subosc design session. Until then the env page exists only on
-    oscillator/loop/sampler (the types whose ADSR the engine actually runs);
-    page-less types (input/midi/tonality/output) don't enter L3. (2026-09-27)
+    original): **implemented 2026-09-28**. Effects get a percussive default
+    env (a=0.01 d=0.4 s=0 — idle-neutral so untouched effects sound as
+    before); sequencer/MIDI notes retrigger (gate edge): filter cutoff
+    ×2^(env·3), delay feedback swells toward 0.99, modulator/waveshaper
+    dry-wet swells toward 1. Slots migrate inert s=0.7 effect envs to s=0.
 14. **Osc rotation does NOT retrigger the amplitude envelope** (deliberate
     deviation from §3.1): encoder rotation is a continuous sweep, retrigger
     would stutter; envelopes fire on placement + sequencer/MIDI notes.

@@ -11,6 +11,15 @@ local HAS_SYNTH = { oscillator = true, loop = true, sampler = true,
   input = true, filter = true, delay = true, modulator = true,
   waveshaper = true, lfo = true }
 
+-- sequencer/MIDI note targets: osc+sampler get the pitched note, effects
+-- get a bare envelope retrigger (filter cutoff, delay feedback, dry-wet)
+local SEQ_TARGETS = { oscillator = true, sampler = true, filter = true,
+  delay = true, modulator = true, waveshaper = true }
+
+-- types whose ADSR the engine runs (env page + sync push)
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
+  filter = true, delay = true, modulator = true, waveshaper = true }
+
 -- id -> { type=, out=dst_id|"output"|nil, kind=, muted=, cparam=, freq=,
 --         lvl_slot= }
 local nodes = {}
@@ -82,7 +91,7 @@ function Audio.sync_object(o)
       end
     end
   end
-  if o.type == "oscillator" or o.type == "loop" or o.type == "sampler" then
+  if ENV_TYPES[o.type] then
     engine.set(o.id, "a", o.env.a)
     engine.set(o.id, "d", o.env.d)
     engine.set(o.id, "s", o.env.s)
@@ -263,18 +272,24 @@ function Audio.seq_tick(tick)
           o._left = st.dur or 2
           if st.on and n.kind == "control" and n.out and not n.muted then
             local t = nodes[n.out]
-            if t and (t.type == "oscillator" or t.type == "sampler") and t.freq then
-              local pitch = st.pitch
-              if o.subtype == 3 then -- random subtype
-                pitch = math.random(-12, 24)
-                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
-                o._hist = o._hist or {}
-                o._hist[o._pos] = pitch
+            if t and SEQ_TARGETS[t.type] then
+              if t.freq then
+                -- pitched target (osc/sampler): note + velocity
+                local pitch = st.pitch
+                if o.subtype == 3 then -- random subtype
+                  pitch = math.random(-12, 24)
+                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                  o._hist = o._hist or {}
+                  o._hist[o._pos] = pitch
+                else
+                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                end
+                engine.set(n.out, "amp", st.vel)
+                engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
               else
-                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                -- effect target: bare envelope retrigger
+                engine.trigger(n.out, 0)
               end
-              engine.set(n.out, "amp", st.vel)
-              engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
             end
           end
         end
@@ -292,13 +307,17 @@ function Audio.midi_note(note, vel)
     if n.type == "midi" and n.kind == "control" and n.out and not n.muted then
       local o = World.get(id)
       local t = nodes[n.out]
-      if o and t and (t.type == "oscillator" or t.type == "sampler") then
-        if vel > 0 then
-          local st = note + (o.params.transpose or 0)
-          engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
-          engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
-        else
-          engine.set(n.out, "gate", 0)
+      if o and t and SEQ_TARGETS[t.type] then
+        if t.freq then
+          if vel > 0 then
+            local st = note + (o.params.transpose or 0)
+            engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
+            engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
+          else
+            engine.set(n.out, "gate", 0)
+          end
+        elseif vel > 0 then
+          engine.trigger(n.out, 0) -- effect envelope; note-off ignored
         end
       end
     end

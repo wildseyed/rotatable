@@ -244,3 +244,17 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   signals are phase-locked (beat interference) — sample max over ~1 s.
   Verified: subs page edits audible, notes page mask trim to degree-7-only
   snaps random seq to 3 discrete heights, e2e all green.
+- 2026-09-28: **Effect envelopes done** (last big original-feature gap).
+  Engine: rot_filter/delay/mod/shaper grew gate+ADSR; filter env ×2^(env·3)
+  on cutoff, delay env swells feedback toward 0.99, mod/shaper env swells
+  dry-wet toward 1 — all idle-neutral at env=0 (effects get percussive
+  default a=0.01 d=0.4 s=0; generators keep s=0.7). Sequencer + MIDI notes
+  retrigger effect envs (bare gate edge, no pitch/amp side-effects).
+  Slots migrate inert s=0.7 effect envs to s=0 (pre-v2.1 the env page did
+  nothing on effects, so 0.7 is provably never deliberate). Env page back
+  on for effects with a target-name footer. Verified via per-synth lvl
+  polls: filter lvl oscillates with the seq trigger (cutoff sweeping the
+  saw's harmonics), delay lvl swells per step. GOTCHA SELF-OWN: spent an
+  hour "proving" the new def wasn't loading via master amp polls — they
+  were lying (beat/poll artifacts, gotcha 12 lesson); the per-synth lvl
+  poll showed it working all along. e2e all green. Spec §9.13 updated.

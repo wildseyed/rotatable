@@ -110,6 +110,11 @@ function Slots.recall(i)
     o.subtype = e.subtype
     for k, v in pairs(e.params) do o.params[k] = v end
     o.env = { a = e.env.a, d = e.env.d, s = e.env.s, r = e.env.r }
+    -- v2.1 migration: effect envs were inert before param envelopes, so
+    -- s=0.7 is always the old default, never a deliberate setting
+    if World.TYPES[o.type].category == "effect" and o.env.s == 0.7 then
+      o.env.s = 0
+    end
     if e.patterns then
       o.patterns = e.patterns
     elseif e.steps then

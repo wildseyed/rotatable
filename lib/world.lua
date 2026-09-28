@@ -99,7 +99,11 @@ function World.add(type, x, y, angle)
     y = y or 0,
     angle = angle or 0,
     params = default_params(type),
-    env = { a = 0.01, d = 0.1, s = 0.7, r = 0.3 }, -- envelope placeholder
+    -- effects get a percussive env (idle-neutral param envelopes);
+    -- generators the classic ADSR
+    env = World.TYPES[type].category == "effect"
+      and { a = 0.01, d = 0.4, s = 0, r = 0.3 }
+      or { a = 0.01, d = 0.1, s = 0.7, r = 0.3 },
   }
   if type == "sequencer" then
     -- 6 rotation-switched preset patterns (phase 8 batch 2); pattern 1 =

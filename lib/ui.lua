@@ -148,9 +148,12 @@ for i = 1, 4 do
   end
 end
 
--- env page only where sync_object actually pushes ADSR (osc/loop/sampler);
--- effect envelopes (filter-freq/feedback/dry-wet) are a future engine item
-local ENV_TYPES = { oscillator = true, loop = true, sampler = true }
+-- env page where sync_object pushes ADSR: generators (amplitude) and
+-- effects (param envelopes, sequencer-triggered; footer shows the target)
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
+  filter = true, delay = true, modulator = true, waveshaper = true }
+local ENV_TARGET = { filter = "cutoff", delay = "fdbk",
+  modulator = "drywet", waveshaper = "drywet" }
 
 -- L3 pages per object: 2d for two-param effects; steps/vel/dur for
 -- sequencer; sample browser for loop+sampler; settings page for syncable
@@ -672,6 +675,12 @@ local function draw_l3()
       screen.stroke()
       screen.move(x, 60)
       screen.text(f)
+    end
+    local tgt = ENV_TARGET[selected.type]
+    if tgt then
+      screen.level(3)
+      screen.move(96, 60)
+      screen.text(tgt)
     end
   elseif page == "steps" or page == "vel" or page == "dur" then
     -- 16 steps around a midline. steps: bar = pitch (-24..+24; random
