@@ -4,6 +4,17 @@
 
 local World = {}
 
+local Tonality = include('lib/tonality')
+
+-- 12-degree scale mask from a tonality subtype preset (editable on-object)
+local function tonality_mask(subtype_name)
+  local m = {}
+  for i = 0, 11 do m[i] = false end
+  for _, d in ipairs(Tonality.SCALES[subtype_name]) do m[d] = true end
+  return m
+end
+World.tonality_mask = tonality_mask
+
 World.TABLE_R = 1.0
 World.CONNECT_DIST = 0.35 -- world units; gap-items decision, tune later
 
@@ -106,6 +117,16 @@ function World.add(type, x, y, angle)
       end
       o.patterns[p] = steps
     end
+  elseif type == "oscillator" then
+    -- sub-oscillators (spec §3.1): 4 subs x (waveform/amp/detune/offset);
+    -- amp 0 = sub off. follow=1 snaps sub pitch to the table tonality
+    o.subs = { follow = 0,
+      { wave = 0, amp = 0, det = 0, off = -12 },
+      { wave = 0, amp = 0, det = 0, off = -12 },
+      { wave = 0, amp = 0, det = 0, off = 12 },
+      { wave = 0, amp = 0, det = 0, off = 12 } }
+  elseif type == "tonality" then
+    o.notes = tonality_mask(World.TYPES.tonality.subtypes[1])
   elseif type == "loop" or type == "sampler" then
     o.sample = nil -- path of loaded WAV (browser panel)
   end
@@ -144,6 +165,10 @@ end
 function World.cycle_subtype(o, dir)
   local n = #World.TYPES[o.type].subtypes
   o.subtype = ((o.subtype - 1 + dir) % n) + 1
+  if o.type == "tonality" then
+    -- subtype = preset load: custom note edits are replaced
+    o.notes = tonality_mask(World.TYPES.tonality.subtypes[o.subtype])
+  end
 end
 
 function World.subtype_name(o)

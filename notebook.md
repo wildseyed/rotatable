@@ -227,3 +227,20 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   main+release+tag. Catalog PR #409 checked: fields still accurate, no
   update; still open upstream. Announcement drafts in session reply.
   Next: subosc/tonality design session (owner queue).
+- 2026-09-28: **Suboscillators + tonality note editing (post-v2.0.0,
+  owner-directed).** Engine: `rot_osc` grew 4 subs × (wave/amp/det-cents/
+  off-semitones), summed pre-envelope — required the full jack/sclang/crone/
+  matron restart (paramiko). Lua: `o.subs` per osc + `subs` L3 page (follow
+  toggle + 16 fields); follow=1 lua-snaps sub pitch to the scale mask before
+  pushing. Tonality: per-object editable 12-degree mask `o.notes`
+  (subtype cycle = preset reload, documented reset), `notes` L3 page;
+  `Tonality.current` reads the mask. Slots persist subs+notes (old slots
+  default cleanly). **Big test-harness bug found: `T.enc`/`T.key` bypassed
+  rotatable's global enc/key handlers, so UI-driven edits in tests NEVER
+  called Audio.sync_object** — physical encoders were always fine; the
+  harness now routes through the real handlers. This invalidated earlier
+  "UI pushes verified" assumptions; re-verified subs via lvl-poll max-reads
+  (0.55 → 1.08). Also learned: single amp reads are useless for A/B when
+  signals are phase-locked (beat interference) — sample max over ~1 s.
+  Verified: subs page edits audible, notes page mask trim to degree-7-only
+  snaps random seq to 3 discrete heights, e2e all green.

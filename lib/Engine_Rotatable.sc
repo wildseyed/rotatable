@@ -21,9 +21,24 @@ Engine_Rotatable : CroneEngine {
 		nodes = IdentityDictionary.new;
 
 		// mod is bipolar (-1..1); pitch-like target: +-1 octave around current
+		// sub-oscillators (spec §3.1): 4 subs x (waveform/amp/detune/offset),
+		// summed pre-envelope. off = semitones, det = cents.
 		SynthDef(\rot_osc, { arg in=0, out=0, gate=1, freq=220, amp=0.8, select=0,
-			a=0.01, d=0.1, s=0.7, r=0.3, mod=0, lvl=0;
-			var sig, env, outSig;
+			a=0.01, d=0.1, s=0.7, r=0.3, mod=0, lvl=0,
+			sub1w=0, sub1a=0, sub1d=0, sub1o=0,
+			sub2w=0, sub2a=0, sub2d=0, sub2o=0,
+			sub3w=0, sub3a=0, sub3d=0, sub3o=0,
+			sub4w=0, sub4a=0, sub4d=0, sub4o=0;
+			var sig, env, outSig, subSig;
+			var mkSub = { arg f, w, amp, det, off;
+				var sf = f * (2 ** ((off + (det / 100)) / 12));
+				SelectX.ar(Lag.kr(w.clip(0, 3), 0.05), [
+					SinOsc.ar(sf),
+					Saw.ar(sf),
+					Pulse.ar(sf, 0.5),
+					LPF.ar(WhiteNoise.ar, (sf * 8).clip(100, 18000))
+				]) * Lag.kr(amp.clip(0, 1), 0.05);
+			};
 			freq = Lag.kr(freq, 0.05) * (2 ** mod.clip(-1, 1));
 			sig = SelectX.ar(Lag.kr(select, 0.05), [
 				SinOsc.ar(freq),
@@ -31,6 +46,11 @@ Engine_Rotatable : CroneEngine {
 				Pulse.ar(freq, 0.5),
 				LPF.ar(WhiteNoise.ar, (freq * 8).clip(100, 18000))
 			]);
+			subSig = mkSub.(freq, sub1w, sub1a, sub1d, sub1o)
+				+ mkSub.(freq, sub2w, sub2a, sub2d, sub2o)
+				+ mkSub.(freq, sub3w, sub3a, sub3d, sub3o)
+				+ mkSub.(freq, sub4w, sub4a, sub4d, sub4o);
+			sig = sig + subSig;
 			env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
 			// mod = LFO control-bus input (dedicated arg: .set never breaks its mapping)
 			outSig = sig * env * Lag.kr(amp, 0.05);

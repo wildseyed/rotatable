@@ -88,7 +88,32 @@ function Audio.sync_object(o)
     engine.set(o.id, "s", o.env.s)
     engine.set(o.id, "r", o.env.r)
   end
+  if o.type == "oscillator" and o.subs then
+    -- sub-oscillators; follow=1 snaps each sub's total pitch offset to the
+    -- table tonality (lua-side: engine only knows the resulting off/det)
+    local ton = o.subs.follow == 1 and Tonality.current(World) or nil
+    for i = 1, 4 do
+      local s = o.subs[i]
+      local off, det = s.off, s.det
+      if ton then
+        off, det = Tonality.snap(off + det / 100, ton.root, ton.scale), 0
+      end
+      engine.set(o.id, "sub" .. i .. "w", s.wave)
+      engine.set(o.id, "sub" .. i .. "a", s.amp)
+      engine.set(o.id, "sub" .. i .. "d", det)
+      engine.set(o.id, "sub" .. i .. "o", off)
+    end
+  end
   if o.type == "oscillator" or o.type == "sampler" then nodes[o.id].freq = v end
+end
+
+-- re-push all follow-tonality oscillators (call when tonality changes)
+function Audio.resync_follow()
+  for _, o in ipairs(World.objects) do
+    if o.type == "oscillator" and o.subs and o.subs.follow == 1 then
+      Audio.sync_object(o)
+    end
+  end
 end
 
 -- LFO target: all targets take the dedicated \mod arg (bipolar -1..1);

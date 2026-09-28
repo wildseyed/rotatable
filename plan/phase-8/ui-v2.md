@@ -34,11 +34,13 @@ notebook entry → commit.
 - [x] Per-object VU meters from `lvl_N` polls (`Audio.lvl_poll(id)`)
 
 **Needs an owner design session first — do NOT implement in batch flow:**
-- Suboscillators panel — blocked on ENGINE work: `rot_osc` has no sub-oscs;
-  adding 4 subs × (waveform/amp/detune/offset) + follow-tonality toggle is a
-  SynthDef change first, panel second. Decide scope with owner.
-- Tonality UI beyond subtype/root (note editing on-object) — "design needed"
-  per spec §9.6; current subtype-cycling + root rotation is functional.
+- ~~Suboscillators panel~~ — **done 2026-09-28** (owner-directed post-v2.0.0):
+  engine `rot_osc` grew 4 subs × (waveform/amp/detune-cents/offset-semitones),
+  summed pre-envelope; L3 `subs` page with follow-tonality toggle (lua snaps
+  sub pitch to the scale mask before pushing)
+- ~~Tonality UI beyond subtype/root~~ — **done 2026-09-28**: per-object
+  editable 12-degree mask (`o.notes`), L3 `notes` page (E2 pick, E3/K3
+  toggle); subtype cycling reloads the preset over custom edits
 - Oscillator waveform-draw page — feasibility unknown; park unless owner
   prioritizes.
 

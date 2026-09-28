@@ -78,8 +78,8 @@ T = {
     local r = World.toggle_hardlink(a, b); dirty = true; return r
   end,
   mute = function(a, b) local m = World.toggle_mute(a, b); dirty = true; return m end,
-  key = function(n, z) UI.key(n, z); dirty = true end,
-  enc = function(n, d) UI.enc(n, d); dirty = true end,
+  key = function(n, z) key(n, z); dirty = true end, -- global handler: syncs engine
+  enc = function(n, d) enc(n, d); dirty = true end,
   dump = function()
     print("level " .. UI.level() .. " | " .. UI.status())
     for _, c in ipairs(World.connections) do
@@ -215,7 +215,10 @@ end
 function enc(n, d)
   UI.enc(n, d)
   local o = UI.selected()
-  if o then Audio.sync_object(o) end
+  if o then
+    Audio.sync_object(o)
+    if o.type == "tonality" then Audio.resync_follow() end
+  end
 end
 
 -- script reloads share the engine: free our nodes or they drone on as
@@ -227,7 +230,10 @@ end
 function key(n, z)
   UI.key(n, z)
   local o = UI.selected()
-  if o then Audio.sync_object(o) end
+  if o then
+    Audio.sync_object(o)
+    if o.type == "tonality" then Audio.resync_follow() end
+  end
 end
 
 local function draw_grid()

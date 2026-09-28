@@ -113,6 +113,12 @@ a VU bar under the glyph.
   `K3` toggles the step. random subtype: shows the improvised-note history
   (E3 = velocity). rotation (ROTATE mode, E2) switches 6 stored patterns —
   the header shows the active one (`p1`–`p6`)
+- **subs** (oscillator): 4 sub-oscillators, E2 picks a field, E3 adjusts —
+  `follow tonality` toggle (snaps sub pitches to the table's scale), then
+  per sub: waveform, amp, detune (cents), offset (semitones)
+- **notes** (tonality): the scale as 12 toggleable degrees — E2 picks,
+  E3/`K3` toggles. subtype cycling reloads the preset (custom edits
+  replaced); root still on rotation
 - **vel** (sequencer): per-step velocity — E2 step, E3 value, `K3` toggles
 - **dur** (sequencer): per-step length in 32nd notes (1–8; 2 = 16th) —
   E2 step, E3 value, `K3` toggles

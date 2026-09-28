@@ -66,7 +66,7 @@ local function gather()
       type = o.type, subtype = o.subtype,
       x = o.x, y = o.y, angle = o.angle,
       params = {}, env = { a = o.env.a, d = o.env.d, s = o.env.s, r = o.env.r },
-      sample = o.sample, patterns = o.patterns,
+      sample = o.sample, patterns = o.patterns, subs = o.subs, notes = o.notes,
     }
     for k, v in pairs(o.params) do e.params[k] = v end
     table.insert(objs, e)
@@ -115,6 +115,8 @@ function Slots.recall(i)
     elseif e.steps then
       o.patterns[1] = e.steps -- v1 slot format: single pattern -> preset 1
     end
+    if e.subs then o.subs = e.subs end
+    if e.notes then o.notes = e.notes end
     if e.sample then Audio.load_sample(o, e.sample) end
     Audio.sync_object(o)
     table.insert(new_ids, o.id)
