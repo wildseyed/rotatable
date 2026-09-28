@@ -59,6 +59,23 @@ def amps_max(tries=6, dt=0.35):
         time.sleep(dt)
     return best
 
+def reset_camera():
+    # UI tests need the reticle over the table center; the cam persists
+    # across sessions (press shots, manual play), so drive it home first
+    import re
+    for _ in range(20):
+        r = lua('print("{cam "..T.cam().."}")')
+        m = re.search(r"cam ([\d.-]+),([\d.-]+) z(\d+)", r)
+        x, y, z = float(m.group(1)), float(m.group(2)), float(m.group(3))
+        if abs(z - 48) / 48 > 0.05:
+            post("/enc", {"n": 1, "d": round(25 * (48 / z - 1)) or (1 if z > 48 else -1)})
+        elif abs(x) > 0.01:
+            post("/enc", {"n": 2, "d": round(-x / (0.01 * 48 / z))})
+        elif abs(y) > 0.01:
+            post("/enc", {"n": 3, "d": round(-y / (0.01 * 48 / z))})
+        else:
+            break
+
 print("== clear + place all 13 types ==")
 post("/clear")
 TYPES = ["oscillator", "loop", "sampler", "input", "filter", "delay",
@@ -142,6 +159,9 @@ check("random subtype improvises (hist>0)", "hist=0" not in r, r)
 post("/set", {"id": seq, "param": "subtype", "value": 1})
 
 print("== midi note routing ==")
+post("/clear")  # clean stage: any active sequencer would retrigger the gate
+post("/place", {"type": "oscillator", "x": 0.1, "y": 0.0})
+post("/place", {"type": "midi", "x": 0.1, "y": 0.15})
 lua("T.midi_note(60, 100)")
 on = amps_max(2, 0.2)
 lua("T.midi_note(60, 0)")
@@ -151,6 +171,14 @@ check("midi note-on audible", on > 0.02, f"on={on}")
 check("midi note-off releases", off < on * 0.5 + 0.01, f"off={off}")
 
 print("== hardlink + mute ==")
+post("/clear")
+post("/place", {"type": "oscillator", "x": 0.2, "y": 0.0})
+post("/place", {"type": "filter", "x": 0.1, "y": 0.0})
+post("/place", {"type": "sequencer", "x": 0.2, "y": 0.12})
+st = state()
+osc = ids_by_type(st, "oscillator")[0]
+flt = ids_by_type(st, "filter")[0]
+seq = ids_by_type(st, "sequencer")[0]
 r = lua(f'print("{{"..tostring(T.link({seq}, {osc})).."}}")')
 check("hardlink toggles on", "true" in r, r)
 r = lua(f'print("{{"..tostring(T.mute({osc}, {flt})).."}}")')
@@ -159,6 +187,7 @@ lua(f'print("{{"..tostring(T.mute({osc}, {flt})).."}}")')  # restore
 lua(f'print("{{"..tostring(T.link({seq}, {osc})).."}}")')  # unlink
 
 print("== UI navigation smoke ==")
+reset_camera()
 post("/clear")
 post("/place", {"type": "oscillator", "x": 0.05, "y": 0})
 select_at_center()

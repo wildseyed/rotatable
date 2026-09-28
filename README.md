@@ -4,7 +4,15 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v1.1.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v2.0.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v2**: 13 object types (adds sampler, audio-in, waveshaper,
+tonality, midi-in) · tempo sync everywhere (LFO multiply, delay quantize +
+sweep, loop bar-entry) · sequencer: 6 patterns per object, per-step
+velocity + duration, random subtype · subtype pictograms on every block,
+animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
+(hold K1+K2+K3) with 8 factory presets · synced settings panels ·
+melodic sampler with base-pitch tuning
 
 ## install
 
