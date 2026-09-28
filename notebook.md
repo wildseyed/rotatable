@@ -219,3 +219,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   11.8/12.8%, worst-case 14-object patch avg 22.6% / peak 23.3% — batch-3
   redraw+polls cost nothing measurable. Slot-format decision recorded:
   v1 backward-compat kept (steps → pattern 1 migration).
+- 2026-09-28: **v2.0.0 RELEASED.** Version bump (rotatable.lua + README),
+  what's-new section, 3 fresh press shots (table-wide, chain-detail,
+  panel-steps). Release branch now bundles `presets/` (factory presets
+  postdate the lean-branch doc; AGENTS.md updated) — also fixed a latent
+  gap: release was missing `lib/tonality.lua`. Tagged v2.0.0, pushed
+  main+release+tag. Catalog PR #409 checked: fields still accurate, no
+  update; still open upstream. Announcement drafts in session reply.
+  Next: subosc/tonality design session (owner queue).

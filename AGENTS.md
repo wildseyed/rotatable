@@ -117,7 +117,8 @@ maiden `;install`): `rotatable.lua` + `lib/` at root.
 
 - `main` = development branch (all project files: docs, plans, tools).
 - `release` = **default branch, orphan, lean** — only `rotatable.lua`, `lib/`,
-  `README.md`, `.gitignore`. This is what users get via `;install`.
+  `presets/` (factory presets; added v2), `README.md`, `.gitignore`. This is
+  what users get via `;install`.
 - Publish flow: commit dev work to `main`; when releasing, update `release`
   with just the script files (checkout release, copy from main, commit, push,
   tag). Never commit `.device/` or `reference/` anywhere (gitignored).
