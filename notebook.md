@@ -258,3 +258,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   hour "proving" the new def wasn't loading via master amp polls — they
   were lying (beat/poll artifacts, gotcha 12 lesson); the per-synth lvl
   poll showed it working all along. e2e all green. Spec §9.13 updated.
+- 2026-09-28: **V3 planned** → `plan/phase-10/v3.md`. Owner identified the
+  remaining gaps: tempo as a table object (Song Settings), global FX on
+  output (reverb+compression, spec §3.13), and THE SLIDER — the Reactable's
+  second per-block control (right-side dot, finger-dragged). E3 already
+  drives the slider param in ROTATE for all types (spec-faithful mapping);
+  V3's real work is the persistent on-block slider visual + feel, plus the
+  tempo object and the master FX stage. 3 owner questions open (slider
+  visual style, tempo object vs page, no-output-object FX behavior).
