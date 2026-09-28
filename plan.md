@@ -25,11 +25,11 @@ add new files as work evolves, and keep this index stable.*
 - [ ] **Phase 8 — UI & panels v2** → [ui-v2](plan/phase-8/ui-v2.md) — 13-type place menu, remaining panels, visual polish. Sub-part: [system-menu](plan/phase-8/system-menu.md) — **done 2026-09-27** (SYSTEM menu + factory presets)
 - [ ] **Phase 9 — Integration & release v2.0.0** → [release-v2](plan/phase-9/release-v2.md)
 
-### v3 (planned 2026-09-28)
-- [ ] **Phase 10 — Slider, tempo global, global FX** → [v3](plan/phase-10/v3.md) —
-  on-block slider visual (E3 already maps it), tempo as a table object
-  (Song Settings gap), reverb+compression on the master bus (Output's
-  Global Effects panel). 3 owner questions open before batch 1.
+### v3 (released 2026-09-28)
+- [x] **Phase 10 — Slider, tempo global, global FX** → [v3](plan/phase-10/v3.md) —
+  on-block slider dot + LFO depth fix, tempo object, master reverb +
+  compression, suboscillators, tonality scale editing, effect envelopes.
+  **v3.0.0 tagged and published** (main f2f28c7, release a193530)
 
 ## Parking lot (undecided / later)
 

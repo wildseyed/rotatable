@@ -298,3 +298,12 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   15-obj worst case + FX engaged avg 30.0% / peak 30.7% (was 22.6/23.3)
   — ~7 points for the always-on stage; AT the plan threshold, flagged
   for owner. e2e green.
+- 2026-09-28: **v3.0.0 RELEASED** (main f2f28c7, release a193530, tag
+  v3.0.0 — first push hit a transient GitHub 500, retry landed). v3 =
+  slider (dot + LFO depth fix + fine adjust), tempo object, global FX,
+  plus the post-v2 work (subosc, tonality notes, effect envelopes).
+  e2e extended with a v3 section (tempo adopt/rotation, output adopt,
+  reverb tail), all green ×3. Press: refreshed table-wide, new panel-gfx.
+  Announcement drafts delivered in session reply. Parking lot stands:
+  poly tenori grid, waveform draw, grid/arc controllers, feel-check
+  (real MIDI hardware especially).
