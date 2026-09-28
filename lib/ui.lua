@@ -146,7 +146,11 @@ local function pages_for(o)
   local p = { "env" }
   local c = World.TYPES[o.type].category
   if c == "effect" then table.insert(p, 1, "2d") end
-  if o.type == "sequencer" then table.insert(p, 1, "steps") end
+  if o.type == "sequencer" then
+    table.insert(p, 1, "dur")
+    table.insert(p, 1, "vel")
+    table.insert(p, 1, "steps")
+  end
   if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
   if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
   return p
@@ -360,12 +364,19 @@ function UI.enc(n, d)
       local kx, ky = params_2d(selected)
       if n == 2 then selected.params[kx] = util.clamp(selected.params[kx] + d * 0.02, 0, 1)
       elseif n == 3 then selected.params[ky] = util.clamp(selected.params[ky] + d * 0.02, 0, 1) end
-    elseif page == "steps" then
+    elseif page == "steps" or page == "vel" or page == "dur" then
       if n == 2 then
         step_idx = util.clamp(step_idx + d, 1, 16)
       elseif n == 3 then
-        local st = selected.steps[step_idx]
-        if k1_down then
+        local st = World.seq_steps(selected)[step_idx]
+        if page == "vel" then
+          st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
+        elseif page == "dur" then
+          st.dur = util.clamp((st.dur or 2) + d, 1, 8)
+        elseif selected.subtype == 3 then
+          -- random: pitch is improvised; E3 edits velocity here
+          st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
+        elseif k1_down then
           st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
         else
           st.pitch = util.clamp(st.pitch + d, -24, 24)
@@ -512,8 +523,8 @@ function UI.key(n, z)
           end
         elseif level == "L3" and selected then
           local page = pages_for(selected)[page_idx]
-          if page == "steps" then
-            local st = selected.steps[step_idx]
+          if page == "steps" or page == "vel" or page == "dur" then
+            local st = World.seq_steps(selected)[step_idx]
             st.on = not st.on
           elseif page == "browser" then
             if browser.files == nil then browser.files = scan_audio_files() end
@@ -606,7 +617,9 @@ local function draw_l3()
   screen.level(12)
   screen.move(12, 10)
   screen.text(World.TYPES[selected.type].label .. "#" .. selected.id ..
-    " " .. World.subtype_name(selected) .. "  [" .. page .. " " .. page_idx .. "/" .. #pages .. "]")
+    " " .. World.subtype_name(selected) ..
+    (selected.type == "sequencer" and " p" .. (selected.params.preset or 1) or "") ..
+    "  [" .. page .. " " .. page_idx .. "/" .. #pages .. "]")
   if page == "env" then
     for i, f in ipairs(ENV_FIELDS) do
       local x = 20 + (i - 1) * 26
@@ -618,20 +631,35 @@ local function draw_l3()
       screen.move(x, 60)
       screen.text(f)
     end
-  elseif page == "steps" then
-    -- 16 steps: bar height = pitch (-24..+24 around midline), brightness = vel
+  elseif page == "steps" or page == "vel" or page == "dur" then
+    -- 16 steps around a midline. steps: bar = pitch (-24..+24; random
+    -- subtype shows its improvised history instead), vel: bar = velocity,
+    -- dur: bar = step length in 32nds. brightness = vel, dot = step off
+    local steps = World.seq_steps(selected)
+    local random = selected.subtype == 3
     local x0, mid = 14, 36
     screen.level(3)
     screen.move(x0, mid) screen.line(118, mid)
     screen.stroke()
     for i = 1, 16 do
-      local st = selected.steps[i]
+      local st = steps[i]
       local x = x0 + (i - 1) * 7
-      local h = util.clamp(st.pitch, -24, 24) / 24 * 16
       local lvl = st.on and (2 + math.floor(st.vel * 12)) or 2
       if i == step_idx then lvl = 15 end
       screen.level(lvl)
-      if st.on then
+      local h
+      if page == "steps" then
+        local pitch = st.pitch
+        if random then pitch = (selected._hist and selected._hist[i]) or 0 end
+        h = util.clamp(pitch, -24, 24) / 24 * 16
+      elseif page == "vel" then
+        h = st.vel * 16
+      else -- dur
+        h = ((st.dur or 2) / 8) * 16
+      end
+      local show = st.on or
+        (page == "steps" and random and selected._hist and selected._hist[i])
+      if show then
         screen.move(x, mid)
         screen.line(x, mid - h)
         screen.stroke()
@@ -644,11 +672,25 @@ local function draw_l3()
         screen.fill()
       end
     end
-    local st = selected.steps[step_idx]
+    local st = steps[step_idx]
     screen.level(6)
     screen.move(12, 60)
-    screen.text(string.format("st%d %s %+d vel %.2f", step_idx,
-      st.on and "ON" or "off", st.pitch, st.vel))
+    if page == "steps" then
+      if random then
+        screen.text(string.format("st%d %s RND last %+d", step_idx,
+          st.on and "ON" or "off",
+          (selected._hist and selected._hist[step_idx]) or 0))
+      else
+        screen.text(string.format("st%d %s %+d vel %.2f", step_idx,
+          st.on and "ON" or "off", st.pitch, st.vel))
+      end
+    elseif page == "vel" then
+      screen.text(string.format("st%d %s vel %.2f", step_idx,
+        st.on and "ON" or "off", st.vel))
+    else
+      screen.text(string.format("st%d %s dur %d/32", step_idx,
+        st.on and "ON" or "off", st.dur or 2))
+    end
   elseif page == "set" then
     local fields = SET_FIELDS[selected.type]
     local y = 24
@@ -795,6 +837,9 @@ function UI.status()
     local extra = ""
     if mode == "ROTATE" then
       extra = "  " .. World.subtype_name(selected)
+      if selected.type == "sequencer" then
+        extra = extra .. " p" .. (selected.params.preset or 1)
+      end
     elseif mode == "LINK" and link_candidates[link_idx] then
       local t = link_candidates[link_idx].obj
       extra = " -> " .. World.TYPES[t.type].label .. "#" .. t.id ..

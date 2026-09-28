@@ -101,13 +101,22 @@ T = {
     engine.loadbuf(id, path)
   end,
   lvl = function(id) return Audio.lvl_poll(id) end,
-  step = function(id, s, on, pitch, vel)
+  seq_state = function(id) -- harness: preset + free-running position
     local o = World.get(id)
-    if not o or not o.steps then return end
-    local st = o.steps[util.clamp(s, 1, 16)]
+    if not o or not o.patterns then return "no seq" end
+    local nh = 0
+    if o._hist then for _ in pairs(o._hist) do nh = nh + 1 end end
+    return string.format("preset=%d pos=%d left=%d hist=%d",
+      o.params.preset or 1, o._pos or 0, o._left or 0, nh)
+  end,
+  step = function(id, s, on, pitch, vel, dur)
+    local o = World.get(id)
+    if not o or not o.patterns then return end
+    local st = World.seq_steps(o)[util.clamp(s, 1, 16)]
     if on ~= nil then st.on = on end
     if pitch ~= nil then st.pitch = util.clamp(pitch, -24, 24) end
     if vel ~= nil then st.vel = util.clamp(vel, 0, 1) end
+    if dur ~= nil then st.dur = util.clamp(math.floor(dur), 1, 8) end
     dirty = true
   end,
   save_slot = function(i) Slots.save(i) end,
@@ -141,16 +150,17 @@ function init()
 
   params:add_number("rot_tempo", "tempo", 40, 240, 120)
   params:set_action("rot_tempo", function(v)
-    seq_metro.time = 60 / v / 4 -- 16th notes
+    seq_metro.time = 60 / v / 8 -- 32nd notes (step dur unit)
     engine.tempo(v) -- engine tempo bus: LFO sync, delay quantize, loop bar-entry
   end)
 
-  -- sequencer clock: pentatonic pattern, every other step on
-  local seq_step = 0
+  -- sequencer clock: 32nd-note ticks; each sequencer object free-runs its
+  -- own 16-step pattern (per-step dur, in 32nds)
+  local seq_tick_n = 0
   seq_metro = metro.init(function()
-    seq_step = (seq_step % 16) + 1
-    Audio.seq_tick(seq_step)
-  end, 60 / 120 / 4, -1)
+    seq_tick_n = seq_tick_n + 1
+    Audio.seq_tick(seq_tick_n)
+  end, 60 / 120 / 8, -1)
   seq_metro:start()
 
   -- stock amp polls for REPL verification of audio flow

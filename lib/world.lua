@@ -88,14 +88,20 @@ function World.add(type, x, y, angle)
     env = { a = 0.01, d = 0.1, s = 0.7, r = 0.3 }, -- envelope placeholder
   }
   if type == "sequencer" then
-    -- 16 steps; default = the phase-4 pentatonic demo pattern (odd steps on)
+    -- 6 rotation-switched preset patterns (phase 8 batch 2); pattern 1 =
+    -- the phase-4 pentatonic demo (odd steps on), 2-6 blank.
+    -- dur = step length in 32nd notes (2 = 16th, the v1 timing)
     local PENTA_ST = { 0, 2, 4, 7, 9, 12, 14, 16 } -- semitone offsets
-    o.steps = {}
-    for i = 1, 16 do
-      local on = i % 2 == 1
-      o.steps[i] = { on = on,
-        pitch = on and PENTA_ST[(i - 1) / 2 + 1] or 0,
-        vel = 0.8 }
+    o.patterns = {}
+    for p = 1, 6 do
+      local steps = {}
+      for i = 1, 16 do
+        local on = p == 1 and i % 2 == 1
+        steps[i] = { on = on,
+          pitch = on and PENTA_ST[(i - 1) / 2 + 1] or 0,
+          vel = 0.8, dur = 2 }
+      end
+      o.patterns[p] = steps
     end
   elseif type == "loop" or type == "sampler" then
     o.sample = nil -- path of loaded WAV (browser panel)
@@ -104,6 +110,11 @@ function World.add(type, x, y, angle)
   table.insert(World.objects, o)
   World.recompute()
   return o
+end
+
+-- active pattern for a sequencer (rotation = preset slot, 1..6)
+function World.seq_steps(o)
+  return o.patterns[util.clamp(math.floor(o.params.preset or 1), 1, 6)]
 end
 
 function World.remove(id)

@@ -47,10 +47,10 @@ ACTIONS = {
         p["id"], p["param"],
         ("'%s'" % p["value"]) if isinstance(p["value"], str) else p["value"]),
     "/load":   lambda p: "T.load(%d, '%s')" % (p["id"], p["path"]),
-    "/step":   lambda p: "T.step(%d, %d, %s, %s, %s)" % (
+    "/step":   lambda p: "T.step(%d, %d, %s, %s, %s, %s)" % (
         p["id"], p["step"],
         str(p["on"]).lower() if "on" in p else "nil",
-        p.get("pitch", "nil"), p.get("vel", "nil")),
+        p.get("pitch", "nil"), p.get("vel", "nil"), p.get("dur", "nil")),
     "/key":    lambda p: "T.key(%d, %d)" % (p["n"], p["z"]),
     "/enc":    lambda p: "T.enc(%d, %d)" % (p["n"], p["d"]),
     "/mute":   lambda p: "T.mute(%d, %d)" % (p["a"], p["b"]),

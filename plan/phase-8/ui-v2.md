@@ -20,10 +20,10 @@ notebook entry → commit.
 - [x] README: subtype cycling (K1+E2 in ROTATE) callout
 
 **Batch 2 — sequencer depth:**
-- [ ] Sequencer preset slots: rotation switches 6 stored patterns per object
+- [x] Sequencer preset slots: rotation switches 6 stored patterns per object
   (today rotation writes an inert `preset` param)
-- [ ] Sequencer pages: velocity page, step-duration page (multiples of 32nd)
-- [ ] Sequencer random subtype UI (poly grid deferred per phase-6)
+- [x] Sequencer pages: velocity page, step-duration page (multiples of 32nd)
+- [x] Sequencer random subtype UI (poly grid deferred per phase-6)
 
 **Batch 3 — MIDI + polish:**
 - [ ] MIDI-in: device select + channel in params; note routing to closest

@@ -60,8 +60,11 @@ function Audio.sync_object(o)
     return
   end
   if not HAS_SYNTH[o.type] then
-    -- tonality: root lives in o.params for lib/tonality
-    if o.type == "tonality" and k then o.params[k] = v end
+    -- no engine node: params still need the rotation write-through
+    -- (tonality root for lib/tonality, sequencer preset pattern switch)
+    if (o.type == "tonality" or o.type == "sequencer") and k then
+      o.params[k] = v
+    end
     return
   end
   engine.set(o.id, "select", o.subtype - 1)
@@ -213,24 +216,41 @@ function Audio.init(world)
   end
 end
 
--- sequencer clock tick: plays the object's own 16-step pattern
--- (edited in the L3 steps panel). triggers connected oscillators/samplers.
--- "random" subtype ignores the pattern's pitch and improvises (quantized to
--- the table's tonality when a tonality object is present).
-function Audio.seq_tick(step)
+-- sequencer clock tick (32nd notes): each sequencer free-runs its own
+-- position; a step fires when its countdown (dur, in 32nds) elapses.
+-- triggers connected oscillators/samplers. "random" subtype ignores the
+-- pattern's pitch and improvises (quantized to the table's tonality when a
+-- tonality object is present); its last played pitch per step slot is kept
+-- in o._hist for the steps-page display.
+function Audio.seq_tick(tick)
   local ton = Tonality.current(World)
   for id, n in pairs(nodes) do
-    if n.type == "sequencer" and n.kind == "control" and n.out and not n.muted then
+    if n.type == "sequencer" then
       local o = World.get(id)
-      local t = nodes[n.out]
-      if o and o.steps and o.steps[step].on
-        and t and (t.type == "oscillator" or t.type == "sampler") and t.freq then
-        local st = o.steps[step]
-        local pitch = st.pitch
-        if o.subtype == 3 then pitch = math.random(-12, 24) end -- random subtype
-        if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
-        engine.set(n.out, "amp", st.vel)
-        engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
+      if o and o.patterns then
+        o._pos = o._pos or 16
+        o._left = (o._left or 0) - 1
+        if o._left <= 0 then
+          o._pos = (o._pos % 16) + 1
+          local st = World.seq_steps(o)[o._pos]
+          o._left = st.dur or 2
+          if st.on and n.kind == "control" and n.out and not n.muted then
+            local t = nodes[n.out]
+            if t and (t.type == "oscillator" or t.type == "sampler") and t.freq then
+              local pitch = st.pitch
+              if o.subtype == 3 then -- random subtype
+                pitch = math.random(-12, 24)
+                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                o._hist = o._hist or {}
+                o._hist[o._pos] = pitch
+              else
+                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+              end
+              engine.set(n.out, "amp", st.vel)
+              engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
+            end
+          end
+        end
       end
     end
   end

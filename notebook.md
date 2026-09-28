@@ -161,3 +161,20 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   a 6-type matrix at multiple zooms. Test gotcha re-confirmed: T.clear()
   doesn't reset next_id — always read ids from /state (two silent no-op
   /set rounds before catching it).
+- 2026-09-27: **Phase 8 batch 2 done — sequencer depth, device-verified.**
+  6 rotation-switched preset patterns per sequencer (`o.patterns[1..6]`,
+  `World.seq_steps`; p1 = penta default, 2-6 blank). Root cause of the old
+  "inert preset param": `Audio.sync_object` returned early for synth-less
+  types, so rotation never even wrote `o.params.preset` — fixed for
+  sequencer + tonality. New L3 pages `vel` + `dur` (steps/vel/dur/env);
+  `dur` = per-step length in 32nds (1-8; 2 = old 16th timing) — seq metro
+  moved to a 32nd clock, each sequencer free-runs position + countdown
+  (`o._pos`/`o._left`). Random subtype: steps page shows improvised-note
+  history (`o._hist` per step slot), E3 = velocity there. Slots persist
+  `patterns`; v1 `steps` files migrate into pattern 1 (factory presets
+  unaffected — KIT-808 recall verified, drums firing). T.step takes `dur`;
+  T.seq_state(id) harness getter; api.py /step passes dur. Verified:
+  preset isolation (edited p3, p1 intact), dur timing (dur 8 = 2 steps/s
+  vs 8 steps/s at dur 2 @120bpm), random history display, slot roundtrip,
+  SYSTEM-gesture factory restore. Gotcha x3: T.clear() doesn't reset
+  next_id — read ids from /state EVERY time.

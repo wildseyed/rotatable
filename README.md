@@ -75,7 +75,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | delay | effect | time | feedback | feedback |
 | modulator | effect | main (pitch/depth/rate) | dry-wet | ring / chorus / flanger |
 | lfo | controller | rate | depth | sine / saw / square / random |
-| sequencer | controller | preset slot | — | mono (step editor) |
+| sequencer | controller | pattern preset (1–6) | — | mono / poly / random |
 | output | global | master volume | — | — (the star; never connects) |
 
 **config panels** (`K1+K3` on a selected object, E1 switches pages)
@@ -88,7 +88,12 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
   loop: `sync` immediate/quarter/bar (grid entry on load); sampler: `base`
   (the sample's natural pitch, in semitones from C4)
 - **steps** (sequencer): E2 step, E3 pitch (−24..+24), `K1+E3` velocity,
-  `K3` toggles the step
+  `K3` toggles the step. random subtype: shows the improvised-note history
+  (E3 = velocity). rotation (ROTATE mode, E2) switches 6 stored patterns —
+  the header shows the active one (`p1`–`p6`)
+- **vel** (sequencer): per-step velocity — E2 step, E3 value, `K3` toggles
+- **dur** (sequencer): per-step length in 32nd notes (1–8; 2 = 16th) —
+  E2 step, E3 value, `K3` toggles
 - **browser** (loop, sampler): E2 scrolls `dust/audio`, `K3` loads;
   `>` marks the loaded file
 
