@@ -307,3 +307,16 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   Announcement drafts delivered in session reply. Parking lot stands:
   poly tenori grid, waveform draw, grid/arc controllers, feel-check
   (real MIDI hardware especially).
+- 2026-09-28: **Combo detection window for staggered physical presses**
+  (feedback from the NDI-viewer agent: physical K1+K3 always staggers; if
+  K3 lands first the solo action fired before K1 arrived and the combo was
+  lost). Solo-K3 actions are now deferred by a 120ms window: a quick tap
+  fires on release (feels instant), a held press fires on window expiry in
+  UI.tick, and a K1 arriving inside the window cancels the pending solo
+  and fires the ^K3 combo instead. K1-first path and SYSTEM gesture
+  unchanged (master_check also clears the pending). Required some lexical-
+  order surgery in ui.lua (fire_k3_combo/fire_k3_solo extracted before
+  UI.tick; cycle_mode forward-declared). Verified all four paths on
+  device: K1-first, K3-first (60ms stagger -> place menu, no stray
+  select), solo tap, held solo; e2e all green. The viewer's atomic
+  two-key messages + 250ms min hold were already compatible.

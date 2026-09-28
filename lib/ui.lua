@@ -269,6 +269,67 @@ function UI.deselect()
   clear_armed = false
 end
 
+-- deferred solo-K3 (combo detection window, NDI-agent feedback 2026-09-28):
+-- physical K1+K3 presses always stagger; if K3 lands first we must not
+-- commit to the solo action until K1 has had a chance to form the combo.
+local k3_pending = nil -- util.time() of a K3-down awaiting the window
+local COMBO_WINDOW = 0.12 -- s
+local cycle_mode -- forward decl: fire_k3_solo runs before its definition
+
+-- ^K3 shifted action: place menu at L1, dive to config at L2, mute in LINK
+local function fire_k3_combo()
+  if level == "L1" then
+    level = "L0"; menu_idx = 1
+  elseif level == "L2" and selected then
+    if mode == "LINK" and link_candidates[link_idx] then
+      World.toggle_mute(selected.id, link_candidates[link_idx].obj.id)
+    elseif #pages_for(selected) > 0 then
+      level = "L3"; page_idx = 1; field_idx = 1; step_idx = 1
+      browser.files = nil; browser.idx = 1
+    end
+  end
+end
+
+-- solo K3 action (fires on window expiry, or on release for a quick tap)
+local function fire_k3_solo()
+  if level == "L1" then
+    if nearest_to_reticle() == nil then
+      slot_cand = nearest_slot()
+      if slot_cand then
+        k3_slot_press = util.time()
+      else
+        local o = nearest_to_reticle()
+        if o then enter_l2(o) end
+      end
+    else
+      enter_l2(nearest_to_reticle())
+    end
+  elseif level == "L0" then
+    local items = menu_selectables()
+    local o = World.add(items[menu_idx], cam.x, cam.y, 0)
+    enter_l2(o) -- placed at reticle, auto-selected in MOVE
+  elseif level == "L2" then
+    if mode == "LINK" and link_candidates[link_idx] then
+      World.toggle_hardlink(selected.id, link_candidates[link_idx].obj.id)
+    else
+      cycle_mode(1)
+    end
+  elseif level == "L3" and selected then
+    local page = pages_for(selected)[page_idx]
+    if page == "steps" or page == "vel" or page == "dur" then
+      local st = World.seq_steps(selected)[step_idx]
+      st.on = not st.on
+    elseif page == "notes" then
+      local d0 = field_idx - 1
+      selected.notes[d0] = not selected.notes[d0]
+    elseif page == "browser" then
+      if browser.files == nil then browser.files = scan_audio_files() end
+      local f = browser.files[browser.idx]
+      if f then Audio.load_sample(selected, _path.audio .. f) end
+    end
+  end
+end
+
 -- called from the redraw metro; returns true while a move is animating
 function UI.tick()
   -- SYSTEM menu: all three keys held past the threshold
@@ -279,6 +340,12 @@ function UI.tick()
     sys_confirm = nil
     sys_msg = nil
     selected = nil
+    return true
+  end
+  -- deferred solo-K3: window expired with no combo partner (held press)
+  if k3_pending and util.time() - k3_pending >= COMBO_WINDOW then
+    k3_pending = nil
+    fire_k3_solo()
     return true
   end
   local moving = false
@@ -313,7 +380,7 @@ function UI.tick()
   return true
 end
 
-local function cycle_mode(dir)
+function cycle_mode(dir)
   local i = 1
   for j, m in ipairs(modes) do if m == mode then i = j end end
   mode = modes[((i - 1 + (dir or 1)) % #modes) + 1]
@@ -465,6 +532,7 @@ local function master_check()
     clear_armed = false
     k3_slot_press = nil -- a slot press superseded by the gesture must not
     slot_cand = nil     -- fire store/recall on release
+    k3_pending = nil    -- nor a deferred solo-K3
     if level == "L0" then level = "L1" end
   end
 end
@@ -475,6 +543,13 @@ function UI.key(n, z)
     k1_down = (z == 1)
     -- K1 may be the LAST key of the three down (owner physical press 2026-09-27)
     if z == 1 then master_check() else master_t = nil end
+    -- late combo: K3 was waiting out the window when K1 arrived
+    if z == 1 and k3_pending and not master_t then
+      k3_pending = nil
+      fire_k3_combo()
+      dirty()
+      return
+    end
   elseif n == 2 then
     k2_down = (z == 1)
     if z == 1 then master_check() else master_t = nil end
@@ -534,55 +609,16 @@ function UI.key(n, z)
         World.recompute()
         UI.deselect()
       elseif k1_down then
-        if level == "L1" then
-          level = "L0"; menu_idx = 1
-        elseif level == "L2" and selected then
-          if mode == "LINK" and link_candidates[link_idx] then
-            World.toggle_mute(selected.id, link_candidates[link_idx].obj.id)
-          elseif #pages_for(selected) > 0 then
-            level = "L3"; page_idx = 1; field_idx = 1; step_idx = 1
-            browser.files = nil; browser.idx = 1
-          end
-        end
+        fire_k3_combo()
       else
-        if level == "L1" then
-          if nearest_to_reticle() == nil then
-            slot_cand = nearest_slot()
-            if slot_cand then
-              k3_slot_press = util.time()
-            else
-              local o = nearest_to_reticle()
-              if o then enter_l2(o) end
-            end
-          else
-            enter_l2(nearest_to_reticle())
-          end
-        elseif level == "L0" then
-          local items = menu_selectables()
-          local o = World.add(items[menu_idx], cam.x, cam.y, 0)
-          enter_l2(o) -- placed at reticle, auto-selected in MOVE
-        elseif level == "L2" then
-          if mode == "LINK" and link_candidates[link_idx] then
-            World.toggle_hardlink(selected.id, link_candidates[link_idx].obj.id)
-          else
-            cycle_mode(1)
-          end
-        elseif level == "L3" and selected then
-          local page = pages_for(selected)[page_idx]
-          if page == "steps" or page == "vel" or page == "dur" then
-            local st = World.seq_steps(selected)[step_idx]
-            st.on = not st.on
-          elseif page == "notes" then
-            local d0 = field_idx - 1
-            selected.notes[d0] = not selected.notes[d0]
-          elseif page == "browser" then
-            if browser.files == nil then browser.files = scan_audio_files() end
-            local f = browser.files[browser.idx]
-            if f then Audio.load_sample(selected, _path.audio .. f) end
-          end
-        end
+        k3_pending = util.time() -- wait out the combo window (see above)
       end
     else -- z == 0, release
+      if k3_pending then
+        -- quick tap: no combo partner arrived, fire the solo action now
+        k3_pending = nil
+        fire_k3_solo()
+      end
       if k3_slot_press and slot_cand and level == "L1" then
         local held = util.time() - k3_slot_press
         if held >= SLOT_LONG then
