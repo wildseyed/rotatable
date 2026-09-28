@@ -21,6 +21,18 @@ animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
 (hold K1+K2+K3) with 8 factory presets · synced settings panels ·
 melodic sampler with base-pitch tuning
 
+## screenshots
+
+![the table: objects patched toward the output point, tempo object
+lower-left](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png)
+
+![a chain in detail: loop, shaper, delay, filter, osc — subtype
+pictograms and signal-flow dashes](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/chain-detail.png)
+
+![the sequencer steps panel](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-steps.png)
+
+![the output object's global FX panel](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-gfx.png)
+
 ## install
 
 on your norns, in maiden's REPL:
@@ -104,6 +116,72 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 `midi in channel`). notes route to the midi object's closest object,
 velocity sets amp, note-off releases the gate.
 
+## capabilities in depth
+
+### patching & connections
+
+all connections form by proximity — no menus, no cables:
+
+- **generators** connect to the nearest effect in range, else straight to
+  the output point (the white dot at the table center)
+- **effects** chain toward the center: an effect connects to the next
+  effect closer to the output point, else to the output point itself
+- **controllers** (lfo, sequencer, midi) drive their closest non-global
+  object
+- **hardlink** (LINK mode, `K3`): pins two objects permanently, bright
+  double line — a controller can drive a specific target regardless of
+  distance
+- **mute** (LINK mode, `K1+K3`): temporarily cuts a connection, dimmed
+- audio connections are solid lines with bright dashes marching in the
+  signal direction; control connections are dotted
+- everything with a path to the output point is heard; the output point
+  pulses at the current tempo
+
+### tempo & sync
+
+one BPM (`rot_tempo` param, 40–240) drives everything; the tempo object
+puts it on the table (rotation = BPM) and the output point pulses it:
+
+- **lfo**: `sync` + `mult` — period = N 32nd notes (1–128)
+- **delay**: `sync` quantizes delay time to 32nd notes; `sweep` glides
+  time changes
+- **loop**: `sync` = start on the next 32nd/quarter/bar boundary
+- **sequencer**: 32nd-note clock; per-step duration in 32nds
+
+### the sequencer
+
+16 steps × 6 stored patterns per object (rotation switches, header shows
+`p1`–`p6`); per-step pitch (±24 st), velocity, and duration. targets:
+
+- **oscillator / sampler**: plays the note (velocity → amp, ADSR gate)
+- **any effect**: retriggers its param envelope (cutoff / feedback /
+  dry-wet sweep)
+- **random subtype**: improvises, snapped to the table tonality —
+  with a restricted scale this is the original's "automatic solos";
+  the steps page shows the improvised-note history live
+
+### tonality
+
+one tonality object sets the table's scale (root on rotation, first
+object wins). it constrains sequencer notes, random improvisation, and
+sampler/subs pitches. the scale itself is editable: 12 toggleable
+degrees on the notes panel; subtypes are preset loads (major/minor/
+pentatonic/chromatic) you can then customize.
+
+### sound design extras
+
+- **sub-oscillators** (oscillator): 4 subs × waveform/amp/detune/offset,
+  with a follow-tonality toggle that snaps sub pitches to the scale
+- **effect envelopes**: every effect has a sequencer-triggered ADSR on
+  its signature parameter — idle-neutral by default
+- **sampler**: single WAV pitched melodically; `base` tunes the sample's
+  natural pitch in semitones from C4; instrument (gated ADSR) and drum
+  (one-shot) subtypes
+- **global FX** (output object): master reverb (mix + room) and
+  compression on the output bus; neutral when the output object is absent
+- **midi in**: notes land on the closest object (pitched or envelope
+  trigger), rotation = transpose ±24 st
+
 **visuals**: blocks carry a subtype pictogram on their rim (orbits with
 rotation) and a slider dot on their right side (distance from center =
 slider value, like the reactable's draggable dot); audio connections show
@@ -140,7 +218,8 @@ pulses at the tempo; sounding objects get a VU bar under the glyph.
 - **browser** (loop, sampler): E2 scrolls `dust/audio`, `K3` loads;
   `>` marks the loaded file
 
-tempo lives in PARAMETERS (40–240 BPM).
+tempo lives in PARAMETERS (40–240 BPM) — or on the table, via the tempo
+object's rotation.
 
 ## patch slots
 
