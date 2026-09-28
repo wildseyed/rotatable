@@ -95,7 +95,7 @@ a VU bar under the glyph.
 **config panels** (`K1+K3` on a selected object, E1 switches pages)
 
 - **2D** (effects): E2/E3 = X/Y on the control surface
-- **env** (all): ADSR — E2 picks a stage, E3 adjusts
+- **env** (oscillator, loop, sampler): ADSR — E2 picks a stage, E3 adjusts
 - **set** (lfo, delay, loop, sampler): tempo-sync & pitch settings —
   E2 picks a field, E3 adjusts. lfo: `sync` on/off + `mult` (period in
   32nd notes); delay: `sync` (32nd-note quantize) + `sweep` (time glide);

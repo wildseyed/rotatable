@@ -139,13 +139,17 @@ local function set_field_str(o, f)
   return tostring(v)
 end
 
--- L3 pages per object: envelope always; 2d for two-param effects;
--- steps editor for sequencer; sample browser for loop+sampler;
--- settings page for syncable types + sampler
+-- env page only where sync_object actually pushes ADSR (osc/loop/sampler);
+-- effect envelopes (filter-freq/feedback/dry-wet) are a future engine item
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true }
+
+-- L3 pages per object: 2d for two-param effects; steps/vel/dur for
+-- sequencer; sample browser for loop+sampler; settings page for syncable
+-- types + sampler; envelope for envelope-driven generators
 local function pages_for(o)
-  local p = { "env" }
+  local p = {}
   local c = World.TYPES[o.type].category
-  if c == "effect" then table.insert(p, 1, "2d") end
+  if c == "effect" then table.insert(p, "2d") end
   if o.type == "sequencer" then
     table.insert(p, 1, "dur")
     table.insert(p, 1, "vel")
@@ -153,6 +157,7 @@ local function pages_for(o)
   end
   if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
   if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
+  if ENV_TYPES[o.type] then table.insert(p, "env") end
   return p
 end
 
@@ -493,7 +498,7 @@ function UI.key(n, z)
         elseif level == "L2" and selected then
           if mode == "LINK" and link_candidates[link_idx] then
             World.toggle_mute(selected.id, link_candidates[link_idx].obj.id)
-          else
+          elseif #pages_for(selected) > 0 then
             level = "L3"; page_idx = 1; field_idx = 1; step_idx = 1
             browser.files = nil; browser.idx = 1
           end
@@ -846,7 +851,8 @@ function UI.status()
         (World.is_hardlinked(selected.id, t.id) and " [HARD]" or "")
     end
     local act = mode == "LINK" and "hard" or "mode"
-    local sact = mode == "LINK" and "mute" or "cfg"
+    local sact = mode == "LINK" and "mute"
+      or (#pages_for(selected) > 0 and "cfg" or "--")
     local e1 = mode == "MOVE" and " E1 hop" or ""
     return mode .. " " .. World.TYPES[selected.type].label .. "#" .. selected.id ..
       extra .. " |" .. e1 .. " K3 " .. act .. " ^K3 " .. sact .. " K2 back"

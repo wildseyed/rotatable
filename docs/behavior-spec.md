@@ -256,3 +256,12 @@ double-tap-hold + drag = rotate, two-finger rotate.
     LINK ring declutter all in. **Pitchlock loop subtype out** (real
     time-stretch = phase vocoder, poor cost/benefit in v2).
 12. **Label collisions**: resolved 2026-09-26 (v1.x, renderer label queue).
+13. **Effect envelopes** (filter-freq/feedback/dry-wet ADSR panels from the
+    original): deferred — needs SynthDef + sequencer-trigger plumbing; scope
+    with the subosc design session. Until then the env page exists only on
+    oscillator/loop/sampler (the types whose ADSR the engine actually runs);
+    page-less types (input/midi/tonality/output) don't enter L3. (2026-09-27)
+14. **Osc rotation does NOT retrigger the amplitude envelope** (deliberate
+    deviation from §3.1): encoder rotation is a continuous sweep, retrigger
+    would stutter; envelopes fire on placement + sequencer/MIDI notes.
+    (owner decision 2026-09-27)

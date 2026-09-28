@@ -196,3 +196,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   frames; the dirty-flag optimization is gone — CPU impact unchecked,
   phase 9 perf pass must measure). Place menu scroll-verified with all 13
   types. Real MIDI hardware test still pending with owner.
+- 2026-09-27: **Env page gated to osc/loop/sampler + two owner decisions.**
+  The env page was dead UI on effects/controllers (sync_object only pushes
+  ADSR for osc/loop/sampler). Owner call: gate it (effect envelopes = future
+  engine work, scope with the subosc session). Page-less types
+  (input/midi/tonality/output) now skip L3 entirely; status shows `^K3 --`.
+  Also decided: osc rotation does NOT retrigger the envelope (continuous
+  sweeps would stutter) — spec §9.13/14. Device-verified: filter L3 = 2d
+  only, input blocked, osc keeps env.
