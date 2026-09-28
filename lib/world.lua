@@ -1,5 +1,6 @@
 -- world.lua — table world model: objects + proximity connections
--- v1 scope: core 8 object types (owner decision 2026-09-24)
+-- v2: 13 of the original 14 types (phase-6 decisions; song settings dropped,
+-- pitchlock dropped, MIDI-in still pending)
 
 local World = {}
 
@@ -13,23 +14,38 @@ World.TYPES = {
     subtypes = { "sine", "saw", "square", "noise" },
     params = { freq = 220, amp = 0.8 } },
   loop = { category = "generator", label = "LOOP",
-    subtypes = { "loop", "oneshot", "pitchlock" },
-    params = { speed = 1.0, amp = 0.8 } },
+    subtypes = { "loop", "oneshot" }, -- pitchlock dropped (phase-6)
+    params = { speed = 1.0, amp = 0.8, sync = 0 } }, -- sync: 0 immediate, 1 quarter, 2 bar
+  sampler = { category = "generator", label = "SMP",
+    subtypes = { "instrument", "drum" },
+    params = { freq = 220, base = 261.6256, amp = 0.8 } }, -- base = sample's natural pitch
+  input = { category = "generator", label = "IN",
+    subtypes = { "line" },
+    params = { gain = 0.8 } },
   filter = { category = "effect", label = "FLT",
     subtypes = { "lp", "bp", "hp" },
     params = { cutoff = 1200, res = 0.3 } },
   delay = { category = "effect", label = "DLY",
     subtypes = { "feedback", "pingpong", "reverb" },
-    params = { time = 0.3, feedback = 0.4 } },
+    params = { time = 0.3, feedback = 0.4, sync = 0, sweep = 0.2 } },
   modulator = { category = "effect", label = "MOD",
     subtypes = { "ring", "chorus", "flanger" },
     params = { main = 0.5, drywet = 0.5 } },
+  waveshaper = { category = "effect", label = "SHP",
+    subtypes = { "resampler", "compressor", "distortion" },
+    params = { main = 0.5, drywet = 0.5 } },
   lfo = { category = "controller", label = "LFO",
     subtypes = { "sine", "saw", "square", "random" },
-    params = { freq = 2.0, depth = 0.5 } },
+    params = { freq = 2.0, depth = 0.5, sync = 0, mult = 8 } }, -- mult: period in 32nd notes
   sequencer = { category = "controller", label = "SEQ",
     subtypes = { "mono", "poly", "random" },
     params = { preset = 1 } },
+  midi = { category = "controller", label = "MIDI",
+    subtypes = { "in" },
+    params = { transpose = 0 } }, -- transpose: semitones, rotation ±24
+  tonality = { category = "global", label = "TON",
+    subtypes = { "major", "minor", "pentatonic", "chromatic" },
+    params = { root = 0 } }, -- root: semitones from C
   output = { category = "global", label = "OUT",
     subtypes = { "master" },
     params = { volume = 0.8 } },
@@ -38,13 +54,13 @@ World.TYPES = {
 -- canonical object-type order for the place menu, grouped by category
 World.MENU = {
   { header = "GENERATORS" },
-  "oscillator", "loop",
+  "oscillator", "loop", "sampler", "input",
   { header = "EFFECTS" },
-  "filter", "delay", "modulator",
+  "filter", "delay", "modulator", "waveshaper",
   { header = "CONTROLLERS" },
-  "lfo", "sequencer",
+  "lfo", "sequencer", "midi",
   { header = "GLOBALS" },
-  "output",
+  "tonality", "output",
 }
 
 World.objects = {}
@@ -75,22 +91,33 @@ function World.add(type, x, y, angle)
     env = { a = 0.01, d = 0.1, s = 0.7, r = 0.3 }, -- envelope placeholder
   }
   if type == "sequencer" then
-    -- 16 steps; default = the phase-4 pentatonic demo pattern (odd steps on)
+    -- 6 rotation-switched preset patterns (phase 8 batch 2); pattern 1 =
+    -- the phase-4 pentatonic demo (odd steps on), 2-6 blank.
+    -- dur = step length in 32nd notes (2 = 16th, the v1 timing)
     local PENTA_ST = { 0, 2, 4, 7, 9, 12, 14, 16 } -- semitone offsets
-    o.steps = {}
-    for i = 1, 16 do
-      local on = i % 2 == 1
-      o.steps[i] = { on = on,
-        pitch = on and PENTA_ST[(i - 1) / 2 + 1] or 0,
-        vel = 0.8 }
+    o.patterns = {}
+    for p = 1, 6 do
+      local steps = {}
+      for i = 1, 16 do
+        local on = p == 1 and i % 2 == 1
+        steps[i] = { on = on,
+          pitch = on and PENTA_ST[(i - 1) / 2 + 1] or 0,
+          vel = 0.8, dur = 2 }
+      end
+      o.patterns[p] = steps
     end
-  elseif type == "loop" then
+  elseif type == "loop" or type == "sampler" then
     o.sample = nil -- path of loaded WAV (browser panel)
   end
   next_id = next_id + 1
   table.insert(World.objects, o)
   World.recompute()
   return o
+end
+
+-- active pattern for a sequencer (rotation = preset slot, 1..6)
+function World.seq_steps(o)
+  return o.patterns[util.clamp(math.floor(o.params.preset or 1), 1, 6)]
 end
 
 function World.remove(id)

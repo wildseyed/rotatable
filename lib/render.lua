@@ -33,6 +33,102 @@ local function draw_star(sx, sy, r)
   screen.stroke()
 end
 
+-- subtype pictograms (reactable-style): a small mark on the player-facing
+-- rim of the glyph, orbiting with rotation. s = mark radius in px.
+local function mline(pts)
+  screen.move(pts[1], pts[2])
+  for i = 3, #pts, 2 do screen.line(pts[i], pts[i + 1]) end
+  screen.stroke()
+end
+
+local function mdot(x, y)
+  screen.circle(x, y, 1)
+  screen.fill()
+end
+
+local function sub_mark(o, px, py, s)
+  local t, sub = o.type, o.subtype
+  if t == "oscillator" or t == "lfo" then
+    if sub == 1 then -- sine
+      mline({ px - s, py, px - s * 0.4, py - s * 0.7, px + s * 0.4, py + s * 0.7, px + s, py })
+    elseif sub == 2 then -- saw
+      mline({ px - s, py + s * 0.6, px + s * 0.5, py - s * 0.6, px + s * 0.5, py + s * 0.6 })
+    elseif sub == 3 then -- square
+      screen.rect(px - s * 0.6, py - s * 0.6, s * 1.2, s * 1.2)
+      screen.stroke()
+    else -- noise / random
+      mdot(px - s * 0.6, py - s * 0.3) mdot(px, py + s * 0.4) mdot(px + s * 0.6, py - s * 0.5)
+    end
+  elseif t == "loop" then
+    if sub == 1 then -- loop: ring
+      screen.circle(px, py, s * 0.6)
+      screen.stroke()
+    else -- oneshot: play triangle
+      mline({ px - s * 0.5, py - s * 0.6, px + s * 0.6, py, px - s * 0.5, py + s * 0.6, px - s * 0.5, py - s * 0.6 })
+    end
+  elseif t == "sampler" then
+    if sub == 1 then -- instrument: note
+      mdot(px - s * 0.3, py + s * 0.4)
+      mline({ px - s * 0.3 + 1, py + s * 0.4, px - s * 0.3 + 1, py - s * 0.6 })
+    else -- drum: X
+      mline({ px - s * 0.5, py - s * 0.5, px + s * 0.5, py + s * 0.5 })
+      mline({ px - s * 0.5, py + s * 0.5, px + s * 0.5, py - s * 0.5 })
+    end
+  elseif t == "filter" then -- classic slope pictograms
+    if sub == 1 then -- lp
+      mline({ px - s, py - s * 0.4, px, py - s * 0.4, px + s, py + s * 0.5 })
+    elseif sub == 2 then -- bp
+      mline({ px - s, py + s * 0.5, px, py - s * 0.5, px + s, py + s * 0.5 })
+    else -- hp
+      mline({ px - s, py + s * 0.5, px, py - s * 0.4, px + s, py - s * 0.4 })
+    end
+  elseif t == "delay" then
+    if sub == 1 then -- feedback: near-full arc
+      screen.arc(px, py, s * 0.6, 0.4, 5.9)
+      screen.stroke()
+    elseif sub == 2 then -- pingpong: two dots
+      mdot(px - s * 0.5, py) mdot(px + s * 0.5, py)
+    else -- reverb: concentric arcs
+      screen.arc(px, py, s * 0.35, 0.4, 5.9)
+      screen.arc(px, py, s * 0.7, 0.4, 5.9)
+      screen.stroke()
+    end
+  elseif t == "modulator" then
+    if sub == 1 then -- ring: circle + center dot
+      screen.circle(px, py, s * 0.55)
+      screen.stroke()
+      mdot(px, py)
+    elseif sub == 2 then -- chorus: twin arcs
+      screen.arc(px - s * 0.3, py, s * 0.45, 0.4, 5.9)
+      screen.arc(px + s * 0.3, py, s * 0.45, 0.4, 5.9)
+      screen.stroke()
+    else -- flanger: X
+      mline({ px - s * 0.5, py - s * 0.5, px + s * 0.5, py + s * 0.5 })
+      mline({ px - s * 0.5, py + s * 0.5, px + s * 0.5, py - s * 0.5 })
+    end
+  elseif t == "waveshaper" then
+    if sub == 1 then -- resampler: staircase
+      mline({ px - s, py + s * 0.5, px - s * 0.3, py + s * 0.5, px - s * 0.3, py,
+        px + s * 0.3, py, px + s * 0.3, py - s * 0.5, px + s, py - s * 0.5 })
+    elseif sub == 2 then -- compressor: ><
+      mline({ px - s * 0.6, py - s * 0.5, px, py, px - s * 0.6, py + s * 0.5 })
+      mline({ px + s * 0.6, py - s * 0.5, px, py, px + s * 0.6, py + s * 0.5 })
+    else -- distortion: jagged
+      mline({ px - s, py + s * 0.5, px - s * 0.3, py - s * 0.5, px + s * 0.3, py + s * 0.5, px + s, py - s * 0.5 })
+    end
+  elseif t == "sequencer" then
+    if sub == 1 then -- mono: 3 dots in a row
+      mdot(px - s * 0.6, py) mdot(px, py) mdot(px + s * 0.6, py)
+    elseif sub == 2 then -- poly: dot grid
+      mdot(px - s * 0.4, py - s * 0.4) mdot(px + s * 0.4, py - s * 0.4)
+      mdot(px - s * 0.4, py + s * 0.4) mdot(px + s * 0.4, py + s * 0.4)
+    else -- random: scatter
+      mdot(px - s * 0.5, py + s * 0.3) mdot(px + s * 0.1, py - s * 0.5) mdot(px + s * 0.5, py + s * 0.2)
+    end
+  end
+  -- input/tonality/output: single or non-iconic subtypes, no mark
+end
+
 -- label de-collision: labels queue up during the frame, then draw selected
 -- first and skip any that would overlap an already-drawn label
 local label_queue = nil
@@ -68,9 +164,10 @@ function Render.flush_labels()
   label_queue = nil
 end
 
--- connection lines: audio = solid, control = dotted (hand-drawn dots)
--- muted = dim, hardlink = bright double line
-local function draw_connection(cam, w2s, world, conn)
+-- connection lines: audio = dim base + bright signal-flow dashes marching
+-- toward the destination (phase = seconds); control = dotted, dots marching.
+-- muted = dim static, hardlink = bright double line
+local function draw_connection(cam, w2s, world, conn, phase)
   local ax, ay = w2s(conn.a.x, conn.a.y)
   local bx, by
   if conn.b == "output" then
@@ -79,38 +176,53 @@ local function draw_connection(cam, w2s, world, conn)
     bx, by = w2s(conn.b.x, conn.b.y)
   end
   local hard = conn.b ~= "output" and world.is_hardlinked(conn.a.id, conn.b.id)
-  local lvl = conn.muted and 2 or (hard and 15 or (conn.kind == "audio" and 7 or 5))
+  local dx, dy = bx - ax, by - ay
+  local len = math.sqrt(dx * dx + dy * dy)
   if conn.kind == "audio" then
-    screen.level(lvl)
+    screen.level(conn.muted and 2 or 3)
     screen.move(ax, ay)
     screen.line(bx, by)
     screen.stroke()
     if hard then
-      local dx, dy = by - ay, -(bx - ax)
-      local len = math.sqrt(dx * dx + dy * dy)
+      local px, py = dy, -dx
       if len > 0 then
-        dx, dy = dx / len * 1.5, dy / len * 1.5
-        screen.move(ax + dx, ay + dy)
-        screen.line(bx + dx, by + dy)
-        screen.move(ax - dx, ay - dy)
-        screen.line(bx - dx, by - dy)
+        px, py = px / len * 1.5, py / len * 1.5
+        screen.level(conn.muted and 2 or 7)
+        screen.move(ax + px, ay + py)
+        screen.line(bx + px, by + py)
+        screen.move(ax - px, ay - py)
+        screen.line(bx - px, by - py)
         screen.stroke()
       end
     end
+    if not conn.muted and len > 10 then
+      local ux, uy = dx / len, dy / len
+      local off = (phase * 20) % 16 -- dash march speed px/s
+      screen.level(hard and 15 or 9)
+      local p = off
+      while p < len do
+        local e = math.min(p + 3.5, len)
+        screen.move(ax + ux * p, ay + uy * p)
+        screen.line(ax + ux * e, ay + uy * e)
+        p = p + 16
+      end
+      screen.stroke()
+    end
   else
-    screen.level(lvl)
-    local dx, dy = bx - ax, by - ay
-    local len = math.sqrt(dx * dx + dy * dy)
+    screen.level(conn.muted and 2 or (hard and 15 or 5))
     local n = math.max(2, math.floor(len / 4))
+    local shift = (phase * 2) % 1
     for i = 0, n do
-      local t = i / n
-      screen.pixel(math.floor(ax + dx * t + 0.5), math.floor(ay + dy * t + 0.5))
+      local t = (i + shift) / n
+      if t <= 1 then
+        screen.pixel(math.floor(ax + dx * t + 0.5), math.floor(ay + dy * t + 0.5))
+      end
     end
     screen.fill()
   end
 end
 
-function Render.object(cam, w2s, o, types, selected)
+function Render.object(cam, w2s, o, types, selected, lvl)
   local sx, sy = w2s(o.x, o.y)
   local r = util.clamp(GLYPH_R * cam.zoom, 3, 14)
   -- skip (and skip label) when fully offscreen
@@ -127,21 +239,38 @@ function Render.object(cam, w2s, o, types, selected)
   elseif cat == "global" then
     draw_star(sx, sy, r * 1.15)
   end
-  -- rotation tick
+  -- rotation tick (center stub; the subtype pictogram completes the radius)
   screen.level(selected and 15 or 6)
   screen.move(sx, sy)
-  screen.line(sx + r * math.cos(o.angle), sy + r * math.sin(o.angle))
+  screen.line(sx + 0.35 * r * math.cos(o.angle), sy + 0.35 * r * math.sin(o.angle))
   screen.stroke()
+  -- subtype pictogram on the player-facing rim (orbits with rotation)
+  if r >= 3.5 then
+    local s = util.clamp(r * 0.38, 1.5, 6)
+    screen.level(selected and 15 or 9)
+    sub_mark(o, sx + 0.68 * r * math.cos(o.angle), sy + 0.68 * r * math.sin(o.angle), s)
+  end
+  -- VU bar under the glyph (engine lvl poll, sqrt-scaled)
+  if lvl and lvl > 0.01 then
+    local w = math.sqrt(util.clamp(lvl, 0, 1)) * r * 2
+    screen.level(selected and 12 or 5)
+    screen.move(sx - r, sy + r + 2)
+    screen.line(sx - r + w, sy + r + 2)
+    screen.stroke()
+  end
   -- label queues up (collision-resolved at flush) when zoomed in enough to read
   if cam.zoom >= 30 and label_queue then
-    label_queue[#label_queue + 1] =
-      { x = sx, y = sy + r + 6, text = types[o.type].label, sel = selected }
+    local text = types[o.type].label
+    if selected then
+      text = text .. " " .. (types[o.type].subtypes[o.subtype] or "")
+    end
+    label_queue[#label_queue + 1] = { x = sx, y = sy + r + 8, text = text, sel = selected }
   end
 end
 
-function Render.connections(cam, w2s, world)
+function Render.connections(cam, w2s, world, phase)
   for _, conn in ipairs(world.connections) do
-    draw_connection(cam, w2s, world, conn)
+    draw_connection(cam, w2s, world, conn, phase or 0)
   end
 end
 

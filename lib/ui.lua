@@ -23,10 +23,19 @@ local field_idx = 1         -- L3 field within page
 local step_idx = 1          -- L3 steps page: selected step 1..16
 local browser = { files = nil, idx = 1 } -- L3 browser page (lazy scan)
 local k1_down = false
+local k2_down = false
+local k3_down = false
 local clear_armed = false   -- K1+K2 at L1 arms table-clear; K3 confirms, K2 cancels
 local k3_slot_press = nil   -- util.time() of K3 press when armed on a slot
 local slot_cand = nil       -- slot index near reticle at L1 (nil = none)
 local SLOT_LONG = 0.8       -- s; long-press threshold for slot store/delete
+-- SYSTEM master menu: hold K1+K2+K3 for MASTER_LONG seconds (owner, 2026-09-27)
+local master_t = nil        -- util.time() when the third key came down
+local MASTER_LONG = 1.0
+local sys_idx = 1
+local sys_confirm = nil     -- "restore" while the restore confirm is showing
+local sys_msg = nil         -- transient bottom-line message
+local SYS_ITEMS = { "RESTORE PRESETS", "ABOUT" }
 
 function UI.init(ctx)
   World, cam, w2s, mark_dirty = ctx.world, ctx.cam, ctx.w2s, ctx.mark_dirty
@@ -84,14 +93,71 @@ local function rebuild_link_candidates()
   link_idx = 1
 end
 
--- L3 pages per object: envelope always; 2d for two-param effects;
--- steps editor for sequencer; sample browser for loop
+-- L3 "set" page (phase 8 batch 1): one shared pattern for tempo-sync and
+-- pitch settings. Fields per type: lfo sync+mult, delay sync+sweep,
+-- loop sync, sampler base pitch.
+local SET_FIELDS = {
+  lfo = {
+    { k = "sync", min = 0, max = 1, step = 1 },
+    { k = "mult", min = 1, max = 128, step = 1 },
+  },
+  delay = {
+    { k = "sync", min = 0, max = 1, step = 1 },
+    { k = "sweep", min = 0.01, max = 2, step = 0.02 },
+  },
+  loop = {
+    { k = "sync", min = 0, max = 2, step = 1 }, -- 0 immediate, 1 quarter, 2 bar
+  },
+  sampler = {
+    { k = "base", min = -48, max = 48, step = 1 }, -- semitones from C4
+  },
+}
+
+local C4 = 261.6256 -- sampler base reference pitch (params.base is in Hz)
+local NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }
+
+local function base_semis(o)
+  return math.floor(12 * math.log((o.params.base or C4) / C4) / math.log(2) + 0.5)
+end
+
+local function set_field_str(o, f)
+  local v = o.params[f.k]
+  if f.k == "sync" then
+    if o.type == "loop" then
+      return ({ "immed", "quarter", "bar" })[util.clamp(math.floor(v + 0.5), 0, 2) + 1]
+    end
+    return v >= 0.5 and "on" or "off"
+  elseif f.k == "mult" then
+    return string.format("%d 32nds", math.floor(v + 0.5))
+  elseif f.k == "sweep" then
+    return string.format("%.2f s", v)
+  elseif f.k == "base" then
+    local st = base_semis(o)
+    return string.format("%s%d (%d Hz)",
+      NOTE_NAMES[(st % 12) + 1], 4 + math.floor(st / 12), math.floor(v + 0.5))
+  end
+  return tostring(v)
+end
+
+-- env page only where sync_object actually pushes ADSR (osc/loop/sampler);
+-- effect envelopes (filter-freq/feedback/dry-wet) are a future engine item
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true }
+
+-- L3 pages per object: 2d for two-param effects; steps/vel/dur for
+-- sequencer; sample browser for loop+sampler; settings page for syncable
+-- types + sampler; envelope for envelope-driven generators
 local function pages_for(o)
-  local p = { "env" }
+  local p = {}
   local c = World.TYPES[o.type].category
-  if c == "effect" then table.insert(p, 1, "2d") end
-  if o.type == "sequencer" then table.insert(p, 1, "steps") end
-  if o.type == "loop" then table.insert(p, 1, "browser") end
+  if c == "effect" then table.insert(p, "2d") end
+  if o.type == "sequencer" then
+    table.insert(p, 1, "dur")
+    table.insert(p, 1, "vel")
+    table.insert(p, 1, "steps")
+  end
+  if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
+  if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
+  if ENV_TYPES[o.type] then table.insert(p, "env") end
   return p
 end
 
@@ -185,6 +251,16 @@ end
 
 -- called from the redraw metro; returns true while a move is animating
 function UI.tick()
+  -- SYSTEM menu: all three keys held past the threshold
+  if master_t and util.time() - master_t >= MASTER_LONG then
+    master_t = nil
+    level = "SYS"
+    sys_idx = 1
+    sys_confirm = nil
+    sys_msg = nil
+    selected = nil
+    return true
+  end
   local moving = false
   -- camera ease toward hop target
   if cam_target then
@@ -225,6 +301,14 @@ local function cycle_mode(dir)
 end
 
 function UI.enc(n, d)
+  if level == "SYS" then
+    if n == 2 then
+      sys_idx = util.clamp(sys_idx + d, 1, #SYS_ITEMS)
+      sys_msg = nil
+    end
+    dirty()
+    return
+  end
   if level == "L1" then
     if n == 1 then
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
@@ -270,6 +354,12 @@ function UI.enc(n, d)
       end
     end
   elseif level == "L3" and selected then
+    if k1_down and n == 2 then
+      -- subtype cycling from any config page (same as K1+E2 in ROTATE)
+      World.cycle_subtype(selected, d > 0 and 1 or -1)
+      dirty()
+      return
+    end
     local pages = pages_for(selected)
     local page = pages[page_idx]
     if n == 1 then
@@ -279,15 +369,36 @@ function UI.enc(n, d)
       local kx, ky = params_2d(selected)
       if n == 2 then selected.params[kx] = util.clamp(selected.params[kx] + d * 0.02, 0, 1)
       elseif n == 3 then selected.params[ky] = util.clamp(selected.params[ky] + d * 0.02, 0, 1) end
-    elseif page == "steps" then
+    elseif page == "steps" or page == "vel" or page == "dur" then
       if n == 2 then
         step_idx = util.clamp(step_idx + d, 1, 16)
       elseif n == 3 then
-        local st = selected.steps[step_idx]
-        if k1_down then
+        local st = World.seq_steps(selected)[step_idx]
+        if page == "vel" then
+          st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
+        elseif page == "dur" then
+          st.dur = util.clamp((st.dur or 2) + d, 1, 8)
+        elseif selected.subtype == 3 then
+          -- random: pitch is improvised; E3 edits velocity here
+          st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
+        elseif k1_down then
           st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
         else
-          st.pitch = util.clamp(st.pitch + d, -12, 12)
+          st.pitch = util.clamp(st.pitch + d, -24, 24)
+        end
+      end
+    elseif page == "set" then
+      local fields = SET_FIELDS[selected.type]
+      if n == 2 then
+        field_idx = util.clamp(field_idx + d, 1, #fields)
+      elseif n == 3 then
+        local f = fields[field_idx]
+        if f.k == "base" then
+          local st = util.clamp(base_semis(selected) + d, f.min, f.max)
+          selected.params.base = C4 * (2 ^ (st / 12))
+        else
+          selected.params[f.k] =
+            util.clamp(selected.params[f.k] + d * f.step, f.min, f.max)
         end
       end
     elseif page == "browser" then
@@ -305,11 +416,51 @@ function UI.enc(n, d)
   dirty()
 end
 
+-- third key down while the other two are held: start the SYSTEM-menu timer
+-- and neutralize whatever the two-key combos already did
+local function master_check()
+  if k1_down and k2_down and k3_down and not master_t then
+    master_t = util.time()
+    clear_armed = false
+    k3_slot_press = nil -- a slot press superseded by the gesture must not
+    slot_cand = nil     -- fire store/recall on release
+    if level == "L0" then level = "L1" end
+  end
+end
+
 function UI.key(n, z)
   if n == 1 then
     -- K1 = held shift only; its short tap belongs to the norns system menu
     k1_down = (z == 1)
-  elseif n == 2 and z == 1 then
+    -- K1 may be the LAST key of the three down (owner physical press 2026-09-27)
+    if z == 1 then master_check() else master_t = nil end
+  elseif n == 2 then
+    k2_down = (z == 1)
+    if z == 1 then master_check() else master_t = nil end
+  elseif n == 3 then
+    k3_down = (z == 1)
+    if z == 1 then master_check() else master_t = nil end
+  end
+  -- SYSTEM level: E2 scroll / K3 select / K2 close; swallow everything else
+  if level == "SYS" then
+    if n == 2 and z == 1 then
+      if sys_confirm then sys_confirm = nil else level = "L1" end
+    elseif n == 3 and z == 1 then
+      if sys_confirm == "restore" then
+        sys_msg = "restored " .. Slots.restore_factory() .. " presets"
+        sys_confirm = nil
+      elseif SYS_ITEMS[sys_idx] == "RESTORE PRESETS" then
+        sys_confirm = "restore"
+      elseif SYS_ITEMS[sys_idx] == "ABOUT" then
+        sys_msg = "rotatable v2-dev | " .. (Slots.factory_available() and
+          "8 factory presets" or "no presets bundled")
+      end
+    end
+    dirty()
+    return
+  end
+  if master_t then dirty() return end -- all three held: suppress combos
+  if n == 2 and z == 1 then
     -- K2 = BACK (K1+K2 = delete at current scope: object in L2, table at L1)
     if clear_armed then
       clear_armed = false -- cancel
@@ -347,7 +498,7 @@ function UI.key(n, z)
         elseif level == "L2" and selected then
           if mode == "LINK" and link_candidates[link_idx] then
             World.toggle_mute(selected.id, link_candidates[link_idx].obj.id)
-          else
+          elseif #pages_for(selected) > 0 then
             level = "L3"; page_idx = 1; field_idx = 1; step_idx = 1
             browser.files = nil; browser.idx = 1
           end
@@ -377,8 +528,8 @@ function UI.key(n, z)
           end
         elseif level == "L3" and selected then
           local page = pages_for(selected)[page_idx]
-          if page == "steps" then
-            local st = selected.steps[step_idx]
+          if page == "steps" or page == "vel" or page == "dur" then
+            local st = World.seq_steps(selected)[step_idx]
             st.on = not st.on
           elseif page == "browser" then
             if browser.files == nil then browser.files = scan_audio_files() end
@@ -471,7 +622,9 @@ local function draw_l3()
   screen.level(12)
   screen.move(12, 10)
   screen.text(World.TYPES[selected.type].label .. "#" .. selected.id ..
-    " " .. World.subtype_name(selected) .. "  [" .. page .. " " .. page_idx .. "/" .. #pages .. "]")
+    " " .. World.subtype_name(selected) ..
+    (selected.type == "sequencer" and " p" .. (selected.params.preset or 1) or "") ..
+    "  [" .. page .. " " .. page_idx .. "/" .. #pages .. "]")
   if page == "env" then
     for i, f in ipairs(ENV_FIELDS) do
       local x = 20 + (i - 1) * 26
@@ -483,20 +636,35 @@ local function draw_l3()
       screen.move(x, 60)
       screen.text(f)
     end
-  elseif page == "steps" then
-    -- 16 steps: bar height = pitch (-12..+12 around midline), brightness = vel
+  elseif page == "steps" or page == "vel" or page == "dur" then
+    -- 16 steps around a midline. steps: bar = pitch (-24..+24; random
+    -- subtype shows its improvised history instead), vel: bar = velocity,
+    -- dur: bar = step length in 32nds. brightness = vel, dot = step off
+    local steps = World.seq_steps(selected)
+    local random = selected.subtype == 3
     local x0, mid = 14, 36
     screen.level(3)
     screen.move(x0, mid) screen.line(118, mid)
     screen.stroke()
     for i = 1, 16 do
-      local st = selected.steps[i]
+      local st = steps[i]
       local x = x0 + (i - 1) * 7
-      local h = util.clamp(st.pitch, -12, 12) / 12 * 16
       local lvl = st.on and (2 + math.floor(st.vel * 12)) or 2
       if i == step_idx then lvl = 15 end
       screen.level(lvl)
-      if st.on then
+      local h
+      if page == "steps" then
+        local pitch = st.pitch
+        if random then pitch = (selected._hist and selected._hist[i]) or 0 end
+        h = util.clamp(pitch, -24, 24) / 24 * 16
+      elseif page == "vel" then
+        h = st.vel * 16
+      else -- dur
+        h = ((st.dur or 2) / 8) * 16
+      end
+      local show = st.on or
+        (page == "steps" and random and selected._hist and selected._hist[i])
+      if show then
         screen.move(x, mid)
         screen.line(x, mid - h)
         screen.stroke()
@@ -509,11 +677,46 @@ local function draw_l3()
         screen.fill()
       end
     end
-    local st = selected.steps[step_idx]
+    local st = steps[step_idx]
     screen.level(6)
     screen.move(12, 60)
-    screen.text(string.format("st%d %s %+d vel %.2f", step_idx,
-      st.on and "ON" or "off", st.pitch, st.vel))
+    if page == "steps" then
+      if random then
+        screen.text(string.format("st%d %s RND last %+d", step_idx,
+          st.on and "ON" or "off",
+          (selected._hist and selected._hist[step_idx]) or 0))
+      else
+        screen.text(string.format("st%d %s %+d vel %.2f", step_idx,
+          st.on and "ON" or "off", st.pitch, st.vel))
+      end
+    elseif page == "vel" then
+      screen.text(string.format("st%d %s vel %.2f", step_idx,
+        st.on and "ON" or "off", st.vel))
+    else
+      screen.text(string.format("st%d %s dur %d/32", step_idx,
+        st.on and "ON" or "off", st.dur or 2))
+    end
+  elseif page == "set" then
+    local fields = SET_FIELDS[selected.type]
+    local y = 24
+    for i, f in ipairs(fields) do
+      if i == field_idx then
+        screen.level(15)
+        screen.rect(10, y - 6, 106, 9)
+        screen.fill()
+        screen.level(0)
+      else
+        screen.level(10)
+      end
+      screen.move(14, y)
+      screen.text(f.k)
+      screen.move(50, y)
+      screen.text(set_field_str(selected, f))
+      y = y + 11
+    end
+    screen.level(3)
+    screen.move(12, 60)
+    screen.text("E2 field  E3 edit")
   elseif page == "browser" then
     if browser.files == nil then browser.files = scan_audio_files() end
     local n = #browser.files
@@ -560,13 +763,58 @@ local function draw_l3()
   end
 end
 
+-- SYSTEM master menu (K1+K2+K3 long-hold)
+local function draw_sys()
+  screen.level(0)
+  screen.rect(14, 2, 100, 60)
+  screen.fill()
+  screen.level(8)
+  screen.rect(14, 2, 100, 60)
+  screen.stroke()
+  screen.level(3)
+  screen.move(18, 12)
+  screen.text("SYSTEM")
+  if sys_confirm == "restore" then
+    screen.level(10)
+    screen.move(18, 28)
+    screen.text("restore presets?")
+    screen.level(3)
+    screen.move(18, 38)
+    screen.text("replaces all 8 slots")
+    screen.level(10)
+    screen.move(18, 52)
+    screen.text("K3 yes   K2 no")
+  else
+    local y = 26
+    for i, item in ipairs(SYS_ITEMS) do
+      if i == sys_idx then
+        screen.level(15)
+        screen.rect(16, y - 5, 96, 7)
+        screen.fill()
+        screen.level(0)
+      else
+        screen.level(10)
+      end
+      screen.move(18, y)
+      screen.text(item)
+      y = y + 10
+    end
+    if sys_msg then
+      screen.level(6)
+      screen.move(18, 56)
+      screen.text(sys_msg)
+    end
+  end
+end
+
 function UI.draw_overlay()
   if level == "L0" then draw_menu()
+  elseif level == "SYS" then draw_sys()
   elseif level == "L3" and selected then draw_l3() end
 end
 
 function UI.overlay_open()
-  return level == "L0" or (level == "L3" and selected ~= nil)
+  return level == "L0" or level == "SYS" or (level == "L3" and selected ~= nil)
 end
 
 function UI.link_candidate()
@@ -594,16 +842,22 @@ function UI.status()
     local extra = ""
     if mode == "ROTATE" then
       extra = "  " .. World.subtype_name(selected)
+      if selected.type == "sequencer" then
+        extra = extra .. " p" .. (selected.params.preset or 1)
+      end
     elseif mode == "LINK" and link_candidates[link_idx] then
       local t = link_candidates[link_idx].obj
       extra = " -> " .. World.TYPES[t.type].label .. "#" .. t.id ..
         (World.is_hardlinked(selected.id, t.id) and " [HARD]" or "")
     end
     local act = mode == "LINK" and "hard" or "mode"
-    local sact = mode == "LINK" and "mute" or "cfg"
+    local sact = mode == "LINK" and "mute"
+      or (#pages_for(selected) > 0 and "cfg" or "--")
     local e1 = mode == "MOVE" and " E1 hop" or ""
     return mode .. " " .. World.TYPES[selected.type].label .. "#" .. selected.id ..
       extra .. " |" .. e1 .. " K3 " .. act .. " ^K3 " .. sact .. " K2 back"
+  elseif level == "SYS" then
+    return "SYSTEM  E2 scroll | K3 select K2 back"
   elseif level == "L3" and selected then
     return "CONFIG  E1 page E2/E3 edit | K2 back"
   end
