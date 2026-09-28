@@ -111,6 +111,11 @@ local SET_FIELDS = {
   sampler = {
     { k = "base", min = -48, max = 48, step = 1 }, -- semitones from C4
   },
+  output = { -- global FX (spec §3.13): master reverb + compression
+    { k = "rev", min = 0, max = 1, step = 0.02 },
+    { k = "room", min = 0, max = 1, step = 0.02 },
+    { k = "comp", min = 0, max = 1, step = 0.02 },
+  },
 }
 
 local C4 = 261.6256 -- sampler base reference pitch (params.base is in Hz)

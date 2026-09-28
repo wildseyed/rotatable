@@ -210,6 +210,10 @@ function init()
     redraw()
   end, 1/15, -1)
   redraw_metro:start()
+
+  -- master synth sometimes doesn't survive engine (re)boot — remaster is
+  -- idempotent and remaster-fixes it every time (2026-09-28 saga)
+  engine.remaster()
 end
 
 function enc(n, d)

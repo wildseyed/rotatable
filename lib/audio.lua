@@ -24,6 +24,9 @@ local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
 --         lvl_slot= }
 local nodes = {}
 
+-- last-known master volume (engine has no getter; we are the only writer)
+local master_vol = 0.8
+
 -- mirror of the engine's level-poll slot pool: the engine pops from the end
 -- of its free list per addNode (audio defs only, not lfo) and pushes back on
 -- freeNode; adds/removes arrive in the same order we issue them, so this
@@ -67,7 +70,11 @@ function Audio.sync_object(o)
   if not nodes[o.id] then return end
   local k, v = primary(o)
   if o.type == "output" then
+    master_vol = v
     engine.set(o.id, "volume", v)
+    engine.set(o.id, "rev", o.params.rev or 0)
+    engine.set(o.id, "room", o.params.room or 0.5)
+    engine.set(o.id, "comp", o.params.comp or 0)
     return
   end
   if o.type == "tempo" then
@@ -200,6 +207,10 @@ function Audio.on_add(o)
     -- adopt the current bpm instead of resetting it to the angle default
     o.angle = (params:get("rot_tempo") - 40) / 200 * 2 * math.pi
   end
+  if o.type == "output" then
+    -- adopt the current master volume (angle 0 = silence on place)
+    o.angle = master_vol * 2 * math.pi
+  end
   nodes[o.id] = n
   engine.add(o.id, o.type, o.subtype - 1)
   Audio.sync_object(o)
@@ -233,6 +244,7 @@ function Audio.reset()
   -- a removed output object leaves its volume behind on the master synth;
   -- a bare table (no output object) should not stay silent (e2e 2026-09-27)
   engine.volume(0.8)
+  master_vol = 0.8
 end
 
 -- hook points: wrap World functions rather than editing its logic

@@ -107,6 +107,7 @@ function Slots.recall(i)
   local new_ids = {}
   for _, e in ipairs(data.objects) do
     local o = World.add(e.type, e.x, e.y, e.angle)
+    o.angle = e.angle -- re-assert: tempo/output adopt live values on add
     o.subtype = e.subtype
     for k, v in pairs(e.params) do o.params[k] = v end
     o.env = { a = e.env.a, d = e.env.d, s = e.env.s, r = e.env.r }

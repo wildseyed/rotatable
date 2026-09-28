@@ -284,3 +284,17 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   placement, caught in testing. Page-less (^K3 `--`); slots unchanged
   (tempo already persisted). e2e green. This closes the Song Settings
   gap (§9.4 stands: patch selector = slots, background N/A).
+- 2026-09-28: **V3 batch 3 done — global FX on output + a nasty engine
+  bug found.** rot_out master stage: FreeVerb (rev/room) + Compander
+  (comp), neutral defaults; output object gets rev/room/comp params +
+  shared set-page (gfx). Output object now ADOPTS master volume on place
+  (angle from a lua-tracked master_vol — placing one no longer silences
+  the table; slots recall re-asserts saved angle after). THE BUG: engine
+  `set` command hardcoded `master.set(\volume, msg[3])` for output nodes
+  — every rev/room/comp push overwrote volume (comp=0 → silence). It
+  retrospectively explains the whole "master keeps dying, remaster fixes
+  it" saga (remaster just restored default volume 0.8). Fixed to named
+  set. init's engine.remaster() kept as belt-and-braces anyway. CPU:
+  15-obj worst case + FX engaged avg 30.0% / peak 30.7% (was 22.6/23.3)
+  — ~7 points for the always-on stage; AT the plan threshold, flagged
+  for owner. e2e green.

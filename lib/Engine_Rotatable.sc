@@ -220,8 +220,13 @@ Engine_Rotatable : CroneEngine {
 			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
 		}).add;
 
-		SynthDef(\rot_out, { arg in=0, out=0, volume=0.8;
+		// master stage: volume -> FreeVerb (mix/room, mix 0 = dry) ->
+		// Compander (comp 0 = slope 1, neutral). spec §3.13 Global Effects.
+		SynthDef(\rot_out, { arg in=0, out=0, volume=0.8, rev=0, room=0.5, comp=0;
 			var sig = In.ar(in, 1) * Lag.kr(volume, 0.1);
+			sig = FreeVerb.ar(sig, Lag.kr(rev, 0.1), Lag.kr(room, 0.1), 0.5);
+			sig = Compander.ar(sig, sig, 0.4, 1,
+				Lag.kr(comp, 0.1).linlin(0, 1, 1, 0.2), 0.01, 0.1);
 			Out.ar(out, [sig, sig]);
 		}).add;
 
@@ -303,7 +308,7 @@ Engine_Rotatable : CroneEngine {
 			var node = nodes[msg[1]];
 			if (node.notNil) {
 				if (node[\type] == \output) {
-					master.set(\volume, msg[3]);
+					master.set(msg[2].asSymbol, msg[3]);
 				} {
 					if (node[\synth].notNil) { node[\synth].set(msg[2].asSymbol, msg[3]) };
 				};

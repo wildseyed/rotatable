@@ -111,11 +111,12 @@ pulses at the tempo; sounding objects get a VU bar under the glyph.
   envelope, retriggered by sequencer/MIDI notes — filter → cutoff,
   delay → feedback, modulator/waveshaper → dry-wet (page footer shows the
   target); default is idle-neutral (s=0), so it only moves when triggered
-- **set** (lfo, delay, loop, sampler): tempo-sync & pitch settings —
+- **set** (lfo, delay, loop, sampler, output): tempo-sync & pitch/FX settings —
   E2 picks a field, E3 adjusts. lfo: `sync` on/off + `mult` (period in
   32nd notes); delay: `sync` (32nd-note quantize) + `sweep` (time glide);
   loop: `sync` immediate/quarter/bar (grid entry on load); sampler: `base`
-  (the sample's natural pitch, in semitones from C4)
+  (the sample's natural pitch, in semitones from C4); output: global FX —
+  `rev` (master reverb mix), `room`, `comp` (master compression)
 - **steps** (sequencer): E2 step, E3 pitch (−24..+24), `K1+E3` velocity,
   `K3` toggles the step. random subtype: shows the improvised-note history
   (E3 = velocity). rotation (ROTATE mode, E2) switches 6 stored patterns —

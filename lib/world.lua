@@ -62,7 +62,7 @@ World.TYPES = {
     params = {} }, -- rotation drives the rot_tempo param (single source)
   output = { category = "global", label = "OUT",
     subtypes = { "master" },
-    params = { volume = 0.8 } },
+    params = { volume = 0.8, rev = 0, room = 0.5, comp = 0 } }, -- global FX
 }
 
 -- the slider (spec §3 universal mapping): E3 in ROTATE + on-block dot.
