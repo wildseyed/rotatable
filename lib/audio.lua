@@ -48,7 +48,10 @@ local function primary(o)
   elseif o.type == "sampler" then return "freq", 55 * (2 ^ (f * 4))       -- 55..880 Hz
   elseif o.type == "input" then return "gain", f
   elseif o.type == "filter" then return "cutoff", 40 * (300 ^ f)          -- 40..12000 Hz
-  elseif o.type == "delay" then return "time", 0.01 * (200 ^ f)           -- 0.01..2 s
+  elseif o.type == "delay" then
+    -- reverb subtype: rotation = room size (time is meaningless there)
+    if o.subtype == 3 then return "room", f end
+    return "time", 0.01 * (200 ^ f)                                        -- 0.01..2 s
   elseif o.type == "modulator" then return "main", f
   elseif o.type == "waveshaper" then return "main", f
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
@@ -63,7 +66,7 @@ end
 -- engine params pushed verbatim from o.params (everything not type-special)
 local PASS_PARAMS = { freq = true, amp = true, cutoff = true, time = true,
   feedback = true, main = true, drywet = true, depth = true, gain = true,
-  base = true, sync = true, sweep = true, mult = true }
+  base = true, sync = true, sweep = true, mult = true, room = true }
 
 -- push an object's params/subtype/angle to the engine
 function Audio.sync_object(o)
@@ -118,7 +121,10 @@ function Audio.sync_object(o)
       local s = o.subs[i]
       local off, det = s.off, s.det
       if ton then
-        off, det = Tonality.snap(off + det / 100, ton.root, ton.scale), 0
+        -- snap the sub's absolute pitch, not just its offset (v3.0.1)
+        local base = 69 + 12 * math.log((o.params.freq or 220) / 440, 2)
+        local nn = Tonality.snap_abs(base + off + det / 100, ton.root, ton.scale)
+        off, det = nn - base, 0
       end
       engine.set(o.id, "sub" .. i .. "w", s.wave)
       engine.set(o.id, "sub" .. i .. "a", s.amp)
@@ -296,18 +302,20 @@ function Audio.seq_tick(tick)
             local t = nodes[n.out]
             if t and SEQ_TARGETS[t.type] then
               if t.freq then
-                -- pitched target (osc/sampler): note + velocity
+                -- pitched target (osc/sampler): snap the ABSOLUTE note to
+                -- the tonality (offset-snapping left the base out of key)
                 local pitch = st.pitch
-                if o.subtype == 3 then -- random subtype
-                  pitch = math.random(-12, 24)
-                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                local is_random = o.subtype == 3
+                if is_random then pitch = math.random(-12, 24) end
+                local base = 69 + 12 * math.log(t.freq / 440, 2)
+                local nn = base + pitch
+                if ton then nn = Tonality.snap_abs(nn, ton.root, ton.scale) end
+                if is_random then
                   o._hist = o._hist or {}
-                  o._hist[o._pos] = pitch
-                else
-                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                  o._hist[o._pos] = math.floor(nn - math.floor(base + 0.5) + 0.5)
                 end
                 engine.set(n.out, "amp", st.vel)
-                engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
+                engine.trigger(n.out, 440 * (2 ^ ((nn - 69) / 12)))
               else
                 -- effect target: bare envelope retrigger
                 engine.trigger(n.out, 0)
@@ -331,12 +339,18 @@ function Audio.midi_note(note, vel)
       local t = nodes[n.out]
       if o and t and SEQ_TARGETS[t.type] then
         if t.freq then
+          -- legato: gate closes only when the last held note is released
+          o._held = o._held or {}
           if vel > 0 then
+            o._held[note] = true
             local st = note + (o.params.transpose or 0)
             engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
             engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
           else
-            engine.set(n.out, "gate", 0)
+            o._held[note] = nil
+            if not next(o._held) then
+              engine.set(n.out, "gate", 0)
+            end
           end
         elseif vel > 0 then
           engine.trigger(n.out, 0) -- effect envelope; note-off ignored

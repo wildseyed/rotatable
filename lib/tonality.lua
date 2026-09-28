@@ -44,6 +44,22 @@ function Tonality.snap(semi, root, scale)
   return best
 end
 
+-- snap an ABSOLUTE note (midi-style number, may be fractional) to the
+-- nearest scale tone by pitch class; ties round up. use this for actual
+-- sounding pitches (the offset version above is for interval math)
+function Tonality.snap_abs(note, root, scale)
+  if not scale or #scale == 0 then return note end
+  local best, best_d = note, math.huge
+  local d0 = note % 12
+  for _, degree in ipairs(scale) do
+    local pc = (root + degree) % 12
+    local diff = ((pc - d0 + 6) % 12) - 6
+    local d = math.abs(diff)
+    if d < best_d then best, best_d = note + diff, d end
+  end
+  return best
+end
+
 -- convenience: snap with the table's current tonality (no-op when absent)
 function Tonality.constrain(world, semi)
   local t = Tonality.current(world)

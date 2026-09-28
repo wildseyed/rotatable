@@ -38,7 +38,7 @@ World.TYPES = {
     params = { cutoff = 1200, res = 0.3 } },
   delay = { category = "effect", label = "DLY",
     subtypes = { "feedback", "pingpong", "reverb" },
-    params = { time = 0.3, feedback = 0.4, sync = 0, sweep = 0.2 } },
+    params = { time = 0.3, feedback = 0.4, sync = 0, sweep = 0.2, room = 0.4 } },
   modulator = { category = "effect", label = "MOD",
     subtypes = { "ring", "chorus", "flanger" },
     params = { main = 0.5, drywet = 0.5 } },
@@ -166,7 +166,8 @@ function World.remove(id)
     end
   end
   for k in pairs(World.hardlinks) do
-    if k:match("(^|:)" .. id .. "$") or k:match("(^|:)" .. id .. ":") then
+    local ka, kb = k:match("^(%d+):(%d+)$")
+    if tonumber(ka) == id or tonumber(kb) == id then
       World.hardlinks[k] = nil
     end
   end
@@ -271,7 +272,11 @@ function World.recompute()
       end
     elseif c == "effect" then
       local my_r = dist(o, OUT)
-      local fx = hardlink_target(o, function(p) return cat(p) == "effect" end)
+      -- hardlinks must respect flow direction too: targeting an effect that
+      -- is not closer to the center can form a silent A<->B cycle (v3.0.1)
+      local fx = hardlink_target(o, function(p)
+        return cat(p) == "effect" and dist(p, OUT) < my_r
+      end)
         or nearest(o, function(p)
           return cat(p) == "effect" and dist(p, OUT) < my_r
         end, World.CONNECT_DIST)

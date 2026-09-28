@@ -320,3 +320,19 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   device: K1-first, K3-first (60ms stagger -> place menu, no stray
   select), solo tap, held solo; e2e all green. The viewer's atomic
   two-key messages + 250ms min hold were already compatible.
+- 2026-09-29: **v3.0.1 bugfix pack** (external review triage, archived to
+  `prompt-archive/2026-09-28_extern-review-gaps.md`). Six fixes, all
+  device-verified: (1) sampler gate re-raised on trigger — instrument
+  mode no longer dies after a MIDI note-off; (2) tonality snaps the
+  ABSOLUTE note (`Tonality.snap_abs`) in seq_tick + subs follow — was
+  scale-shaped intervals in no key; probe-verified 300 Hz -> D4 293.66;
+  (3) hardlink effect-cycle guard (A<->B silence) — hardlinks must
+  respect flow direction; (4) reverb rotation = room size (new `room`
+  arg/param; feedback = mix), tail tracks room; (5) World.remove
+  hardlink cleanup (broken Lua pattern); (6) MIDI legato — held-note
+  stack, gate closes only when the last note releases. Deeper items
+  deferred to v3.1: norns-clock unification (MIDI clock/Link/crow),
+  dur-as-gate-length, generator outward-audio guard, controller target
+  filtering. Side quest: one script instance had a frozen seq metro
+  after the restart — unreproducible transient; metros die silently on
+  callback errors, worth remembering when pos freezes.
