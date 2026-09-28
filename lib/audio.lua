@@ -51,6 +51,7 @@ local function primary(o)
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
   elseif o.type == "sequencer" then return "preset", 1 + math.floor(f * 5.999)
   elseif o.type == "midi" then return "transpose", math.floor(f * 48.999) - 24
+  elseif o.type == "tempo" then return "bpm", 40 + f * 200
   elseif o.type == "tonality" then return "root", math.floor(f * 12)
   elseif o.type == "output" then return "volume", f
   end
@@ -67,6 +68,11 @@ function Audio.sync_object(o)
   local k, v = primary(o)
   if o.type == "output" then
     engine.set(o.id, "volume", v)
+    return
+  end
+  if o.type == "tempo" then
+    -- rotation drives the param; its action fans out to metro + engine bus
+    params:set("rot_tempo", util.clamp(math.floor(v + 0.5), 40, 240))
     return
   end
   if not HAS_SYNTH[o.type] then
@@ -189,6 +195,10 @@ function Audio.on_add(o)
   local n = { type = o.type }
   if HAS_SYNTH[o.type] and o.type ~= "lfo" then
     n.lvl_slot = table.remove(lvl_pool) -- engine pops the same end
+  end
+  if o.type == "tempo" then
+    -- adopt the current bpm instead of resetting it to the angle default
+    o.angle = (params:get("rot_tempo") - 40) / 200 * 2 * math.pi
   end
   nodes[o.id] = n
   engine.add(o.id, o.type, o.subtype - 1)

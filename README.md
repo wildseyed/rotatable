@@ -90,6 +90,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | sequencer | controller | pattern preset (1–6) | — | mono / poly / random |
 | midi | controller | transpose ±24 st | — | in |
 | tonality | global | root key | — | major / minor / pentatonic / chromatic |
+| tempo | global | BPM (40–240) | — | bpm (label shows the value) |
 | output | global | master volume | — | — (the star; never connects) |
 
 **midi in**: vport + channel in PARAMETERS (`midi in vport`,

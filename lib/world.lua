@@ -57,6 +57,9 @@ World.TYPES = {
   tonality = { category = "global", label = "TON",
     subtypes = { "major", "minor", "pentatonic", "chromatic" },
     params = { root = 0 } }, -- root: semitones from C
+  tempo = { category = "global", label = "BPM",
+    subtypes = { "bpm" },
+    params = {} }, -- rotation drives the rot_tempo param (single source)
   output = { category = "global", label = "OUT",
     subtypes = { "master" },
     params = { volume = 0.8 } },
@@ -81,7 +84,7 @@ World.MENU = {
   { header = "CONTROLLERS" },
   "lfo", "sequencer", "midi",
   { header = "GLOBALS" },
-  "tonality", "output",
+  "tonality", "tempo", "output",
 }
 
 World.objects = {}

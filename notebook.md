@@ -276,3 +276,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   right-side dot), track line at r≥6. K1+E3 fine adjust (0.2× step).
   Verified: dot positions track values (0.2 inner / 0.55 mid / 0.9
   outer), K1+E2 subtype unaffected, e2e green.
+- 2026-09-28: **V3 batch 2 done — tempo object.** 14th type `tempo`
+  (GLOBALS, star glyph, label = live BPM). Rotation drives the
+  `rot_tempo` param (still the single source of truth — its action fans
+  out to metro + engine tempo bus). Placement ADOPTS the current bpm
+  (angle initialized from the param) — first version reset BPM to 40 on
+  placement, caught in testing. Page-less (^K3 `--`); slots unchanged
+  (tempo already persisted). e2e green. This closes the Song Settings
+  gap (§9.4 stands: patch selector = slots, background N/A).

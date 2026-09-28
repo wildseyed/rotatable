@@ -277,6 +277,7 @@ function Render.object(cam, w2s, o, types, selected, lvl, slider)
   -- label queues up (collision-resolved at flush) when zoomed in enough to read
   if cam.zoom >= 30 and label_queue then
     local text = types[o.type].label
+    if o.type == "tempo" then text = tostring(params:get("rot_tempo")) end
     if selected then
       text = text .. " " .. (types[o.type].subtypes[o.subtype] or "")
     end
