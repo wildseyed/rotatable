@@ -207,6 +207,40 @@ st = state()
 check("^K3 opens place menu -> L0", st["level"] == "L0", st["status"])
 tap(2)
 
+print("== v3: tempo object, output adopt, global FX ==")
+post("/clear")
+lua('params:set("rot_tempo", 120)')
+post("/place", {"type": "oscillator", "x": 0.1, "y": 0})
+post("/place", {"type": "tempo", "x": -0.4, "y": 0.2})
+post("/place", {"type": "output", "x": -0.4, "y": -0.3})
+st = state()
+tmp = ids_by_type(st, "tempo")[0]
+out = ids_by_type(st, "output")[0]
+osc = ids_by_type(st, "oscillator")[0]
+# placement must not clobber live settings (adopt, not reset)
+r = lua('print("{bpm="..params:get("rot_tempo").."}")')
+check("tempo object adopts bpm on place", "bpm=120" in r, r)
+check("output object keeps master audible", amps_max(2, 0.2) > 0.02)
+# rotation drives the param
+post("/rotate", {"id": tmp, "angle": 4.712})  # 40 + 0.75*200 = 190
+r = lua('print("{bpm="..params:get("rot_tempo").."}")')
+check("tempo rotation sets bpm", "bpm=190" in r, r)
+post("/rotate", {"id": tmp, "angle": 2.513})  # back to 120
+r = lua('print("{bpm="..params:get("rot_tempo").."}")')
+check("tempo rotation back", "bpm=120" in r, r)
+# gfx: rev tail — silence the osc, master should keep ringing
+post("/rotate", {"id": osc, "angle": 3.0})    # brighter source for the tail
+post("/set", {"id": out, "param": "rev", "value": 0.8})
+time.sleep(0.5)
+lua(f'engine.set({osc}, "gate", 0)')
+time.sleep(0.5)
+tail = amps_max(3, 0.3)
+check("reverb tail after gate-off", tail > 0.005, f"tail={tail}")
+post("/set", {"id": out, "param": "rev", "value": 0})
+# leave the scene the slot roundtrip expects: one osc at center
+post("/clear")
+post("/place", {"type": "oscillator", "x": 0.05, "y": 0})
+
 print("== slot roundtrip (slot 1; factory-restored after) ==")
 lua("T.save_slot(1)")
 post("/clear")
