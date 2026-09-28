@@ -186,6 +186,9 @@ function Audio.reset()
   end
   nodes = {}
   for _, s in ipairs(back) do table.insert(lvl_pool, s) end
+  -- a removed output object leaves its volume behind on the master synth;
+  -- a bare table (no output object) should not stay silent (e2e 2026-09-27)
+  engine.volume(0.8)
 end
 
 -- hook points: wrap World functions rather than editing its logic

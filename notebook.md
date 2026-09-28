@@ -204,3 +204,18 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   Also decided: osc rotation does NOT retrigger the envelope (continuous
   sweeps would stutter) — spec §9.13/14. Device-verified: filter L3 = 2d
   only, input blocked, osc keeps env.
+- 2026-09-27: **Phase 9 partial: e2e suite + CM3 perf pass, plus three real
+  bugs found by testing.** `tools/e2e.py` (REST, all 13 types: connections,
+  sync params, sample load, seq presets/dur/random, midi note gate,
+  hardlink/mute, UI nav, slot roundtrip + factory restore) — all green.
+  Bugs it flushed out: (a) output object at angle 0 zeroes master volume
+  and it STICKS after removal → `Audio.reset` now restores volume 0.8;
+  (b) no `cleanup()` in rotatable.lua → every script reload left orphan
+  engine synths droning (also diverged the lvl-pool mirror) → cleanup()
+  calls Audio.reset(); (c) test-infra: matron ws REPL gives no `<ok>`
+  sentinel for value-returning evals → every API call burned the full 8 s
+  timeout; ws_run early-exits on `<ok>` and api.py appends
+  `; print("<ok>")` — calls now ~20 ms (was 8 s). Perf (scsynth): idle
+  11.8/12.8%, worst-case 14-object patch avg 22.6% / peak 23.3% — batch-3
+  redraw+polls cost nothing measurable. Slot-format decision recorded:
+  v1 backward-compat kept (steps → pattern 1 migration).

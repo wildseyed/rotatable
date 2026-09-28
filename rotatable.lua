@@ -218,6 +218,12 @@ function enc(n, d)
   if o then Audio.sync_object(o) end
 end
 
+-- script reloads share the engine: free our nodes or they drone on as
+-- orphans the next instance can't reach (batch-3 midi test anomaly)
+function cleanup()
+  Audio.reset()
+end
+
 function key(n, z)
   UI.key(n, z)
   local o = UI.selected()

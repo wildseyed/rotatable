@@ -113,8 +113,12 @@ def ws_run(host, lua, timeout=8):
                     ln = struct.unpack(">Q", buf[2:10])[0]; off = 10
                 if len(buf) < off + ln: break
                 payload = buf[off:off + ln]; buf = buf[off + ln:]
-                opcode = buf[0] & 0x0F if False else None
                 out.append(payload.decode(errors="replace"))
+            # matron answers each eval with an "<ok>" sentinel; without it
+            # every call would burn the full timeout (2026-09-27: e2e ran
+            # 11 min at 8 s/call)
+            if "<ok>" in "".join(out):
+                break
         return out
 
     send_text(lua + "\n")

@@ -25,14 +25,17 @@ from deploy import creds, ws_run
 HOST, USER, PW = creds()
 
 def run_lua(code, timeout=8):
-    out = ws_run(HOST, code, timeout=timeout)
+    # ws_run early-exits on matron's "<ok>" sentinel, but value-returning
+    # evals (e.g. T.state()) don't produce one — append an explicit print
+    # so every call terminates promptly (2026-09-27: 8 s/call otherwise)
+    out = ws_run(HOST, code + '; print("<ok>")', timeout=timeout)
     text = "".join(out)
     if "lua:" in text and "error" in text.lower():
         raise RuntimeError(text.strip()[:400])
     return text
 
 def state():
-    text = run_lua("T.state()")
+    text = run_lua("print(T.state())")
     m = re.search(r"\{.*\}", text, re.S)
     if not m:
         raise RuntimeError("no state in reply: " + text[:200])
@@ -77,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/state":
                 self._send(200, state())
             elif self.path == "/amps":
-                text = run_lua("T.amps()")
+                text = run_lua("print(T.amps())")
                 m = re.search(r"amp_l=([\d.]+) amp_r=([\d.]+)", text)
                 self._send(200, {"amp_l": float(m.group(1)), "amp_r": float(m.group(2))})
             else:
