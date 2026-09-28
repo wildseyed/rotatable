@@ -41,6 +41,7 @@ local function primary(o)
   elseif o.type == "waveshaper" then return "main", f
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
   elseif o.type == "sequencer" then return "preset", 1 + math.floor(f * 5.999)
+  elseif o.type == "midi" then return "transpose", math.floor(f * 48.999) - 24
   elseif o.type == "tonality" then return "root", math.floor(f * 12)
   elseif o.type == "output" then return "volume", f
   end
@@ -61,10 +62,8 @@ function Audio.sync_object(o)
   end
   if not HAS_SYNTH[o.type] then
     -- no engine node: params still need the rotation write-through
-    -- (tonality root for lib/tonality, sequencer preset pattern switch)
-    if (o.type == "tonality" or o.type == "sequencer") and k then
-      o.params[k] = v
-    end
+    -- (tonality root, sequencer preset, midi transpose)
+    if k and o.params[k] ~= nil then o.params[k] = v end
     return
   end
   engine.set(o.id, "select", o.subtype - 1)
@@ -103,7 +102,7 @@ end
 function Audio.sync_connections()
   local desired = {}
   for _, c in ipairs(World.connections) do
-    if HAS_SYNTH[c.a.type] or c.a.type == "sequencer" then
+    if HAS_SYNTH[c.a.type] or c.a.type == "sequencer" or c.a.type == "midi" then
       local dst = c.b == "output" and "output" or c.b.id
       desired[c.a.id] = { dst = dst, kind = c.kind, muted = c.muted == true,
         b = c.b }
@@ -125,7 +124,7 @@ function Audio.sync_connections()
   -- build new routes
   for id, d in pairs(desired) do
     local n = nodes[id]
-    if n and n.type ~= "sequencer" then
+    if n and n.type ~= "sequencer" and n.type ~= "midi" then
       if d.kind == "audio" then
         if n.out ~= d.dst or n.kind ~= "audio" then
           if d.dst == "output" then engine.connect_output(id)
@@ -146,7 +145,7 @@ function Audio.sync_connections()
           end
         end
       end
-    elseif n and n.type == "sequencer" and d.kind == "control" then
+    elseif n and (n.type == "sequencer" or n.type == "midi") and d.kind == "control" then
       n.out, n.kind, n.muted = d.dst, "control", d.muted
     end
   end
@@ -250,6 +249,28 @@ function Audio.seq_tick(tick)
               engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
             end
           end
+        end
+      end
+    end
+  end
+end
+
+-- MIDI-in: every midi object on the table forwards incoming notes to its
+-- control target (closest connectable object), transposed by rotation.
+-- note_on (vel>0) triggers like a sequencer note; note-off releases the
+-- gate (osc/sampler ADSR). lua-side test hook: T.midi_note(n, v).
+function Audio.midi_note(note, vel)
+  for id, n in pairs(nodes) do
+    if n.type == "midi" and n.kind == "control" and n.out and not n.muted then
+      local o = World.get(id)
+      local t = nodes[n.out]
+      if o and t and (t.type == "oscillator" or t.type == "sampler") then
+        if vel > 0 then
+          local st = note + (o.params.transpose or 0)
+          engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
+          engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
+        else
+          engine.set(n.out, "gate", 0)
         end
       end
     end

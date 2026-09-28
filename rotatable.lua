@@ -23,7 +23,27 @@ local cam = { x = 0.0, y = 0.0, zoom = 48.0 }
 local TABLE_R = World.TABLE_R
 local GRID_STEP = 0.1
 local dirty = true
+local frame = 0          -- redraw counter; drives connection animation phase
+local seq_tick_n = 0     -- 32nd-note seq clock counter; drives output pulse
 amp_l, amp_r = 0, 0 -- latest master amp poll values (REPL-visible)
+lvl_vals = {}         -- engine lvl_1..16 poll values by slot (REPL-visible)
+
+-- MIDI-in: vport + channel live in params; notes route through each midi
+-- object's control connection (Audio.midi_note). T.midi_note tests it.
+local midi_in
+local function midi_setup(vport)
+  if midi_in then midi_in.event = nil end
+  midi_in = midi.connect(vport)
+  midi_in.event = function(data)
+    local msg = midi.to_msg(data)
+    if not msg.ch or msg.ch ~= params:get("rot_midi_ch") then return end
+    if msg.type == "note_on" then
+      Audio.midi_note(msg.note, msg.vel) -- vel 0 = de-facto note-off
+    elseif msg.type == "note_off" then
+      Audio.midi_note(msg.note, 0)
+    end
+  end
+end
 
 local function w2s(wx, wy)
   return 64 + (wx - cam.x) * cam.zoom, 32 + (wy - cam.y) * cam.zoom
@@ -101,6 +121,7 @@ T = {
     engine.loadbuf(id, path)
   end,
   lvl = function(id) return Audio.lvl_poll(id) end,
+  midi_note = function(n, v) Audio.midi_note(n, v or 100) end,
   seq_state = function(id) -- harness: preset + free-running position
     local o = World.get(id)
     if not o or not o.patterns then return "no seq" end
@@ -154,9 +175,13 @@ function init()
     engine.tempo(v) -- engine tempo bus: LFO sync, delay quantize, loop bar-entry
   end)
 
+  params:add_number("rot_midi_dev", "midi in vport", 1, 16, 1)
+  params:add_number("rot_midi_ch", "midi in channel", 1, 16, 1)
+  params:set_action("rot_midi_dev", function(v) midi_setup(v) end)
+  midi_setup(params:get("rot_midi_dev"))
+
   -- sequencer clock: 32nd-note ticks; each sequencer object free-runs its
   -- own 16-step pattern (per-step dur, in 32nds)
-  local seq_tick_n = 0
   seq_metro = metro.init(function()
     seq_tick_n = seq_tick_n + 1
     Audio.seq_tick(seq_tick_n)
@@ -171,9 +196,18 @@ function init()
   amp_poll_l:start()
   amp_poll_r:start()
 
+  -- per-object VU: engine lvl_1..16 poll pool (registered at engine load)
+  for i = 1, 16 do
+    local pp = poll.set("lvl_" .. i, function(v) lvl_vals[i] = v end)
+    pp.time = 0.12
+    pp:start()
+  end
+
   redraw_metro = metro.init(function()
-    if UI.tick() then dirty = true end
-    if dirty then redraw() end
+    UI.tick()
+    -- unconditional: connection dashes, tempo pulse and VU bars animate
+    -- even with no input (dirty flag only gates nothing anymore)
+    redraw()
   end, 1/15, -1)
   redraw_metro:start()
 end
@@ -220,24 +254,30 @@ end
 
 local function draw_output()
   local cx, cy = w2s(0, 0)
+  -- tempo pulse: beat = 8 32nd ticks (spec §1: output point pulses at tempo)
+  local pulse = 1 - ((seq_tick_n % 8) / 8)
+  pulse = pulse * pulse
   screen.level(15)
-  screen.circle(cx, cy, util.clamp(0.03 * cam.zoom, 2, 5))
+  screen.circle(cx, cy, util.clamp(0.03 * cam.zoom, 2, 5) * (1 + pulse * 0.7))
   screen.fill()
 end
 
 local function draw_objects()
-  Render.connections(cam, w2s, World)
+  Render.connections(cam, w2s, World, frame / 15)
   local sel = UI.selected()
   Render.begin_labels()
   for _, o in ipairs(World.objects) do
-    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id)
+    local lvl
+    local pn = Audio.lvl_poll(o.id)
+    if pn then lvl = lvl_vals[tonumber(pn:sub(5))] end
+    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id, lvl)
   end
-  -- LINK candidate ring
+  -- LINK candidate ring (glyph-sized; big circle was clutter, owner 2026-09-27)
   local cand = UI.link_candidate()
   if cand then
     local sx, sy = w2s(cand.x, cand.y)
-    screen.level(15)
-    screen.circle(sx, sy, 10)
+    screen.level(10)
+    screen.circle(sx, sy, util.clamp(0.08 * cam.zoom, 3, 14) + 3)
     screen.stroke()
   end
   Render.flush_labels()
@@ -259,6 +299,7 @@ local function draw_status()
 end
 
 function redraw()
+  frame = frame + 1
   screen.clear()
   draw_grid()
   draw_table()

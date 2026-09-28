@@ -40,6 +40,9 @@ World.TYPES = {
   sequencer = { category = "controller", label = "SEQ",
     subtypes = { "mono", "poly", "random" },
     params = { preset = 1 } },
+  midi = { category = "controller", label = "MIDI",
+    subtypes = { "in" },
+    params = { transpose = 0 } }, -- transpose: semitones, rotation ±24
   tonality = { category = "global", label = "TON",
     subtypes = { "major", "minor", "pentatonic", "chromatic" },
     params = { root = 0 } }, -- root: semitones from C
@@ -55,7 +58,7 @@ World.MENU = {
   { header = "EFFECTS" },
   "filter", "delay", "modulator", "waveshaper",
   { header = "CONTROLLERS" },
-  "lfo", "sequencer",
+  "lfo", "sequencer", "midi",
   { header = "GLOBALS" },
   "tonality", "output",
 }

@@ -164,9 +164,10 @@ function Render.flush_labels()
   label_queue = nil
 end
 
--- connection lines: audio = solid, control = dotted (hand-drawn dots)
--- muted = dim, hardlink = bright double line
-local function draw_connection(cam, w2s, world, conn)
+-- connection lines: audio = dim base + bright signal-flow dashes marching
+-- toward the destination (phase = seconds); control = dotted, dots marching.
+-- muted = dim static, hardlink = bright double line
+local function draw_connection(cam, w2s, world, conn, phase)
   local ax, ay = w2s(conn.a.x, conn.a.y)
   local bx, by
   if conn.b == "output" then
@@ -175,38 +176,53 @@ local function draw_connection(cam, w2s, world, conn)
     bx, by = w2s(conn.b.x, conn.b.y)
   end
   local hard = conn.b ~= "output" and world.is_hardlinked(conn.a.id, conn.b.id)
-  local lvl = conn.muted and 2 or (hard and 15 or (conn.kind == "audio" and 7 or 5))
+  local dx, dy = bx - ax, by - ay
+  local len = math.sqrt(dx * dx + dy * dy)
   if conn.kind == "audio" then
-    screen.level(lvl)
+    screen.level(conn.muted and 2 or 3)
     screen.move(ax, ay)
     screen.line(bx, by)
     screen.stroke()
     if hard then
-      local dx, dy = by - ay, -(bx - ax)
-      local len = math.sqrt(dx * dx + dy * dy)
+      local px, py = dy, -dx
       if len > 0 then
-        dx, dy = dx / len * 1.5, dy / len * 1.5
-        screen.move(ax + dx, ay + dy)
-        screen.line(bx + dx, by + dy)
-        screen.move(ax - dx, ay - dy)
-        screen.line(bx - dx, by - dy)
+        px, py = px / len * 1.5, py / len * 1.5
+        screen.level(conn.muted and 2 or 7)
+        screen.move(ax + px, ay + py)
+        screen.line(bx + px, by + py)
+        screen.move(ax - px, ay - py)
+        screen.line(bx - px, by - py)
         screen.stroke()
       end
     end
+    if not conn.muted and len > 10 then
+      local ux, uy = dx / len, dy / len
+      local off = (phase * 20) % 16 -- dash march speed px/s
+      screen.level(hard and 15 or 9)
+      local p = off
+      while p < len do
+        local e = math.min(p + 3.5, len)
+        screen.move(ax + ux * p, ay + uy * p)
+        screen.line(ax + ux * e, ay + uy * e)
+        p = p + 16
+      end
+      screen.stroke()
+    end
   else
-    screen.level(lvl)
-    local dx, dy = bx - ax, by - ay
-    local len = math.sqrt(dx * dx + dy * dy)
+    screen.level(conn.muted and 2 or (hard and 15 or 5))
     local n = math.max(2, math.floor(len / 4))
+    local shift = (phase * 2) % 1
     for i = 0, n do
-      local t = i / n
-      screen.pixel(math.floor(ax + dx * t + 0.5), math.floor(ay + dy * t + 0.5))
+      local t = (i + shift) / n
+      if t <= 1 then
+        screen.pixel(math.floor(ax + dx * t + 0.5), math.floor(ay + dy * t + 0.5))
+      end
     end
     screen.fill()
   end
 end
 
-function Render.object(cam, w2s, o, types, selected)
+function Render.object(cam, w2s, o, types, selected, lvl)
   local sx, sy = w2s(o.x, o.y)
   local r = util.clamp(GLYPH_R * cam.zoom, 3, 14)
   -- skip (and skip label) when fully offscreen
@@ -234,19 +250,27 @@ function Render.object(cam, w2s, o, types, selected)
     screen.level(selected and 15 or 9)
     sub_mark(o, sx + 0.68 * r * math.cos(o.angle), sy + 0.68 * r * math.sin(o.angle), s)
   end
+  -- VU bar under the glyph (engine lvl poll, sqrt-scaled)
+  if lvl and lvl > 0.01 then
+    local w = math.sqrt(util.clamp(lvl, 0, 1)) * r * 2
+    screen.level(selected and 12 or 5)
+    screen.move(sx - r, sy + r + 2)
+    screen.line(sx - r + w, sy + r + 2)
+    screen.stroke()
+  end
   -- label queues up (collision-resolved at flush) when zoomed in enough to read
   if cam.zoom >= 30 and label_queue then
     local text = types[o.type].label
     if selected then
       text = text .. " " .. (types[o.type].subtypes[o.subtype] or "")
     end
-    label_queue[#label_queue + 1] = { x = sx, y = sy + r + 6, text = text, sel = selected }
+    label_queue[#label_queue + 1] = { x = sx, y = sy + r + 8, text = text, sel = selected }
   end
 end
 
-function Render.connections(cam, w2s, world)
+function Render.connections(cam, w2s, world, phase)
   for _, conn in ipairs(world.connections) do
-    draw_connection(cam, w2s, world, conn)
+    draw_connection(cam, w2s, world, conn, phase or 0)
   end
 end
 

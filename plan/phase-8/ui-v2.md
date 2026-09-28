@@ -26,12 +26,12 @@ notebook entry → commit.
 - [x] Sequencer random subtype UI (poly grid deferred per phase-6)
 
 **Batch 3 — MIDI + polish:**
-- [ ] MIDI-in: device select + channel in params; note routing to closest
+- [x] MIDI-in: device select + channel in params; note routing to closest
   object; rotation = transpose ±24 st (spec §9.3)
-- [ ] Place menu with all 13 types: verify feel (works; check windowed scroll)
-- [ ] Visual polish: LINK ring clutter, connection animation (signal-flow
+- [x] Place menu with all 13 types: verify feel (works; check windowed scroll)
+- [x] Visual polish: LINK ring clutter, connection animation (signal-flow
   dashes), tempo pulse at output point
-- [ ] Per-object VU meters from `lvl_N` polls (`Audio.lvl_poll(id)`)
+- [x] Per-object VU meters from `lvl_N` polls (`Audio.lvl_poll(id)`)
 
 **Needs an owner design session first — do NOT implement in batch flow:**
 - Suboscillators panel — blocked on ENGINE work: `rot_osc` has no sub-oscs;

@@ -178,3 +178,21 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   vs 8 steps/s at dur 2 @120bpm), random history display, slot roundtrip,
   SYSTEM-gesture factory restore. Gotcha x3: T.clear() doesn't reset
   next_id — read ids from /state EVERY time.
+- 2026-09-27: **Phase 8 batch 3 done — MIDI-in + visual polish,
+  device-verified. Phase 8 feature batches complete.** MIDI-in is the 13th
+  type: controller category (proximity control-connect for free), rotation
+  = transpose ±24 st, `rot_midi_dev`/`rot_midi_ch` params, note_on triggers
+  the control target like a seq note (velocity→amp), note-off releases the
+  gate. TWO routing bugs found by testing: midi connections never entered
+  `desired` in Audio.sync_connections (guard listed only sequencer), and
+  the memo-build elseif was unreachable because the first branch's
+  `n.type ~= "sequencer"` guard swallowed midi nodes doing nothing. Verified
+  via T.midi_note: gate on/off now audible (note-off → silence).
+  Polish: output point pulses at tempo (beat = 8×32nd ticks); audio conns
+  = dim base + bright dashes marching toward destination (20 px/s), control
+  dots march too; LINK ring glyph-sized (was fixed 10px circle); VU bars
+  under sounding glyphs from the lvl_N poll pool (16 lua polls @0.12s,
+  sqrt-scaled). **Redraw is now unconditional at 15fps** (animation needs
+  frames; the dirty-flag optimization is gone — CPU impact unchecked,
+  phase 9 perf pass must measure). Place menu scroll-verified with all 13
+  types. Real MIDI hardware test still pending with owner.

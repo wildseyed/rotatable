@@ -70,13 +70,27 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | object | role | rotation (E2) | E3 | subtypes (K1+E2) |
 |---|---|---|---|---|
 | oscillator | generator | pitch | amp | sine / saw / square / noise |
-| loop | generator | playback rate | amp | loop (browser panel) |
+| loop | generator | playback rate | amp | loop / oneshot (browser panel) |
+| sampler | generator | pitch | amp | instrument / drum (browser + base pitch panels) |
+| input | generator | gain | — | line |
 | filter | effect | cutoff | resonance | lp / bp / hp |
-| delay | effect | time | feedback | feedback |
+| delay | effect | time | feedback | feedback / pingpong / reverb |
 | modulator | effect | main (pitch/depth/rate) | dry-wet | ring / chorus / flanger |
+| waveshaper | effect | main | dry-wet | resampler / compressor / distortion |
 | lfo | controller | rate | depth | sine / saw / square / random |
 | sequencer | controller | pattern preset (1–6) | — | mono / poly / random |
+| midi | controller | transpose ±24 st | — | in |
+| tonality | global | root key | — | major / minor / pentatonic / chromatic |
 | output | global | master volume | — | — (the star; never connects) |
+
+**midi in**: vport + channel in PARAMETERS (`midi in vport`,
+`midi in channel`). notes route to the midi object's closest object,
+velocity sets amp, note-off releases the gate.
+
+**visuals**: blocks carry a subtype pictogram on their rim (orbits with
+rotation); audio connections show signal-flow dashes, control connections
+marching dots; the output point pulses at the tempo; sounding objects get
+a VU bar under the glyph.
 
 **config panels** (`K1+K3` on a selected object, E1 switches pages)
 
