@@ -92,6 +92,13 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   lua mirror marks them done — `on_add` drops memos targeting the new node
   so they re-issue. (11) matron's ws REPL evaluates per LINE: no multi-line
   chunks, no locals spanning lines — batch as single-line statements.
+  (12) `T.enc`/`T.key` must route through the script's GLOBAL `enc`/`key`
+  handlers, not straight to `UI.enc`/`UI.key` — the globals are where
+  `Audio.sync_object` runs, so bypassing them means harness-driven UI edits
+  never reach the engine (physical encoders were never affected; found
+  2026-09-28 when subs edits were silent in tests only). Also: single
+  amp-poll reads are useless for A/B comparisons on phase-locked signals
+  (beat interference) — take max over ~1 s of reads.
 
 ## Repo layout
 
