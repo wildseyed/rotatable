@@ -111,7 +111,7 @@ Engine_Rotatable : CroneEngine {
 		// glide (seconds of lag on time changes). envelope -> feedback
 		// (swells toward 0.99, idle-neutral at env=0); gate retrigs on seq notes.
 		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1,
-			select=0, sync=0, sweep=0.2, tbus=0, mod=0, lvl=0,
+			select=0, sync=0, sweep=0.2, tbus=0, mod=0, lvl=0, room=0.4,
 			gate=1, a=0.01, d=0.4, s=0, r=0.3;
 			var dry = In.ar(in, 1);
 			var bpm = In.kr(tbus).max(1);
@@ -130,7 +130,8 @@ Engine_Rotatable : CroneEngine {
 			ppB = DelayC.ar(dry + local[1], 2, t * 0.75);
 			LocalOut.ar([wet1, ppA * fb, ppB * fb]);
 			pingpong = (ppA + ppB) * 0.5;
-			reverb = FreeVerb.ar(dry, 0.6, fb, 0.5);
+			// reverb subtype: feedback arg = mix, room arg = room size (v3.0.1)
+			reverb = FreeVerb.ar(dry, fb, Lag.kr(room, 0.1).clip(0, 1), 0.5);
 			wet = Select.ar(select.clip(0, 2).round, [wet1, pingpong, reverb]);
 			wet = (dry + wet) * Lag.kr(amp, 0.05);
 			Out.ar(out, wet);
@@ -323,6 +324,9 @@ Engine_Rotatable : CroneEngine {
 			if (node.notNil and: { node[\synth].notNil }) {
 				if (node[\type] == \sampler or: { node[\type] == \loop }) {
 					node[\synth].set(\freq, msg[2]);
+					// raise gate too: a MIDI note-off shuts the gated ADSR and
+					// only this path can reopen it (v3.0.1)
+					node[\synth].set(\gate, 1);
 					node[\synth].set(\t_trig, 1);
 				} {
 					if (#[\filter, \delay, \modulator, \waveshaper].includes(node[\type])) {
