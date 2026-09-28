@@ -282,7 +282,9 @@ local function draw_objects()
     local lvl
     local pn = Audio.lvl_poll(o.id)
     if pn then lvl = lvl_vals[tonumber(pn:sub(5))] end
-    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id, lvl)
+    local sk = World.SLIDER_PARAM[o.type]
+    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id,
+      lvl, sk and o.params[sk] or nil)
   end
   -- LINK candidate ring (glyph-sized; big circle was clutter, owner 2026-09-27)
   local cand = UI.link_candidate()

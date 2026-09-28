@@ -350,17 +350,16 @@ function UI.enc(n, d)
       if n == 2 then vel_x = clamp_vel(vel_x + imp)
       elseif n == 3 then vel_y = clamp_vel(vel_y + imp) end
     elseif mode == "ROTATE" then
-      if k1_down then
-        if n == 2 then World.cycle_subtype(selected, d > 0 and 1 or -1) end
-      else
-        if n == 2 then
-          selected.angle = (selected.angle + d * 0.05) % (2 * math.pi)
-        elseif n == 3 then
-          -- right-dot parameter: amp for generators, second param otherwise
-          local key = World.TYPES[selected.type].category == "generator" and "amp" or select(2, params_2d(selected))
-          if selected.params[key] ~= nil then
-            selected.params[key] = util.clamp((selected.params[key] or 0) + d * 0.02, 0, 1)
-          end
+      if n == 2 and k1_down then
+        World.cycle_subtype(selected, d > 0 and 1 or -1)
+      elseif n == 2 then
+        selected.angle = (selected.angle + d * 0.05) % (2 * math.pi)
+      elseif n == 3 then
+        -- the slider (spec §3): E3 = slider param, K1+E3 = fine adjust
+        local key = World.SLIDER_PARAM[selected.type]
+        if key then
+          local step = k1_down and 0.004 or 0.02
+          selected.params[key] = util.clamp(selected.params[key] + d * step, 0, 1)
         end
       end
     elseif mode == "LINK" then

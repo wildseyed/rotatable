@@ -266,3 +266,13 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   V3's real work is the persistent on-block slider visual + feel, plus the
   tempo object and the master FX stage. 3 owner questions open (slider
   visual style, tempo object vs page, no-output-object FX behavior).
+- 2026-09-28: **V3 batch 1 done — the slider.** Owner answers: settings
+  belong on-table (Q3 → neutral without output object); Q1/Q2 spec-
+  faithful defaults (radial dot, dedicated tempo object). `World.
+  SLIDER_PARAM` explicit map — audit caught a live bug: LFO E3 fell
+  through to params_2d → "drywet" (nonexistent), so LFO depth had NO
+  control anywhere; now depth. Slider visual: dot at rotation+90°,
+  radial distance 0.3..0.8r = value (orbits with the block, spec's
+  right-side dot), track line at r≥6. K1+E3 fine adjust (0.2× step).
+  Verified: dot positions track values (0.2 inner / 0.55 mid / 0.9
+  outer), K1+E2 subtype unaffected, e2e green.

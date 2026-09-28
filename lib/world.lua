@@ -62,6 +62,16 @@ World.TYPES = {
     params = { volume = 0.8 } },
 }
 
+-- the slider (spec §3 universal mapping): E3 in ROTATE + on-block dot.
+-- amp for generators, dry/wet for mod+shaper, feedback for delay,
+-- depth for LFO, resonance for filter; nil = no slider
+World.SLIDER_PARAM = {
+  oscillator = "amp", loop = "amp", sampler = "amp",
+  filter = "res", delay = "feedback",
+  modulator = "drywet", waveshaper = "drywet",
+  lfo = "depth",
+}
+
 -- canonical object-type order for the place menu, grouped by category
 World.MENU = {
   { header = "GENERATORS" },

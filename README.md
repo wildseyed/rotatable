@@ -61,7 +61,8 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 
 - **MOVE**: E2/E3 glide the object with accel/decel physics (connections
   form/break live as it slides)
-- **ROTATE**: E2 = main param, E3 = secondary param, `K1+E2` = subtype
+- **ROTATE**: E2 = main param, E3 = the slider (amp / dry-wet / feedback /
+  depth / resonance per type), `K1+E3` = fine adjust, `K1+E2` = subtype
 - **LINK**: E2 cycles targets by proximity; `K3` toggles hardlink
   (permanent, bright line); `K1+K3` mutes the connection (dimmed)
 - **E1 hops selection between objects in every L2 mode**, centering the
@@ -96,9 +97,10 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 velocity sets amp, note-off releases the gate.
 
 **visuals**: blocks carry a subtype pictogram on their rim (orbits with
-rotation); audio connections show signal-flow dashes, control connections
-marching dots; the output point pulses at the tempo; sounding objects get
-a VU bar under the glyph.
+rotation) and a slider dot on their right side (distance from center =
+slider value, like the reactable's draggable dot); audio connections show
+signal-flow dashes, control connections marching dots; the output point
+pulses at the tempo; sounding objects get a VU bar under the glyph.
 
 **config panels** (`K1+K3` on a selected object, E1 switches pages)
 
