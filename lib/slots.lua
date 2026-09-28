@@ -66,7 +66,7 @@ local function gather()
       type = o.type, subtype = o.subtype,
       x = o.x, y = o.y, angle = o.angle,
       params = {}, env = { a = o.env.a, d = o.env.d, s = o.env.s, r = o.env.r },
-      sample = o.sample, patterns = o.patterns,
+      sample = o.sample, patterns = o.patterns, subs = o.subs, notes = o.notes,
     }
     for k, v in pairs(o.params) do e.params[k] = v end
     table.insert(objs, e)
@@ -107,14 +107,22 @@ function Slots.recall(i)
   local new_ids = {}
   for _, e in ipairs(data.objects) do
     local o = World.add(e.type, e.x, e.y, e.angle)
+    o.angle = e.angle -- re-assert: tempo/output adopt live values on add
     o.subtype = e.subtype
     for k, v in pairs(e.params) do o.params[k] = v end
     o.env = { a = e.env.a, d = e.env.d, s = e.env.s, r = e.env.r }
+    -- v2.1 migration: effect envs were inert before param envelopes, so
+    -- s=0.7 is always the old default, never a deliberate setting
+    if World.TYPES[o.type].category == "effect" and o.env.s == 0.7 then
+      o.env.s = 0
+    end
     if e.patterns then
       o.patterns = e.patterns
     elseif e.steps then
       o.patterns[1] = e.steps -- v1 slot format: single pattern -> preset 1
     end
+    if e.subs then o.subs = e.subs end
+    if e.notes then o.notes = e.notes end
     if e.sample then Audio.load_sample(o, e.sample) end
     Audio.sync_object(o)
     table.insert(new_ids, o.id)

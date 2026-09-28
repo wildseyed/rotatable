@@ -12,12 +12,20 @@ Tonality.SCALES = {
   chromatic = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 }
 
--- active tonality from the table (first tonality object wins), or nil
+-- active tonality from the table (first tonality object wins), or nil.
+-- scale comes from the object's editable 12-degree mask (o.notes),
+-- falling back to the subtype preset
 function Tonality.current(world)
   for _, o in ipairs(world.objects) do
     if o.type == "tonality" then
-      local name = world.TYPES.tonality.subtypes[o.subtype]
-      return { root = math.floor(o.params.root or 0), scale = Tonality.SCALES[name] }
+      local scale
+      if o.notes then
+        scale = {}
+        for d = 0, 11 do if o.notes[d] then table.insert(scale, d) end end
+      else
+        scale = Tonality.SCALES[world.TYPES.tonality.subtypes[o.subtype]]
+      end
+      return { root = math.floor(o.params.root or 0), scale = scale }
     end
   end
 end

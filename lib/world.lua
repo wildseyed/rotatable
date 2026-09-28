@@ -4,6 +4,17 @@
 
 local World = {}
 
+local Tonality = include('lib/tonality')
+
+-- 12-degree scale mask from a tonality subtype preset (editable on-object)
+local function tonality_mask(subtype_name)
+  local m = {}
+  for i = 0, 11 do m[i] = false end
+  for _, d in ipairs(Tonality.SCALES[subtype_name]) do m[d] = true end
+  return m
+end
+World.tonality_mask = tonality_mask
+
 World.TABLE_R = 1.0
 World.CONNECT_DIST = 0.35 -- world units; gap-items decision, tune later
 
@@ -46,9 +57,22 @@ World.TYPES = {
   tonality = { category = "global", label = "TON",
     subtypes = { "major", "minor", "pentatonic", "chromatic" },
     params = { root = 0 } }, -- root: semitones from C
+  tempo = { category = "global", label = "BPM",
+    subtypes = { "bpm" },
+    params = {} }, -- rotation drives the rot_tempo param (single source)
   output = { category = "global", label = "OUT",
     subtypes = { "master" },
-    params = { volume = 0.8 } },
+    params = { volume = 0.8, rev = 0, room = 0.5, comp = 0 } }, -- global FX
+}
+
+-- the slider (spec §3 universal mapping): E3 in ROTATE + on-block dot.
+-- amp for generators, dry/wet for mod+shaper, feedback for delay,
+-- depth for LFO, resonance for filter; nil = no slider
+World.SLIDER_PARAM = {
+  oscillator = "amp", loop = "amp", sampler = "amp",
+  filter = "res", delay = "feedback",
+  modulator = "drywet", waveshaper = "drywet",
+  lfo = "depth",
 }
 
 -- canonical object-type order for the place menu, grouped by category
@@ -60,7 +84,7 @@ World.MENU = {
   { header = "CONTROLLERS" },
   "lfo", "sequencer", "midi",
   { header = "GLOBALS" },
-  "tonality", "output",
+  "tonality", "tempo", "output",
 }
 
 World.objects = {}
@@ -88,7 +112,11 @@ function World.add(type, x, y, angle)
     y = y or 0,
     angle = angle or 0,
     params = default_params(type),
-    env = { a = 0.01, d = 0.1, s = 0.7, r = 0.3 }, -- envelope placeholder
+    -- effects get a percussive env (idle-neutral param envelopes);
+    -- generators the classic ADSR
+    env = World.TYPES[type].category == "effect"
+      and { a = 0.01, d = 0.4, s = 0, r = 0.3 }
+      or { a = 0.01, d = 0.1, s = 0.7, r = 0.3 },
   }
   if type == "sequencer" then
     -- 6 rotation-switched preset patterns (phase 8 batch 2); pattern 1 =
@@ -106,6 +134,16 @@ function World.add(type, x, y, angle)
       end
       o.patterns[p] = steps
     end
+  elseif type == "oscillator" then
+    -- sub-oscillators (spec §3.1): 4 subs x (waveform/amp/detune/offset);
+    -- amp 0 = sub off. follow=1 snaps sub pitch to the table tonality
+    o.subs = { follow = 0,
+      { wave = 0, amp = 0, det = 0, off = -12 },
+      { wave = 0, amp = 0, det = 0, off = -12 },
+      { wave = 0, amp = 0, det = 0, off = 12 },
+      { wave = 0, amp = 0, det = 0, off = 12 } }
+  elseif type == "tonality" then
+    o.notes = tonality_mask(World.TYPES.tonality.subtypes[1])
   elseif type == "loop" or type == "sampler" then
     o.sample = nil -- path of loaded WAV (browser panel)
   end
@@ -144,6 +182,10 @@ end
 function World.cycle_subtype(o, dir)
   local n = #World.TYPES[o.type].subtypes
   o.subtype = ((o.subtype - 1 + dir) % n) + 1
+  if o.type == "tonality" then
+    -- subtype = preset load: custom note edits are replaced
+    o.notes = tonality_mask(World.TYPES.tonality.subtypes[o.subtype])
+  end
 end
 
 function World.subtype_name(o)

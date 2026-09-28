@@ -111,6 +111,11 @@ local SET_FIELDS = {
   sampler = {
     { k = "base", min = -48, max = 48, step = 1 }, -- semitones from C4
   },
+  output = { -- global FX (spec §3.13): master reverb + compression
+    { k = "rev", min = 0, max = 1, step = 0.02 },
+    { k = "room", min = 0, max = 1, step = 0.02 },
+    { k = "comp", min = 0, max = 1, step = 0.02 },
+  },
 }
 
 local C4 = 261.6256 -- sampler base reference pitch (params.base is in Hz)
@@ -139,13 +144,26 @@ local function set_field_str(o, f)
   return tostring(v)
 end
 
--- env page only where sync_object actually pushes ADSR (osc/loop/sampler);
--- effect envelopes (filter-freq/feedback/dry-wet) are a future engine item
-local ENV_TYPES = { oscillator = true, loop = true, sampler = true }
+-- sub-oscillator page (oscillator): follow toggle + 4 subs x 4 fields
+local SUB_WAVES = { "sine", "saw", "sqr", "noi" }
+local SUB_FIELDS = { { follow = true } }
+for i = 1, 4 do
+  for _, k in ipairs({ "wave", "amp", "det", "off" }) do
+    table.insert(SUB_FIELDS, { i = i, k = k })
+  end
+end
+
+-- env page where sync_object pushes ADSR: generators (amplitude) and
+-- effects (param envelopes, sequencer-triggered; footer shows the target)
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
+  filter = true, delay = true, modulator = true, waveshaper = true }
+local ENV_TARGET = { filter = "cutoff", delay = "fdbk",
+  modulator = "drywet", waveshaper = "drywet" }
 
 -- L3 pages per object: 2d for two-param effects; steps/vel/dur for
 -- sequencer; sample browser for loop+sampler; settings page for syncable
--- types + sampler; envelope for envelope-driven generators
+-- types + sampler; subs for oscillator; notes for tonality;
+-- envelope for envelope-driven generators
 local function pages_for(o)
   local p = {}
   local c = World.TYPES[o.type].category
@@ -155,6 +173,8 @@ local function pages_for(o)
     table.insert(p, 1, "vel")
     table.insert(p, 1, "steps")
   end
+  if o.type == "oscillator" then table.insert(p, 1, "subs") end
+  if o.type == "tonality" then table.insert(p, 1, "notes") end
   if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
   if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
   if ENV_TYPES[o.type] then table.insert(p, "env") end
@@ -335,17 +355,16 @@ function UI.enc(n, d)
       if n == 2 then vel_x = clamp_vel(vel_x + imp)
       elseif n == 3 then vel_y = clamp_vel(vel_y + imp) end
     elseif mode == "ROTATE" then
-      if k1_down then
-        if n == 2 then World.cycle_subtype(selected, d > 0 and 1 or -1) end
-      else
-        if n == 2 then
-          selected.angle = (selected.angle + d * 0.05) % (2 * math.pi)
-        elseif n == 3 then
-          -- right-dot parameter: amp for generators, second param otherwise
-          local key = World.TYPES[selected.type].category == "generator" and "amp" or select(2, params_2d(selected))
-          if selected.params[key] ~= nil then
-            selected.params[key] = util.clamp((selected.params[key] or 0) + d * 0.02, 0, 1)
-          end
+      if n == 2 and k1_down then
+        World.cycle_subtype(selected, d > 0 and 1 or -1)
+      elseif n == 2 then
+        selected.angle = (selected.angle + d * 0.05) % (2 * math.pi)
+      elseif n == 3 then
+        -- the slider (spec §3): E3 = slider param, K1+E3 = fine adjust
+        local key = World.SLIDER_PARAM[selected.type]
+        if key then
+          local step = k1_down and 0.004 or 0.02
+          selected.params[key] = util.clamp(selected.params[key] + d * step, 0, 1)
         end
       end
     elseif mode == "LINK" then
@@ -400,6 +419,28 @@ function UI.enc(n, d)
           selected.params[f.k] =
             util.clamp(selected.params[f.k] + d * f.step, f.min, f.max)
         end
+      end
+    elseif page == "subs" then
+      if n == 2 then
+        field_idx = util.clamp(field_idx + d, 1, #SUB_FIELDS)
+      elseif n == 3 then
+        local f = SUB_FIELDS[field_idx]
+        if f.follow then
+          selected.subs.follow = util.clamp(selected.subs.follow + d, 0, 1)
+        else
+          local s = selected.subs[f.i]
+          if f.k == "wave" then s.wave = util.clamp(s.wave + d, 0, 3)
+          elseif f.k == "amp" then s.amp = util.clamp(s.amp + d * 0.02, 0, 1)
+          elseif f.k == "det" then s.det = util.clamp(s.det + d * 2, -100, 100)
+          else s.off = util.clamp(s.off + d, -24, 24) end
+        end
+      end
+    elseif page == "notes" then
+      if n == 2 then
+        field_idx = util.clamp(field_idx + d, 1, 12)
+      elseif n == 3 then
+        local d0 = field_idx - 1
+        selected.notes[d0] = not selected.notes[d0]
       end
     elseif page == "browser" then
       if n == 2 and #browser.files > 0 then
@@ -531,6 +572,9 @@ function UI.key(n, z)
           if page == "steps" or page == "vel" or page == "dur" then
             local st = World.seq_steps(selected)[step_idx]
             st.on = not st.on
+          elseif page == "notes" then
+            local d0 = field_idx - 1
+            selected.notes[d0] = not selected.notes[d0]
           elseif page == "browser" then
             if browser.files == nil then browser.files = scan_audio_files() end
             local f = browser.files[browser.idx]
@@ -636,6 +680,12 @@ local function draw_l3()
       screen.move(x, 60)
       screen.text(f)
     end
+    local tgt = ENV_TARGET[selected.type]
+    if tgt then
+      screen.level(3)
+      screen.move(96, 60)
+      screen.text(tgt)
+    end
   elseif page == "steps" or page == "vel" or page == "dur" then
     -- 16 steps around a midline. steps: bar = pitch (-24..+24; random
     -- subtype shows its improvised history instead), vel: bar = velocity,
@@ -717,6 +767,60 @@ local function draw_l3()
     screen.level(3)
     screen.move(12, 60)
     screen.text("E2 field  E3 edit")
+  elseif page == "subs" then
+    -- follow toggle + 4 sub rows (wave/amp/det/off)
+    screen.level(field_idx == 1 and 15 or 8)
+    screen.move(14, 20)
+    screen.text("follow tonality")
+    screen.move(96, 20)
+    screen.text(selected.subs.follow == 1 and "on" or "off")
+    local y = 29
+    for i = 1, 4 do
+      local s = selected.subs[i]
+      local b = 2 + (i - 1) * 4
+      screen.level(6)
+      screen.move(14, y)
+      screen.text("s" .. i)
+      local cells = {
+        { b, 30, SUB_WAVES[s.wave + 1] },
+        { b + 1, 56, string.format("%.2f", s.amp) },
+        { b + 2, 80, string.format("%+d", s.det) },
+        { b + 3, 100, string.format("%+d", s.off) },
+      }
+      for _, c in ipairs(cells) do
+        screen.level(field_idx == c[1] and 15 or 8)
+        screen.move(c[2], y)
+        screen.text(c[3])
+      end
+      y = y + 9
+    end
+  elseif page == "notes" then
+    -- editable 12-degree scale mask; bright = in scale
+    local NAMES = { "1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7" }
+    local n_on = 0
+    for d0 = 0, 11 do
+      local col = d0 % 6
+      local row = math.floor(d0 / 6)
+      local x = 16 + col * 16
+      local y = 32 + row * 15
+      if field_idx == d0 + 1 then
+        screen.level(15)
+        screen.rect(x - 3, y - 8, 14, 11)
+        screen.stroke()
+      end
+      screen.level(selected.notes[d0] and 12 or 3)
+      screen.move(x, y)
+      screen.text(NAMES[d0 + 1])
+      if selected.notes[d0] then
+        n_on = n_on + 1
+        screen.move(x, y + 3)
+        screen.line(x + 6, y + 3)
+        screen.stroke()
+      end
+    end
+    screen.level(6)
+    screen.move(12, 60)
+    screen.text(n_on .. " notes  E2 pick  E3/K3 toggle")
   elseif page == "browser" then
     if browser.files == nil then browser.files = scan_audio_files() end
     local n = #browser.files

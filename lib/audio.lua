@@ -11,9 +11,21 @@ local HAS_SYNTH = { oscillator = true, loop = true, sampler = true,
   input = true, filter = true, delay = true, modulator = true,
   waveshaper = true, lfo = true }
 
+-- sequencer/MIDI note targets: osc+sampler get the pitched note, effects
+-- get a bare envelope retrigger (filter cutoff, delay feedback, dry-wet)
+local SEQ_TARGETS = { oscillator = true, sampler = true, filter = true,
+  delay = true, modulator = true, waveshaper = true }
+
+-- types whose ADSR the engine runs (env page + sync push)
+local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
+  filter = true, delay = true, modulator = true, waveshaper = true }
+
 -- id -> { type=, out=dst_id|"output"|nil, kind=, muted=, cparam=, freq=,
 --         lvl_slot= }
 local nodes = {}
+
+-- last-known master volume (engine has no getter; we are the only writer)
+local master_vol = 0.8
 
 -- mirror of the engine's level-poll slot pool: the engine pops from the end
 -- of its free list per addNode (audio defs only, not lfo) and pushes back on
@@ -42,6 +54,7 @@ local function primary(o)
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
   elseif o.type == "sequencer" then return "preset", 1 + math.floor(f * 5.999)
   elseif o.type == "midi" then return "transpose", math.floor(f * 48.999) - 24
+  elseif o.type == "tempo" then return "bpm", 40 + f * 200
   elseif o.type == "tonality" then return "root", math.floor(f * 12)
   elseif o.type == "output" then return "volume", f
   end
@@ -57,7 +70,16 @@ function Audio.sync_object(o)
   if not nodes[o.id] then return end
   local k, v = primary(o)
   if o.type == "output" then
+    master_vol = v
     engine.set(o.id, "volume", v)
+    engine.set(o.id, "rev", o.params.rev or 0)
+    engine.set(o.id, "room", o.params.room or 0.5)
+    engine.set(o.id, "comp", o.params.comp or 0)
+    return
+  end
+  if o.type == "tempo" then
+    -- rotation drives the param; its action fans out to metro + engine bus
+    params:set("rot_tempo", util.clamp(math.floor(v + 0.5), 40, 240))
     return
   end
   if not HAS_SYNTH[o.type] then
@@ -82,13 +104,38 @@ function Audio.sync_object(o)
       end
     end
   end
-  if o.type == "oscillator" or o.type == "loop" or o.type == "sampler" then
+  if ENV_TYPES[o.type] then
     engine.set(o.id, "a", o.env.a)
     engine.set(o.id, "d", o.env.d)
     engine.set(o.id, "s", o.env.s)
     engine.set(o.id, "r", o.env.r)
   end
+  if o.type == "oscillator" and o.subs then
+    -- sub-oscillators; follow=1 snaps each sub's total pitch offset to the
+    -- table tonality (lua-side: engine only knows the resulting off/det)
+    local ton = o.subs.follow == 1 and Tonality.current(World) or nil
+    for i = 1, 4 do
+      local s = o.subs[i]
+      local off, det = s.off, s.det
+      if ton then
+        off, det = Tonality.snap(off + det / 100, ton.root, ton.scale), 0
+      end
+      engine.set(o.id, "sub" .. i .. "w", s.wave)
+      engine.set(o.id, "sub" .. i .. "a", s.amp)
+      engine.set(o.id, "sub" .. i .. "d", det)
+      engine.set(o.id, "sub" .. i .. "o", off)
+    end
+  end
   if o.type == "oscillator" or o.type == "sampler" then nodes[o.id].freq = v end
+end
+
+-- re-push all follow-tonality oscillators (call when tonality changes)
+function Audio.resync_follow()
+  for _, o in ipairs(World.objects) do
+    if o.type == "oscillator" and o.subs and o.subs.follow == 1 then
+      Audio.sync_object(o)
+    end
+  end
 end
 
 -- LFO target: all targets take the dedicated \mod arg (bipolar -1..1);
@@ -156,6 +203,14 @@ function Audio.on_add(o)
   if HAS_SYNTH[o.type] and o.type ~= "lfo" then
     n.lvl_slot = table.remove(lvl_pool) -- engine pops the same end
   end
+  if o.type == "tempo" then
+    -- adopt the current bpm instead of resetting it to the angle default
+    o.angle = (params:get("rot_tempo") - 40) / 200 * 2 * math.pi
+  end
+  if o.type == "output" then
+    -- adopt the current master volume (angle 0 = silence on place)
+    o.angle = master_vol * 2 * math.pi
+  end
   nodes[o.id] = n
   engine.add(o.id, o.type, o.subtype - 1)
   Audio.sync_object(o)
@@ -189,6 +244,7 @@ function Audio.reset()
   -- a removed output object leaves its volume behind on the master synth;
   -- a bare table (no output object) should not stay silent (e2e 2026-09-27)
   engine.volume(0.8)
+  master_vol = 0.8
 end
 
 -- hook points: wrap World functions rather than editing its logic
@@ -238,18 +294,24 @@ function Audio.seq_tick(tick)
           o._left = st.dur or 2
           if st.on and n.kind == "control" and n.out and not n.muted then
             local t = nodes[n.out]
-            if t and (t.type == "oscillator" or t.type == "sampler") and t.freq then
-              local pitch = st.pitch
-              if o.subtype == 3 then -- random subtype
-                pitch = math.random(-12, 24)
-                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
-                o._hist = o._hist or {}
-                o._hist[o._pos] = pitch
+            if t and SEQ_TARGETS[t.type] then
+              if t.freq then
+                -- pitched target (osc/sampler): note + velocity
+                local pitch = st.pitch
+                if o.subtype == 3 then -- random subtype
+                  pitch = math.random(-12, 24)
+                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                  o._hist = o._hist or {}
+                  o._hist[o._pos] = pitch
+                else
+                  if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                end
+                engine.set(n.out, "amp", st.vel)
+                engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
               else
-                if ton then pitch = Tonality.snap(pitch, ton.root, ton.scale) end
+                -- effect target: bare envelope retrigger
+                engine.trigger(n.out, 0)
               end
-              engine.set(n.out, "amp", st.vel)
-              engine.trigger(n.out, t.freq * (2 ^ (pitch / 12)))
             end
           end
         end
@@ -267,13 +329,17 @@ function Audio.midi_note(note, vel)
     if n.type == "midi" and n.kind == "control" and n.out and not n.muted then
       local o = World.get(id)
       local t = nodes[n.out]
-      if o and t and (t.type == "oscillator" or t.type == "sampler") then
-        if vel > 0 then
-          local st = note + (o.params.transpose or 0)
-          engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
-          engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
-        else
-          engine.set(n.out, "gate", 0)
+      if o and t and SEQ_TARGETS[t.type] then
+        if t.freq then
+          if vel > 0 then
+            local st = note + (o.params.transpose or 0)
+            engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
+            engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
+          else
+            engine.set(n.out, "gate", 0)
+          end
+        elseif vel > 0 then
+          engine.trigger(n.out, 0) -- effect envelope; note-off ignored
         end
       end
     end

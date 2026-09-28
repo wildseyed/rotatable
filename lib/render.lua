@@ -222,7 +222,7 @@ local function draw_connection(cam, w2s, world, conn, phase)
   end
 end
 
-function Render.object(cam, w2s, o, types, selected, lvl)
+function Render.object(cam, w2s, o, types, selected, lvl, slider)
   local sx, sy = w2s(o.x, o.y)
   local r = util.clamp(GLYPH_R * cam.zoom, 3, 14)
   -- skip (and skip label) when fully offscreen
@@ -250,6 +250,22 @@ function Render.object(cam, w2s, o, types, selected, lvl)
     screen.level(selected and 15 or 9)
     sub_mark(o, sx + 0.68 * r * math.cos(o.angle), sy + 0.68 * r * math.sin(o.angle), s)
   end
+  -- the slider (spec §3): dot on the right side of the glyph (rotation
+  -- angle + 90°), radial distance from center = value; short track when big
+  if slider and r >= 3.5 then
+    local sa = o.angle + math.pi / 2
+    local ca, sn = math.cos(sa), math.sin(sa)
+    if r >= 6 then
+      screen.level(selected and 6 or 3)
+      screen.move(sx + 0.3 * r * ca, sy + 0.3 * r * sn)
+      screen.line(sx + 0.8 * r * ca, sy + 0.8 * r * sn)
+      screen.stroke()
+    end
+    local sr = (0.3 + 0.5 * util.clamp(slider, 0, 1)) * r
+    screen.level(selected and 15 or 8)
+    screen.circle(sx + sr * ca, sy + sr * sn, math.max(1, r * 0.12))
+    screen.fill()
+  end
   -- VU bar under the glyph (engine lvl poll, sqrt-scaled)
   if lvl and lvl > 0.01 then
     local w = math.sqrt(util.clamp(lvl, 0, 1)) * r * 2
@@ -261,6 +277,7 @@ function Render.object(cam, w2s, o, types, selected, lvl)
   -- label queues up (collision-resolved at flush) when zoomed in enough to read
   if cam.zoom >= 30 and label_queue then
     local text = types[o.type].label
+    if o.type == "tempo" then text = tostring(params:get("rot_tempo")) end
     if selected then
       text = text .. " " .. (types[o.type].subtypes[o.subtype] or "")
     end

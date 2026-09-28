@@ -4,7 +4,14 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v2.0.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.0.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3**: the slider — every block shows a value dot on its right
+side (E3 in ROTATE, K1+E3 fine-tune) · tempo object: rotation = BPM on
+the table · global FX on the output object (master reverb + compression)
+· oscillator sub-oscillators (4 subs + follow-tonality) · tonality scale
+editing (12 toggleable degrees) · effect envelopes — sequencer/MIDI notes
+sweep filter cutoff, delay feedback, dry-wet
 
 **new in v2**: 13 object types (adds sampler, audio-in, waveshaper,
 tonality, midi-in) · tempo sync everywhere (LFO multiply, delay quantize +
@@ -61,7 +68,8 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 
 - **MOVE**: E2/E3 glide the object with accel/decel physics (connections
   form/break live as it slides)
-- **ROTATE**: E2 = main param, E3 = secondary param, `K1+E2` = subtype
+- **ROTATE**: E2 = main param, E3 = the slider (amp / dry-wet / feedback /
+  depth / resonance per type), `K1+E3` = fine adjust, `K1+E2` = subtype
 - **LINK**: E2 cycles targets by proximity; `K3` toggles hardlink
   (permanent, bright line); `K1+K3` mutes the connection (dimmed)
 - **E1 hops selection between objects in every L2 mode**, centering the
@@ -89,6 +97,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | sequencer | controller | pattern preset (1–6) | — | mono / poly / random |
 | midi | controller | transpose ±24 st | — | in |
 | tonality | global | root key | — | major / minor / pentatonic / chromatic |
+| tempo | global | BPM (40–240) | — | bpm (label shows the value) |
 | output | global | master volume | — | — (the star; never connects) |
 
 **midi in**: vport + channel in PARAMETERS (`midi in vport`,
@@ -96,23 +105,35 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 velocity sets amp, note-off releases the gate.
 
 **visuals**: blocks carry a subtype pictogram on their rim (orbits with
-rotation); audio connections show signal-flow dashes, control connections
-marching dots; the output point pulses at the tempo; sounding objects get
-a VU bar under the glyph.
+rotation) and a slider dot on their right side (distance from center =
+slider value, like the reactable's draggable dot); audio connections show
+signal-flow dashes, control connections marching dots; the output point
+pulses at the tempo; sounding objects get a VU bar under the glyph.
 
 **config panels** (`K1+K3` on a selected object, E1 switches pages)
 
 - **2D** (effects): E2/E3 = X/Y on the control surface
-- **env** (oscillator, loop, sampler): ADSR — E2 picks a stage, E3 adjusts
-- **set** (lfo, delay, loop, sampler): tempo-sync & pitch settings —
+- **env** (oscillator, loop, sampler, and all effects): ADSR — E2 picks a
+  stage, E3 adjusts. generators: amplitude envelope. effects: param
+  envelope, retriggered by sequencer/MIDI notes — filter → cutoff,
+  delay → feedback, modulator/waveshaper → dry-wet (page footer shows the
+  target); default is idle-neutral (s=0), so it only moves when triggered
+- **set** (lfo, delay, loop, sampler, output): tempo-sync & pitch/FX settings —
   E2 picks a field, E3 adjusts. lfo: `sync` on/off + `mult` (period in
   32nd notes); delay: `sync` (32nd-note quantize) + `sweep` (time glide);
   loop: `sync` immediate/quarter/bar (grid entry on load); sampler: `base`
-  (the sample's natural pitch, in semitones from C4)
+  (the sample's natural pitch, in semitones from C4); output: global FX —
+  `rev` (master reverb mix), `room`, `comp` (master compression)
 - **steps** (sequencer): E2 step, E3 pitch (−24..+24), `K1+E3` velocity,
   `K3` toggles the step. random subtype: shows the improvised-note history
   (E3 = velocity). rotation (ROTATE mode, E2) switches 6 stored patterns —
   the header shows the active one (`p1`–`p6`)
+- **subs** (oscillator): 4 sub-oscillators, E2 picks a field, E3 adjusts —
+  `follow tonality` toggle (snaps sub pitches to the table's scale), then
+  per sub: waveform, amp, detune (cents), offset (semitones)
+- **notes** (tonality): the scale as 12 toggleable degrees — E2 picks,
+  E3/`K3` toggles. subtype cycling reloads the preset (custom edits
+  replaced); root still on rotation
 - **vel** (sequencer): per-step velocity — E2 step, E3 value, `K3` toggles
 - **dur** (sequencer): per-step length in 32nd notes (1–8; 2 = 16th) —
   E2 step, E3 value, `K3` toggles

@@ -1,5 +1,5 @@
 -- rotatable
--- v2.0.0 @wildseyed
+-- v3.0.0 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -78,8 +78,8 @@ T = {
     local r = World.toggle_hardlink(a, b); dirty = true; return r
   end,
   mute = function(a, b) local m = World.toggle_mute(a, b); dirty = true; return m end,
-  key = function(n, z) UI.key(n, z); dirty = true end,
-  enc = function(n, d) UI.enc(n, d); dirty = true end,
+  key = function(n, z) key(n, z); dirty = true end, -- global handler: syncs engine
+  enc = function(n, d) enc(n, d); dirty = true end,
   dump = function()
     print("level " .. UI.level() .. " | " .. UI.status())
     for _, c in ipairs(World.connections) do
@@ -210,12 +210,19 @@ function init()
     redraw()
   end, 1/15, -1)
   redraw_metro:start()
+
+  -- master synth sometimes doesn't survive engine (re)boot — remaster is
+  -- idempotent and remaster-fixes it every time (2026-09-28 saga)
+  engine.remaster()
 end
 
 function enc(n, d)
   UI.enc(n, d)
   local o = UI.selected()
-  if o then Audio.sync_object(o) end
+  if o then
+    Audio.sync_object(o)
+    if o.type == "tonality" then Audio.resync_follow() end
+  end
 end
 
 -- script reloads share the engine: free our nodes or they drone on as
@@ -227,7 +234,10 @@ end
 function key(n, z)
   UI.key(n, z)
   local o = UI.selected()
-  if o then Audio.sync_object(o) end
+  if o then
+    Audio.sync_object(o)
+    if o.type == "tonality" then Audio.resync_follow() end
+  end
 end
 
 local function draw_grid()
@@ -276,7 +286,9 @@ local function draw_objects()
     local lvl
     local pn = Audio.lvl_poll(o.id)
     if pn then lvl = lvl_vals[tonumber(pn:sub(5))] end
-    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id, lvl)
+    local sk = World.SLIDER_PARAM[o.type]
+    Render.object(cam, w2s, o, World.TYPES, sel ~= nil and o.id == sel.id,
+      lvl, sk and o.params[sk] or nil)
   end
   -- LINK candidate ring (glyph-sized; big circle was clutter, owner 2026-09-27)
   local cand = UI.link_candidate()
