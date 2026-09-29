@@ -86,8 +86,24 @@ short for the README table.
   notes nearly silent)
 - [x] README: new 16-row preset table with the "teaches" column; notebook
   entry; plan.md index (phase-11 line)
-- [ ] Commit on main; release-branch bundling follows the phase-9 decision
-  (presets already ship on release)
+- [x] Commit on main (`e8917ad`); release-branch bundling follows the
+  phase-9 decision (presets already ship on release)
+
+## Post-release field testing (2026-09-29, owner hands-on)
+
+First hands-on session surfaced two same-symptom bugs ("no sequence
+execution"), both fixed and committed:
+
+- **Frozen seq metro** (`b8b0f91`): tick callback now pcall-wrapped
+  (rate-limited error prints), 1 s watchdog restarts a stopped clock,
+  `T.health()` probe added.
+- **Engine-node leak** (`12fd30f`): norns `include()` is per-includer, so
+  ui.lua's own audio/slots copies had a separate empty node mirror —
+  physical recalls/clears never freed engine nodes until scsynth exhausted
+  RT memory (`JackDriver: alloc failed`). audio.lua/slots.lua are now
+  global-guarded singletons. Harness-only testing had missed this because
+  `T.*` always used the correct instances — physical-path coverage matters.
+  AGENTS.md gotcha 13.
 
 ## Open questions for owner
 
