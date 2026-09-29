@@ -416,6 +416,10 @@ function UI.tick()
     vel_x, vel_y = 0, 0
   end
   selected.x, selected.y = nx, ny
+  -- camera tracks the block while moving (owner, 2026-09-29): the block
+  -- stays under the reticle instead of gliding off screen
+  cam.x, cam.y = nx, ny
+  cam_target = nil
   vel_x, vel_y = vel_x * FRICTION, vel_y * FRICTION
   World.recompute()
   return true

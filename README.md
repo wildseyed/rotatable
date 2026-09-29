@@ -4,7 +4,7 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.1.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.2.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
 **new in v3.1**: **16 factory presets** — a tutorial arc of full musical
 tables, with a bundled sample library (synthesized drums, orchestral
@@ -86,7 +86,8 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 **L2 modes**
 
 - **MOVE**: E2/E3 glide the object with accel/decel physics (connections
-  form/break live as it slides)
+  form/break live as it slides); the camera tracks the block so it stays
+  under the reticle
 - **ROTATE**: E2 = main param, E3 = the slider (amp / dry-wet / feedback /
   depth / resonance per type), `K1+E3` = fine adjust, `K1+E2` = subtype
 - **LINK**: E2 cycles targets by proximity; `K3` toggles hardlink
@@ -268,7 +269,9 @@ object's rotation.
 
 ## patch slots
 
-pan outside the table edge: 16 numbered slots in a ring.
+pan outside the table edge: 16 numbered slots in a ring. the boxes are
+world-fixed like blocks — they grow as you zoom in, so they stay visible
+landing targets when navigating way zoomed in.
 
 - **long-press K3** empty slot → store the whole patch (objects, params,
   sequences, samples, links, tempo)

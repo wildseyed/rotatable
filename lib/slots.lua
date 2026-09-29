@@ -9,6 +9,7 @@ local Slots = {}
 
 Slots.N = 16
 Slots.RADIUS = 1.18 -- world units, ring just outside the table (r=1.0)
+Slots.DRAW_R = 0.08 -- world units, box radius; matches GLYPH_R in render.lua
 
 local DIR = _path.data .. "rotatable/slots/"
 
@@ -152,9 +153,11 @@ function Slots.draw(w2s, cam, candidate)
   for i = 1, Slots.N do
     local wx, wy = Slots.pos(i)
     local sx, sy = w2s(wx, wy)
-    if sx > -10 and sx < 138 and sy > -10 and sy < 74 then
+    if sx > -20 and sx < 148 and sy > -20 and sy < 84 then
       local occ = Slots.occupied(i)
-      local r = 4
+      -- world-fixed size like blocks (owner, 2026-09-29): grows with zoom so
+      -- boxes stay visible landing targets when navigating zoomed in
+      local r = util.clamp(Slots.DRAW_R * cam.zoom, 3, 14)
       local lvl = occ and 10 or 3
       if candidate == i then lvl = 15 end
       screen.level(lvl)
