@@ -385,31 +385,50 @@ def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     tempo_obj(112)
     output_obj(vol=0.8, rev=0.3, room=0.5)
 
-def b12():  # STACK — three detuned oscillators into one LP filter, slow cutoff LFO
-    o1 = place("oscillator", 0.50, -0.15, a_freq(110))
+def b12():  # DRIFT — multi-osc stack, per-osc drift LFOs, random-seq filter swells
+    o1 = place("oscillator", 0.50, -0.18, a_freq(110))
     st(o1, "subtype", 2)  # saw
-    st(o1, "amp", 0.55)
-    sub(o1, 1, wave=1, amp=0.5, off=-12)      # octave down
-    sub(o1, 2, wave=1, amp=0.3, off=7, det=6) # detuned fifth
+    st(o1, "amp", 0.65)
+    sub(o1, 1, wave=1, amp=0.45, off=-12)     # octave down
+    sub(o1, 2, wave=1, amp=0.3, off=7, det=8) # detuned fifth
     subfollow(o1, 1)                           # subs snap to the tonality
-    o2 = place("oscillator", 0.50, 0.12, a_freq(110.8))  # beating detune
+    o2 = place("oscillator", 0.50, 0.15, a_freq(110.8))  # beating detune
     st(o2, "subtype", 3)  # square
-    st(o2, "amp", 0.45)
-    sub(o2, 1, wave=3, amp=0.25, off=12, det=8)  # detuned octave up
+    st(o2, "amp", 0.5)
+    sub(o2, 1, wave=3, amp=0.25, off=12, det=10)  # detuned octave up
     subfollow(o2, 1)
-    o3 = place("oscillator", 0.28, 0.30, a_freq(55))
+    o3 = place("oscillator", 0.26, 0.32, a_freq(55))
     st(o3, "subtype", 1)  # sine sub-bass
-    st(o3, "amp", 0.6)
-    flt = place("filter", 0.22, 0.0, a_cut(700))
+    st(o3, "amp", 0.65)
+    flt = place("filter", 0.22, 0.0, a_cut(900))
     st(flt, "subtype", 1)  # lp
-    st(flt, "res", 0.4)
-    lfo = place("lfo", 0.02, 0.24, a_lfo(0.15))
-    st(lfo, "subtype", 1)
-    st(lfo, "depth", 0.3)
-    link(lfo, flt)       # slow cutoff drift (osc3 is closer; hardlink wins)
+    st(flt, "res", 0.45)
+    for k, v in (("a", 0.3), ("d", 1.5), ("s", 0.0), ("r", 1.0)):
+        st(flt, k, v)  # cutoff swells on each random-seq trigger
+    cho = place("delay", 0.02, -0.12, a_01(0.6))  # reverb: rotation = room
+    st(cho, "subtype", 3)  # reverb
+    st(cho, "room", 0.7)
+    st(cho, "feedback", 0.45)  # reverb subtype: feedback arg = mix
+    l1 = place("lfo", 0.66, -0.32, a_lfo(0.09))
+    st(l1, "subtype", 1)
+    st(l1, "depth", 0.15)
+    link(l1, o1)         # slow pitch drift on the saw
+    l2 = place("lfo", 0.68, 0.28, a_lfo(0.13))
+    st(l2, "subtype", 1)
+    st(l2, "depth", 0.12)
+    link(l2, o2)         # a different drift on the square
+    seq = place("sequencer", 0.05, 0.30, a_preset(1))
+    st(seq, "subtype", 3)  # random
+    pattern(seq, 1, [
+        (1, 0, .8), (0, 0), (0, 0), (0, 0),
+        (1, 0, .6), (0, 0), (1, 0, .7), (0, 0),
+        (0, 0), (0, 0), (1, 0, .8), (0, 0),
+        (0, 0), (1, 0, .6), (0, 0), (0, 0)])
+    link(seq, flt)       # sparse gates retrigger the filter envelope
     ton = place("tonality", -0.45, -0.35, a_root(9))  # A minor
     st(ton, "subtype", 2)
-    output_obj(vol=0.8, rev=0.35, room=0.6, comp=0.25)
+    tempo_obj(60)
+    output_obj(vol=0.8, rev=0.4, room=0.7, comp=0.25)
 
 def b13():  # CRUSH — resampler, HP filter, random LFO on dry-wet
     lop = place("loop", 0.60, -0.10, a_rate(2))

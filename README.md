@@ -303,7 +303,7 @@ musical sketch that also teaches one or two concepts.
 | 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
 | 10 | POLY | 108 | poly sequencer, pattern presets 1–6 (rotate to compare) | poly sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
 | 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
-| 12 | STACK | — | multiple generators into one effect, detune = width, sub stacking | saw + detuned square + sine sub-bass, each with sub-oscillators, stacked into one LP filter; slow LFO drifts the cutoff |
+| 12 | DRIFT | 60 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | saw + detuned square + sine sub-bass, each with subs, into one LP filter; each osc has its own slow pitch-drift LFO; a random sequencer retriggers the filter's cutoff envelope; reverb-delay insert for space |
 | 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
 | 14 | PLUCK | 118 | instrument sampler + tonality, oneshot loops, call-and-response | mandolin and saxophone trade a D-minor melody (two sequencers), oneshot snare backbeat |
 | 15 | ZOO | 80 | sound design: generators don't have to be musical | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots |
@@ -344,10 +344,11 @@ from the block settings guide above:
     and the pentatonic tonality keeps every roll musical. open its steps
     page to watch the note history appear. raise the delay's feedback
     slider for a longer trail.
-12. **STACK** — width from numbers. try: rotate any oscillator to retune
-    its stack; the subs follow the A-minor tonality. nudge one osc away
-    from the filter and it patches straight to the output — an unfiltered
-    layer. the LFO on the cutoff is the slow breathe.
+12. **DRIFT** — width from numbers, movement from patience. try: nothing
+    at first — each osc has its own slow pitch-drift LFO and a random
+    sequencer swells the filter cutoff on sparse gates. then open the
+    filter's env page and stretch the decay for longer breathes, or raise
+    a drift LFO's depth slider into detune-wobble territory.
 13. **CRUSH** — deliberate ugliness. try: the random LFO is modulating the
     bitcrusher's dry-wet — watch the connection dots. filter rotation
     (HP) decides how much of the dirt survives.

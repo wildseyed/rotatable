@@ -479,3 +479,23 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   over the code-dir factory file so RESTORE PRESETS yields STACK. Recall
   path verified end-to-end (amps ~0.37). README table/tour/loop-tip
   updated. Release branch NOT synced (preset content changed since v3.2.0).
+- 2026-09-29: **preset 12 revised → DRIFT** (owner: "ethereal movement among
+  the oscs + random seq into filter controls"). Both are engine-supported:
+  LFO→osc mod bus = pitch drift (per-osc sine LFOs, 0.09/0.13 Hz, depth
+  0.15/0.12); sequencer→effect = bare gate retrigger of the effect's param
+  ADSR (random subtype, sparse gates → filter env sweeps cutoff ×8,
+  a=0.3 d=1.5). Space now from a reverb-delay insert (subtype 3, mix 0.45,
+  room 0.7) instead of chorus — see bug below. Levels tuned: peak ~0.45
+  on recall (was 0.087 with chorus, 0.37 for STACK). tempo 60 bpm.
+- 2026-09-29: **SUSPECTED ENGINE BUG: modulator (chorus) as insert kills
+  the chain**. Evidence (device, DRIFT build): filter→output direct peaks
+  0.31; filter→chorus(dw 0.4)→output peaks 0.086; chorus dw=0 (should be
+  pure dry!) peaks 0.0016 — yet dw=1 peaks 0.177. Node lvl polls show hot
+  signal inside the chain (0.77/0.50/0.19) while master reads 0.086, so
+  the loss is at the chorus→output hop or in rot_mod's dry path, not the
+  sources. The dw=0-silent vs dw=1-audible pair is paradoxical from the
+  SynthDef alone (wet derives from dry) — smells like a bus/order issue
+  (gotchas 2/9 territory) rather than the mix math. CHOIR/SOLO also use
+  chorus inserts — worth re-measuring. NOT fixed; DRIFT avoids chorus.
+  Repro: build chain osc→filter→modulator(chorus)→output, measure
+  T.amps() at drywet 0 / 0.4 / 1.
