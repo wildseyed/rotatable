@@ -438,3 +438,13 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   (16 presets, sample library, metro hardening, include-leak fix, K1+E1,
   docs) is main-only. tools/presets.py rebuilds any preset via the REST
   harness (`python3 tools/presets.py N`, `--pull` fetches slots back).
+- 2026-09-29 (other-PC session): **2d-page bug confirmed by owner** (E2
+  pinned the cursor at the right edge) and fixed blind: the page clamped
+  raw params to 0..1 (cutoff is Hz!), and worse, primary params are
+  angle-driven — direct param edits get stomped by the next sync_object.
+  Fix: 2d axes that ARE the block's primary param now edit/display via
+  the angle (`norm_2d`/`edit_2d` in ui.lua, `Audio.primary_key` exported);
+  non-primary axes keep direct param edits, with a real 0.01..2 range for
+  delay time (reverb subtype, where rotation drives room). PENDING DEVICE
+  VERIFICATION on the other PC: pull, `python3 tools/deploy.py --load`,
+  filter 2d page — E2 should sweep cutoff and move the cursor both ways.

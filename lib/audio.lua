@@ -81,6 +81,11 @@ local PASS_PARAMS = { freq = true, amp = true, cutoff = true, time = true,
   feedback = true, main = true, drywet = true, depth = true, gain = true,
   base = true, sync = true, sweep = true, mult = true, room = true }
 
+-- which param rotation drives for this object (ui 2d page: primary params
+-- are angle-driven — editing the param directly would be stomped by the
+-- next sync_object, so the pad must edit the angle instead)
+function Audio.primary_key(o) return (primary(o)) end
+
 -- push an object's params/subtype/angle to the engine
 function Audio.sync_object(o)
   if not nodes[o.id] then return end

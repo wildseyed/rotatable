@@ -227,6 +227,29 @@ local function params_2d(o)
   else return "main", "drywet" end
 end
 
+-- 2d-page value mapping: a primary axis (cutoff/time/main) is driven by the
+-- block's ANGLE (sync_object re-derives the param every sync), so the pad
+-- must edit the angle — editing the param directly is stomped, and a 0..1
+-- clamp on a Hz value pins the cursor at the edge (owner-confirmed
+-- 2026-09-29). non-primary axes edit the param; time needs a real range
+-- (reverb subtype, where rotation drives room instead).
+local RANGE_2D = { time = { 0.01, 2 } }
+
+local function norm_2d(o, k)
+  if k == Audio.primary_key(o) then return o.angle / (2 * math.pi) end
+  local r = RANGE_2D[k] or { 0, 1 }
+  return (o.params[k] - r[1]) / (r[2] - r[1])
+end
+
+local function edit_2d(o, k, d)
+  if k == Audio.primary_key(o) then
+    o.angle = util.clamp(o.angle + d * 0.02 * 2 * math.pi, 0, 2 * math.pi)
+  else
+    local r = RANGE_2D[k] or { 0, 1 }
+    o.params[k] = util.clamp(o.params[k] + d * (r[2] - r[1]) * 0.02, r[1], r[2])
+  end
+end
+
 -- ---------- input ----------
 
 local function enter_l2(o)
@@ -484,8 +507,8 @@ function UI.enc(n, d)
       field_idx = 1
     elseif page == "2d" then
       local kx, ky = params_2d(selected)
-      if n == 2 then selected.params[kx] = util.clamp(selected.params[kx] + d * 0.02, 0, 1)
-      elseif n == 3 then selected.params[ky] = util.clamp(selected.params[ky] + d * 0.02, 0, 1) end
+      if n == 2 then edit_2d(selected, kx, d)
+      elseif n == 3 then edit_2d(selected, ky, d) end
     elseif page == "steps" or page == "vel" or page == "dur" then
       if n == 2 then
         step_idx = util.clamp(step_idx + d, 1, 16)
@@ -920,8 +943,8 @@ local function draw_l3()
     end
   else -- 2d
     local kx, ky = params_2d(selected)
-    local px = 16 + util.clamp(selected.params[kx], 0, 1) * 90
-    local py = 54 - util.clamp(selected.params[ky], 0, 1) * 38
+    local px = 16 + util.clamp(norm_2d(selected, kx), 0, 1) * 90
+    local py = 54 - util.clamp(norm_2d(selected, ky), 0, 1) * 38
     screen.level(4)
     screen.rect(16, 16, 90, 38)
     screen.stroke()
