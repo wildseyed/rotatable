@@ -142,6 +142,16 @@ T = {
   end,
   save_slot = function(i) Slots.save(i) end,
   restore_factory = function() return Slots.restore_factory() end,
+  health = function() -- seq-clock diagnostics (2026-09-29 frozen-clock saga)
+    local wseq = 0
+    for _, o in ipairs(World.objects) do
+      if o.type == "sequencer" then wseq = wseq + 1 end
+    end
+    return string.format(
+      "tick=%d running=%s tick_errors=%d world_seqs=%d node_seqs=%d",
+      seq_tick_n, tostring(seq_metro and seq_metro.is_running),
+      seq_err_n or -1, wseq, Audio.count_type("sequencer"))
+  end,
   sub = function(id, i, k, v) -- sub-osc i (1..4) field k, or i="follow"
     local o = World.get(id)
     if not o or not o.subs then return "no subs" end
@@ -196,12 +206,30 @@ function init()
   midi_setup(params:get("rot_midi_dev"))
 
   -- sequencer clock: 32nd-note ticks; each sequencer object free-runs its
-  -- own 16-step pattern (per-step dur, in 32nds)
+  -- own 16-step pattern (per-step dur, in 32nds). pcall: a tick error must
+  -- never kill the metro silently (froze sequencing twice, 2026-09-28/29)
+  seq_err_n = 0
   seq_metro = metro.init(function()
     seq_tick_n = seq_tick_n + 1
-    Audio.seq_tick(seq_tick_n)
+    local ok, err = pcall(Audio.seq_tick, seq_tick_n)
+    if not ok then
+      seq_err_n = seq_err_n + 1
+      if seq_err_n <= 3 or seq_err_n % 100 == 0 then
+        print("rotatable seq_tick error #" .. seq_err_n .. ": " .. tostring(err))
+      end
+    end
   end, 60 / 120 / 8, -1)
   seq_metro:start()
+
+  -- watchdog: if the clock still ends up stopped (init race, metro freed
+  -- elsewhere), restart it loudly instead of leaving a dead table
+  watchdog_metro = metro.init(function()
+    if seq_metro and not seq_metro.is_running then
+      print("rotatable: seq metro was stopped — restarting")
+      pcall(function() seq_metro:start() end)
+    end
+  end, 1, -1)
+  watchdog_metro:start()
 
   -- stock amp polls for REPL verification of audio flow
   amp_poll_l = poll.set("amp_out_l", function(v) amp_l = v end)

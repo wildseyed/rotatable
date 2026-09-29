@@ -40,6 +40,13 @@ function Audio.lvl_poll(id)
   return n and n.lvl_slot and ("lvl_" .. n.lvl_slot) or nil
 end
 
+-- how many nodes of a type the mirror holds (T.health diagnostics)
+function Audio.count_type(type)
+  local n = 0
+  for _, nd in pairs(nodes) do if nd.type == type then n = n + 1 end end
+  return n
+end
+
 -- angle -> primary param (rotation = primary, behavior-spec §3)
 local function primary(o)
   local f = o.angle / (2 * math.pi)

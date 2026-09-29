@@ -368,3 +368,16 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   worth remembering for any future sample ingestion (trim at onset, not at
   file start). SOLO stays the mellow one by design (random seq + smooth
   theremin), boosted to amp 1.0.
+- 2026-09-29: **Frozen sequencer clock, round 2 — now hardened.** Owner
+  found presets 1–6 not sequencing. Live probe: seq `pos=0`, clock never
+  ticked; a script reload cured it — same transient as 2026-09-28's
+  frozen seq metro, now seen twice. Post-mortem was inconclusive (journal
+  showed no rotatable lua error for that session; recall path verified
+  clean all 16 ways), so the clock is now bulletproof instead of
+  mysterious: seq metro callback is pcall-wrapped (errors print,
+  rate-limited: first 3 then every 100th), and a 1 s watchdog metro
+  restarts `seq_metro` if it ever shows stopped (verified live:
+  `seq_metro:stop()` -> watchdog recovered in <2 s). New harness probe
+  `T.health()` -> tick counter, running flag, tick error count,
+  world-vs-nodes sequencer counts — use it FIRST if sequencing ever looks
+  dead again. `Audio.count_type` added for the mirror count.
