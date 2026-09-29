@@ -381,3 +381,22 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   `T.health()` -> tick counter, running flag, tick error count,
   world-vs-nodes sequencer counts — use it FIRST if sequencing ever looks
   dead again. `Audio.count_type` added for the mirror count.
+- 2026-09-29 (later): **The real killer found — per-includer include()
+  copies.** Round 2 of "no sequence execution": the clock was healthy this
+  time (T.health: tick advancing, 0 errors), but `node_seqs=43` vs
+  `world_seqs=1` and scsclang journal spammed `JackDriver: alloc failed`
+  (RT memory exhausted). Root cause: norns `include()` does NOT cache —
+  ui.lua's `include('lib/audio')` creates a SECOND Audio instance with its
+  own empty `nodes` mirror. `UI.init` then ran `Slots.init(World, Audio)`
+  wiring ui's Slots copy to ui's Audio copy, so every PHYSICAL slot recall
+  or table clear ran the wrong `Audio.reset()` — harness recalls
+  (T.recall_slot, my whole phase-11 verification) used rotatable's own
+  copies and were clean, which is why device tests never saw it. Engine
+  nodes accumulated (~200 adds, 0 frees) until scsynth wedged silent.
+  Fix: singleton guards — audio.lua/slots.lua early-return globals
+  (`RotatableAudio`/`RotatableSlots`). Verified: polluted the mirror, then
+  recalled through the ui-visible singleton table — mirror cleared to match
+  the world exactly; 32-recall storm clean, no alloc failures since the
+  stack restart. Yesterday's pos=0 incident was likely a genuinely dead
+  metro (separate failure, now pcall+watchdogged); today's was this wedge.
+  Same symptom, two causes — both now hardened. AGENTS.md gotcha 13 added.

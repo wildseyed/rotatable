@@ -99,6 +99,16 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   2026-09-28 when subs edits were silent in tests only). Also: single
   amp-poll reads are useless for A/B comparisons on phase-locked signals
   (beat interference) — take max over ~1 s of reads.
+  (13) norns `include()` is PER-INCLUDER (no caching): ui.lua's own copy of
+  `audio.lua` had a separate `nodes` mirror, so physical recalls/clears
+  (`Slots.recall`/`Audio.reset` at ui.lua) never freed engine nodes —
+  scsynth exhausted RT memory (`JackDriver: alloc failed`) after ~2 preset
+  passes and the whole table went silent while lua stayed healthy (found
+  2026-09-29). Stateful shared modules MUST be singletons: audio.lua and
+  slots.lua early-return a global (`RotatableAudio`/`RotatableSlots`).
+  Symptom tells: clock ticking + clean lua + silence = engine wedge; check
+  `journalctl -u norns-sclang` for `alloc failed`. Only the full stack
+  restart (gotcha 3) recovers a wedged scsynth.
 
 ## Repo layout
 

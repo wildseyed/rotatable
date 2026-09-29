@@ -2,6 +2,12 @@
 -- hooks World.add/remove/recompute/toggle_mute; engine-side stays the source
 -- of truth for routing, lua mirrors it in `nodes`.
 
+-- include() is per-includer on norns: ui.lua gets its own copy of this file,
+-- whose reset() used to clear a DIFFERENT `nodes` mirror — physical recalls
+-- and table-clears leaked every engine node until scsynth ran out of RT
+-- memory (2026-09-29). Singleton via a global (nuked on script clear).
+if RotatableAudio then return RotatableAudio end
+
 local Audio = {}
 
 local World
@@ -373,4 +379,5 @@ function Audio.load_sample(o, path)
   engine.loadbuf(o.id, path)
 end
 
+RotatableAudio = Audio
 return Audio

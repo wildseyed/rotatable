@@ -39,7 +39,8 @@ local SYS_ITEMS = { "RESTORE PRESETS", "ABOUT" }
 
 function UI.init(ctx)
   World, cam, w2s, mark_dirty = ctx.world, ctx.cam, ctx.w2s, ctx.mark_dirty
-  -- include() instances are per-includer on norns: initialize OUR copy too
+  -- audio/slots are singletons (global-guarded against per-includer
+  -- include() copies); re-init with the same wiring is harmless
   Slots.init(World, Audio)
 end
 
