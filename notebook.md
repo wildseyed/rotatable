@@ -448,3 +448,8 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   delay time (reverb subtype, where rotation drives room). PENDING DEVICE
   VERIFICATION on the other PC: pull, `python3 tools/deploy.py --load`,
   filter 2d page — E2 should sweep cutoff and move the cursor both ways.
+- 2026-09-29: **2d-panel fix owner-verified on device; v3.1.0 released**
+  (main + release branch, tag v3.1.0). Ships: 16 factory presets + sample
+  library, K1+E1 preset navigation with camera flight, seq-clock
+  pcall+watchdog, include()-singleton engine-leak fix, 2d-panel angle
+  mapping, README settings guide + preset tour.

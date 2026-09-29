@@ -4,7 +4,14 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.0.1** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.1.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.1**: **16 factory presets** — a tutorial arc of full musical
+tables, with a bundled sample library (synthesized drums, orchestral
+instruments, animal sounds; sources in `presets/audio/SOURCES.md`) ·
+K1+E1 preset navigation (the camera flies slot to slot; K3 loads) ·
+stability: sequencer-clock watchdog, engine-leak fix · block settings
+guide + guided preset tour below
 
 **new in v3**: the slider — every block shows a value dot on its right
 side (E3 in ROTATE, K1+E3 fine-tune) · tempo object: rotation = BPM on
@@ -20,12 +27,6 @@ velocity + duration, random subtype · subtype pictograms on every block,
 animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
 (hold K1+K2+K3) with factory presets · synced settings panels ·
 melodic sampler with base-pitch tuning
-
-**new in v3**: on-block slider dot · tempo object · master reverb +
-compression · suboscillators · editable tonality scales · effect
-envelopes · **16 factory presets** — a tutorial arc of full musical
-tables, with a bundled sample library (synthesized drums, orchestral
-instruments, animal sounds; sources in `presets/audio/SOURCES.md`)
 
 ## screenshots
 
