@@ -28,6 +28,7 @@ local k3_down = false
 local clear_armed = false   -- K1+K2 at L1 arms table-clear; K3 confirms, K2 cancels
 local k3_slot_press = nil   -- util.time() of K3 press when armed on a slot
 local slot_cand = nil       -- slot index near reticle at L1 (nil = none)
+local slot_focus = nil      -- K1+E1 slot focus at L1: K3 acts on it, no load on move
 local SLOT_LONG = 0.8       -- s; long-press threshold for slot store/delete
 -- SYSTEM master menu: hold K1+K2+K3 for MASTER_LONG seconds (owner, 2026-09-27)
 local master_t = nil        -- util.time() when the third key came down
@@ -39,7 +40,8 @@ local SYS_ITEMS = { "RESTORE PRESETS", "ABOUT" }
 
 function UI.init(ctx)
   World, cam, w2s, mark_dirty = ctx.world, ctx.cam, ctx.w2s, ctx.mark_dirty
-  -- include() instances are per-includer on norns: initialize OUR copy too
+  -- audio/slots are singletons (global-guarded against per-includer
+  -- include() copies); re-init with the same wiring is harmless
   Slots.init(World, Audio)
 end
 
@@ -70,6 +72,16 @@ local function nearest_slot()
     if d < best_d then best, best_d = i, d end
   end
   return best
+end
+
+-- next occupied slot after `from` in direction dir (wraps; nil if none).
+-- from=nil starts at the reticle's slot when there is one, else the ends
+local function next_occupied_slot(from, dir)
+  local start = from or nearest_slot() or (dir > 0 and 0 or 1)
+  for step = 1, Slots.N do
+    local i = ((start - 1 + step * dir) % Slots.N) + 1
+    if Slots.occupied(i) then return i end
+  end
 end
 
 local function menu_selectables()
@@ -215,6 +227,29 @@ local function params_2d(o)
   else return "main", "drywet" end
 end
 
+-- 2d-page value mapping: a primary axis (cutoff/time/main) is driven by the
+-- block's ANGLE (sync_object re-derives the param every sync), so the pad
+-- must edit the angle — editing the param directly is stomped, and a 0..1
+-- clamp on a Hz value pins the cursor at the edge (owner-confirmed
+-- 2026-09-29). non-primary axes edit the param; time needs a real range
+-- (reverb subtype, where rotation drives room instead).
+local RANGE_2D = { time = { 0.01, 2 } }
+
+local function norm_2d(o, k)
+  if k == Audio.primary_key(o) then return o.angle / (2 * math.pi) end
+  local r = RANGE_2D[k] or { 0, 1 }
+  return (o.params[k] - r[1]) / (r[2] - r[1])
+end
+
+local function edit_2d(o, k, d)
+  if k == Audio.primary_key(o) then
+    o.angle = util.clamp(o.angle + d * 0.02 * 2 * math.pi, 0, 2 * math.pi)
+  else
+    local r = RANGE_2D[k] or { 0, 1 }
+    o.params[k] = util.clamp(o.params[k] + d * (r[2] - r[1]) * 0.02, r[1], r[2])
+  end
+end
+
 -- ---------- input ----------
 
 local function enter_l2(o)
@@ -267,6 +302,7 @@ function UI.deselect()
   mode = "MOVE"
   reset_move_physics()
   clear_armed = false
+  slot_focus = nil
 end
 
 -- deferred solo-K3 (combo detection window, NDI-agent feedback 2026-09-28):
@@ -279,6 +315,7 @@ local cycle_mode -- forward decl: fire_k3_solo runs before its definition
 -- ^K3 shifted action: place menu at L1, dive to config at L2, mute in LINK
 local function fire_k3_combo()
   if level == "L1" then
+    slot_focus = nil
     level = "L0"; menu_idx = 1
   elseif level == "L2" and selected then
     if mode == "LINK" and link_candidates[link_idx] then
@@ -293,7 +330,11 @@ end
 -- solo K3 action (fires on window expiry, or on release for a quick tap)
 local function fire_k3_solo()
   if level == "L1" then
-    if nearest_to_reticle() == nil then
+    if slot_focus then
+      -- focused slot (K1+E1): K3 acts on it regardless of the reticle
+      slot_cand = slot_focus
+      k3_slot_press = util.time()
+    elseif nearest_to_reticle() == nil then
       slot_cand = nearest_slot()
       if slot_cand then
         k3_slot_press = util.time()
@@ -397,12 +438,25 @@ function UI.enc(n, d)
     return
   end
   if level == "L1" then
-    if n == 1 then
+    if n == 1 and k1_down then
+      -- K1+E1: move slot focus without loading (owner, 2026-09-29);
+      -- the camera flies to center the focused slot; K3 acts on it,
+      -- plain camera moves dismiss focus
+      slot_focus = next_occupied_slot(slot_focus, d > 0 and 1 or -1)
+      if slot_focus then
+        local wx, wy = Slots.pos(slot_focus)
+        cam_target = { x = wx, y = wy }
+      end
+    elseif n == 1 then
+      slot_focus = nil
+      cam_target = nil
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
     elseif n == 2 then
+      slot_focus = nil
       cam_target = nil
       cam.x = cam.x + d * 0.01 * (48 / cam.zoom)
     elseif n == 3 then
+      slot_focus = nil
       cam_target = nil
       cam.y = cam.y + d * 0.01 * (48 / cam.zoom)
     end
@@ -453,8 +507,8 @@ function UI.enc(n, d)
       field_idx = 1
     elseif page == "2d" then
       local kx, ky = params_2d(selected)
-      if n == 2 then selected.params[kx] = util.clamp(selected.params[kx] + d * 0.02, 0, 1)
-      elseif n == 3 then selected.params[ky] = util.clamp(selected.params[ky] + d * 0.02, 0, 1) end
+      if n == 2 then edit_2d(selected, kx, d)
+      elseif n == 3 then edit_2d(selected, ky, d) end
     elseif page == "steps" or page == "vel" or page == "dur" then
       if n == 2 then
         step_idx = util.clamp(step_idx + d, 1, 16)
@@ -532,6 +586,7 @@ local function master_check()
     clear_armed = false
     k3_slot_press = nil -- a slot press superseded by the gesture must not
     slot_cand = nil     -- fire store/recall on release
+    slot_focus = nil    -- nor keep a slot focus into the SYSTEM level
     k3_pending = nil    -- nor a deferred solo-K3
     if level == "L0" then level = "L1" end
   end
@@ -568,8 +623,8 @@ function UI.key(n, z)
       elseif SYS_ITEMS[sys_idx] == "RESTORE PRESETS" then
         sys_confirm = "restore"
       elseif SYS_ITEMS[sys_idx] == "ABOUT" then
-        sys_msg = "rotatable v2-dev | " .. (Slots.factory_available() and
-          "8 factory presets" or "no presets bundled")
+        sys_msg = "rotatable v3 | " .. (Slots.factory_available() and
+          Slots.N .. " factory presets" or "no presets bundled")
       end
     end
     dirty()
@@ -623,6 +678,7 @@ function UI.key(n, z)
         local held = util.time() - k3_slot_press
         if held >= SLOT_LONG then
           if Slots.occupied(slot_cand) then Slots.delete(slot_cand)
+            if slot_focus == slot_cand then slot_focus = nil end
           else Slots.save(slot_cand) end
         else
           if Slots.occupied(slot_cand) then Slots.recall(slot_cand) end
@@ -887,8 +943,8 @@ local function draw_l3()
     end
   else -- 2d
     local kx, ky = params_2d(selected)
-    local px = 16 + util.clamp(selected.params[kx], 0, 1) * 90
-    local py = 54 - util.clamp(selected.params[ky], 0, 1) * 38
+    local px = 16 + util.clamp(norm_2d(selected, kx), 0, 1) * 90
+    local py = 54 - util.clamp(norm_2d(selected, ky), 0, 1) * 38
     screen.level(4)
     screen.rect(16, 16, 90, 38)
     screen.stroke()
@@ -920,7 +976,7 @@ local function draw_sys()
     screen.text("restore presets?")
     screen.level(3)
     screen.move(18, 38)
-    screen.text("replaces all 8 slots")
+    screen.text("replaces all " .. Slots.N .. " slots")
     screen.level(10)
     screen.move(18, 52)
     screen.text("K3 yes   K2 no")
@@ -966,7 +1022,7 @@ end
 
 function UI.slot_candidate()
   if level == "L1" and nearest_to_reticle() == nil then
-    return nearest_slot()
+    return slot_focus or nearest_slot()
   end
 end
 
@@ -975,6 +1031,9 @@ function UI.status()
     return "CLEAR TABLE?  K3 yes  K2 no"
   end
   if level == "L1" then
+    if slot_focus then
+      return "SLOT " .. slot_focus .. "  ^E1 move | K3 load"
+    end
     return "NAV  E1 zoom E2 x E3 y | K3 sel ^K3 place"
   elseif level == "L0" then
     return "PLACE  E2 scroll | K3 place K2 back"

@@ -2,6 +2,12 @@
 -- hooks World.add/remove/recompute/toggle_mute; engine-side stays the source
 -- of truth for routing, lua mirrors it in `nodes`.
 
+-- include() is per-includer on norns: ui.lua gets its own copy of this file,
+-- whose reset() used to clear a DIFFERENT `nodes` mirror — physical recalls
+-- and table-clears leaked every engine node until scsynth ran out of RT
+-- memory (2026-09-29). Singleton via a global (nuked on script clear).
+if RotatableAudio then return RotatableAudio end
+
 local Audio = {}
 
 local World
@@ -40,6 +46,13 @@ function Audio.lvl_poll(id)
   return n and n.lvl_slot and ("lvl_" .. n.lvl_slot) or nil
 end
 
+-- how many nodes of a type the mirror holds (T.health diagnostics)
+function Audio.count_type(type)
+  local n = 0
+  for _, nd in pairs(nodes) do if nd.type == type then n = n + 1 end end
+  return n
+end
+
 -- angle -> primary param (rotation = primary, behavior-spec §3)
 local function primary(o)
   local f = o.angle / (2 * math.pi)
@@ -67,6 +80,11 @@ end
 local PASS_PARAMS = { freq = true, amp = true, cutoff = true, time = true,
   feedback = true, main = true, drywet = true, depth = true, gain = true,
   base = true, sync = true, sweep = true, mult = true, room = true }
+
+-- which param rotation drives for this object (ui 2d page: primary params
+-- are angle-driven — editing the param directly would be stomped by the
+-- next sync_object, so the pad must edit the angle instead)
+function Audio.primary_key(o) return (primary(o)) end
 
 -- push an object's params/subtype/angle to the engine
 function Audio.sync_object(o)
@@ -366,4 +384,5 @@ function Audio.load_sample(o, path)
   engine.loadbuf(o.id, path)
 end
 
+RotatableAudio = Audio
 return Audio

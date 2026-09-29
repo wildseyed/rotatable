@@ -1,9 +1,13 @@
 -- slots.lua — patch slots: store/recall/delete patches outside the table edge
 -- (plan/phase-5/patch-slots.md, owner feature 2026-09-25)
 
+-- singleton like audio.lua: ui.lua's own include() copy must share the same
+-- World/Audio wiring or physical recalls/clears leak engine nodes
+if RotatableSlots then return RotatableSlots end
+
 local Slots = {}
 
-Slots.N = 8
+Slots.N = 16
 Slots.RADIUS = 1.18 -- world units, ring just outside the table (r=1.0)
 
 local DIR = _path.data .. "rotatable/slots/"
@@ -169,4 +173,5 @@ function Slots.draw(w2s, cam, candidate)
   end
 end
 
+RotatableSlots = Slots
 return Slots
