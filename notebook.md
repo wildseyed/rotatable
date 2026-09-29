@@ -499,3 +499,22 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   chorus inserts — worth re-measuring. NOT fixed; DRIFT avoids chorus.
   Repro: build chain osc→filter→modulator(chorus)→output, measure
   T.amps() at drywet 0 / 0.4 / 1.
+- 2026-09-29: **ENGINE BUG FOUND + FIXED: SC operator precedence killed
+  effect dry paths**. rot_mod + rot_shaper mixed with
+  `wet = (dry * (1 - dw) + wet * dw) * amp` — but SuperCollider binary ops
+  are LEFT-ASSOCIATIVE with no precedence, so this parses as
+  `(((dry * (1 - dw)) + wet) * dw)`: at drywet=0 the whole synth goes
+  EXACTLY silent (any dw multiplies everything), and mixes were wet-
+  dominant at all settings. Every chorus/ring/flanger and shaper insert
+  ran degraded since the param-envelope change introduced the line
+  (CHOIR/SOLO/CRUSH presets were all quieter than designed). Found via
+  /g_queryTree + raw-OSC probes (routing verified good, all args correct,
+  yet dry=0 in a fresh instance — the code "couldn't" be running, until
+  the precedence read). Fix: explicit parens in both lines, deployed,
+  full stack restart, verified: ring/chorus dw=0 now passes dry at full
+  level. Diagnostic tooling left on device: /tmp/querytree.py
+  (/g_queryTree via OSC 57110), /tmp/probe2.py (raw /s_new probes +
+  /c_get). CAVEAT for future backups: a copy of the script dir inside
+  dust/code (rotatable.bak-*) makes sclang fail the whole class library
+  with "duplicate Class found: 'Engine_Rotatable'" — backups must live
+  OUTSIDE dust/code (moved to ~/rotatable.bak-20260929).
