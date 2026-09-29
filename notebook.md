@@ -418,3 +418,15 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   plain E1 (zoom) now also cancels a camera flight, matching E2/E3.
   Verified: camera converges exactly onto Slots.pos(focus), K3 loads the
   centered slot, screenshot shows the focused slot under the reticle.
+- 2026-09-29 (docs pass): README gained a per-block **settings guide**
+  (replaces the terse config-panels list; universal L2/L3 gesture summary
+  up top, then per-block rotation/slider/subtypes + every panel's fields)
+  and a **guided tour** under the preset table (per-preset "try this").
+  No device verification — norns offline; docs-only. **Suspected bug
+  found while documenting:** the L3 "2d" page edits params with a 0..1
+  clamp (ui.lua params_2d + the 2d enc branch), but filter cutoff is in
+  Hz (40..12000) and delay time in seconds (0.01..2) — first 2d touch on
+  a filter slams cutoff to <=1 Hz. modulator/waveshaper (main/drywet are
+  0..1) are fine. NOT fixed (no device to verify); candidate fix: give
+  params_2d per-param min/max/step like SET_FIELDS. Verify on device, then
+  fix.
