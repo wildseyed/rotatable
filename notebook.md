@@ -336,3 +336,35 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   filtering. Side quest: one script instance had a frozen seq metro
   after the restart — unreproducible transient; metros die silently on
   callback errors, worth remembering when pos freezes.
+- 2026-09-28: **Sample library expansion** (prep for the 16-preset
+  re-authoring, plan/phase-11). 26 new WAVs in `presets/audio/`, all 44.1k
+  mono 16-bit, peak-normalized: `drums/` = 8 SoX-synthesized 808-style
+  voices (kick/snare/clap/chh/ohh/tom/cowbell/clave; CC0 — archive.org's
+  raw-WAV drum packs were either 5 GB monoliths, murky licenses, or .sf2
+  soundfonts, so we rolled our own); `instruments/` = 9 BBC Philharmonia
+  single notes (CC BY 2.5, archive.org `orchestral_samples` — RARs needed
+  the rarlab `unrar` static binary; numbered files, pitches recovered by
+  autocorrelation and baked into filenames) + a theremin from Berklee/OLPC
+  (CC BY 3.0); `animals/` = 8 Red Library clips (CC0, loudest-4s window).
+  Full provenance in `presets/audio/SOURCES.md` (ships on release for the
+  CC-BY attributions). Authoring note: push the same tree to
+  `~/dust/audio/rotatable-drums/` on device so saved slot paths match the
+  `restore_factory` rewrite prefix.
+- 2026-09-28: **Phase 11 — 16 factory presets, built and verified on
+  device.** `Slots.N` 8 -> 16 (ring geometry count-driven; ui.lua texts +
+  ABOUT now derive from N). New harness helpers `T.sub` / `T.notes` /
+  `T.restore_factory` (subs, tonality masks and restore weren't reachable
+  via `T.set`). `tools/presets.py`: scripted builders for all 16 tables
+  (angle = source of truth for primary params — the `a_*` helpers invert
+  `audio.lua primary()`; controllers must sit within CONNECT_DIST 0.35 or
+  be hardlinked; effect chains need <=0.35 hops toward center; >0.7 from
+  center = no output fallback). Every slot verified post-recall:
+  connection counts, muted-link survival (KIT-808), subs/notes persistence,
+  sample-path rewrite via a real RESTORE PRESETS pass, FINALE CPU 11.5%
+  avg / 13.4% peak (15 objects + master FX — far under the 30% threshold).
+  **Sample gotcha found:** BBC/Berklee sources have 0.1-0.6 s lead-in
+  silence; gated short notes only ever played the quiet intro (SOLO read
+  0.005 peak). All 10 instrument WAVs re-trimmed at detected onsets —
+  worth remembering for any future sample ingestion (trim at onset, not at
+  file start). SOLO stays the mellow one by design (random seq + smooth
+  theremin), boosted to amp 1.0.

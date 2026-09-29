@@ -141,6 +141,21 @@ T = {
     dirty = true
   end,
   save_slot = function(i) Slots.save(i) end,
+  restore_factory = function() return Slots.restore_factory() end,
+  sub = function(id, i, k, v) -- sub-osc i (1..4) field k, or i="follow"
+    local o = World.get(id)
+    if not o or not o.subs then return "no subs" end
+    if i == "follow" then o.subs.follow = v
+    elseif o.subs[i] then o.subs[i][k] = v end
+    Audio.sync_object(o); dirty = true
+  end,
+  notes = function(id, ...) -- 12 booleans/0-1, degrees 0..11 (C..B)
+    local o = World.get(id)
+    if not o or not o.notes then return "no notes" end
+    local t = { ... }
+    for d = 0, 11 do o.notes[d] = t[d + 1] == 1 or t[d + 1] == true end
+    dirty = true
+  end,
   recall_slot = function(i) local r = Slots.recall(i); dirty = true; return r end,
   del_slot = function(i) Slots.delete(i); dirty = true end,
   state = function()

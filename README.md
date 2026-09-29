@@ -18,8 +18,14 @@ tonality, midi-in) · tempo sync everywhere (LFO multiply, delay quantize +
 sweep, loop bar-entry) · sequencer: 6 patterns per object, per-step
 velocity + duration, random subtype · subtype pictograms on every block,
 animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
-(hold K1+K2+K3) with 8 factory presets · synced settings panels ·
+(hold K1+K2+K3) with factory presets · synced settings panels ·
 melodic sampler with base-pitch tuning
+
+**new in v3**: on-block slider dot · tempo object · master reverb +
+compression · suboscillators · editable tonality scales · effect
+envelopes · **16 factory presets** — a tutorial arc of full musical
+tables, with a bundled sample library (synthesized drums, orchestral
+instruments, animal sounds; sources in `presets/audio/SOURCES.md`)
 
 ## screenshots
 
@@ -234,19 +240,28 @@ slots persist as files (`~/dust/data/rotatable/slots/`) — they survive
 restarts and reinstalls.
 
 **factory presets** — the SYSTEM menu (`K1+K2+K3` held 1 s) has
-`RESTORE PRESETS`, which overwrites all 8 slots with the bundled factory
-set (with a confirm). the eight:
+`RESTORE PRESETS`, which overwrites all 16 slots with the bundled factory
+set (with a confirm). the sixteen form a tutorial arc: each is a complete
+musical sketch that also teaches one or two concepts.
 
-| slot | name | what's in it |
-|---|---|---|
-| 1 | KIT-808 | kick/snare/hat drum samplers, each with its own 16-step sequencer (hardlinked), 124 BPM |
-| 2 | ACID | saw osc → resonant LP, minor tonality snapping the sequencer, tempo-synced LFO on cutoff, 128 BPM |
-| 3 | DUB | looped kick as pulsing bass → tempo-quantized feedback delay, slow LFO on delay time, 90 BPM |
-| 4 | PING | rim sampler → pingpong delay, syncopated sequencer, 100 BPM |
-| 5 | SOLO | random sequencer → square osc → chorus, pentatonic tonality ("automatic solos"), 112 BPM |
-| 6 | CRUSH | snare-stutter loop → bitcrusher → HP filter, random LFO on dry-wet, 96 BPM |
-| 7 | WASH | line in → compressor → reverb — run external gear through the table |
-| 8 | CHOIR | two sines a fifth apart → chorus → reverb, slow synced vibrato, 60 BPM |
+| slot | name | BPM | teaches | what's in it |
+|---|---|---|---|---|
+| 1 | HELLO | 110 | proximity patching, rotation = pitch, slider dot = amp | saw osc + mono sequencer melody + tempo object |
+| 2 | BEAT | 120 | sampler, hardlink (`LINK K3`), step editor, velocity | synth kick + clap, each with a hardlinked 16-step sequencer |
+| 3 | KIT-808 | 124 | multiple hardlinks, mute (`LINK K1+K3`), output compression | TR-909 kick/snare/hat + clap, each own sequencer; muted alt-snare ready to unmute; comp 0.3 |
+| 4 | KEY | 100 | tonality snapping, root key, editable scale mask | saw + sequencer + a *custom* harmonic-minor tonality — check its notes panel |
+| 5 | SUB | 95 | suboscillators, LP filter, resonance slider | saw + 2 subs (octave-down follows tonality, detuned fifth) → LP, A-minor bassline |
+| 6 | ACID | 128 | LFO controllers, tempo sync (mult), filter bite | saw → LP, saw LFO locked to quarter notes on the cutoff, minor tonality |
+| 7 | PING | 100 | delay subtypes, pingpong, effect envelopes | clave + cowbell → tempo-quantized pingpong; a third sequencer's notes retrigger the delay's envelope so feedback swells |
+| 8 | WASH | — | audio input, compressor, reverb delay, output FX | line in → compressor → reverb — run a radio/synth through the table (silent until you plug something in) |
+| 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
+| 10 | POLY | 108 | poly sequencer, pattern presets 1–6 (rotate to compare) | poly sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
+| 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
+| 12 | DUB | 90 | loop player, quantized feedback delay, delay-time LFO | half-speed kick loop as bass pulse → dotted-eighth delay, slow LFO on delay time, roomy output |
+| 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
+| 14 | PLUCK | 118 | instrument sampler + tonality, oneshot loops, call-and-response | mandolin and saxophone trade a D-minor melody (two sequencers), oneshot snare backbeat |
+| 15 | ZOO | 80 | sound design: generators don't have to be musical | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots |
+| 16 | FINALE | 122 | everything at once | 15 objects: drum kit, tuba bass, horn stabs, theremin pad, A-minor tonality, full master FX — the demo you play people |
 
 ## dev
 

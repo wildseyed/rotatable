@@ -31,6 +31,12 @@ add new files as work evolves, and keep this index stable.*
   compression, suboscillators, tonality scale editing, effect envelopes.
   **v3.0.0 tagged and published** (main f2f28c7, release a193530)
 
+### v3.1 (in progress)
+- [x] **Phase 11 — Sample library + 16 factory presets** → [presets](plan/phase-11/presets.md) —
+  26-sample bundled library (synth drums/orchestral/animals, `presets/audio/SOURCES.md`),
+  slot count 8 → 16, all 16 tutorial-arc tables authored via `tools/presets.py`
+  and device-verified (2026-09-28)
+
 ## Parking lot (undecided / later)
 
 - Grid/MIDI controller support

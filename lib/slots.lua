@@ -3,7 +3,7 @@
 
 local Slots = {}
 
-Slots.N = 8
+Slots.N = 16
 Slots.RADIUS = 1.18 -- world units, ring just outside the table (r=1.0)
 
 local DIR = _path.data .. "rotatable/slots/"

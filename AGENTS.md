@@ -113,7 +113,7 @@ plan-archive/       superseded plans
 prompt-archive/     archived session prompts/braindumps
 docs/               behavior-spec.md, interaction-design.md (approved designs)
 reference/          original Reactable manual mirror (read-only)
-tools/              deploy.py, api.py, djset.py, seqjam.py
+tools/              deploy.py, api.py, djset.py, seqjam.py, presets.py
 .device/            device IP/credentials (never copy secrets elsewhere)
 ```
 

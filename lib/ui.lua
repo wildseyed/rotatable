@@ -568,8 +568,8 @@ function UI.key(n, z)
       elseif SYS_ITEMS[sys_idx] == "RESTORE PRESETS" then
         sys_confirm = "restore"
       elseif SYS_ITEMS[sys_idx] == "ABOUT" then
-        sys_msg = "rotatable v2-dev | " .. (Slots.factory_available() and
-          "8 factory presets" or "no presets bundled")
+        sys_msg = "rotatable v3 | " .. (Slots.factory_available() and
+          Slots.N .. " factory presets" or "no presets bundled")
       end
     end
     dirty()
@@ -920,7 +920,7 @@ local function draw_sys()
     screen.text("restore presets?")
     screen.level(3)
     screen.move(18, 38)
-    screen.text("replaces all 8 slots")
+    screen.text("replaces all " .. Slots.N .. " slots")
     screen.level(10)
     screen.move(18, 52)
     screen.text("K3 yes   K2 no")
