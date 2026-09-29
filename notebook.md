@@ -453,3 +453,13 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   library, K1+E1 preset navigation with camera flight, seq-clock
   pcall+watchdog, include()-singleton engine-leak fix, 2d-panel angle
   mapping, README settings guide + preset tour.
+- 2026-09-29: **slot boxes world-scaled + MOVE camera follow** (owner
+  requests). (1) Slot boxes were a constant 4 px screen radius — invisible
+  specks when zoomed in. Now `Slots.DRAW_R = 0.08` world units with the
+  same clamp as blocks (`render.lua` GLYPH_R formula): they grow with
+  zoom. Hit detection unchanged (`nearest_slot` uses a constant 25 px
+  screen radius, which still covers the max 14 px box). (2) MOVE glide
+  moved the block but never the camera, so blocks glided off screen.
+  `UI.tick` now pins the camera to the block while gliding
+  (`cam.x, cam.y = nx, ny`, clears `cam_target`); E1 hops still ease via
+  `cam_target` since they reset move physics first.

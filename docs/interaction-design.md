@@ -68,7 +68,8 @@ exits to L1); mode shown in status line:
   2026-09-25/26).
 - MOVE uses velocity+friction physics: encoder turns add impulse, blocks
   glide with accel/decel and a soft wall at the rim; connections form/break
-  live during the glide (owner, 2026-09-26).
+  live during the glide (owner, 2026-09-26). The camera tracks the block
+  while it glides, keeping it under the reticle (owner, 2026-09-29).
 
 - MOVE is where patching happens: proximity connections form/break live and
   are drawn as they change.
