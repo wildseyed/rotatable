@@ -430,3 +430,11 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   0..1) are fine. NOT fixed (no device to verify); candidate fix: give
   params_2d per-param min/max/step like SET_FIELDS. Verify on device, then
   fix.
+- 2026-09-29 (handoff): **for the next session (other PC, norns attached)**:
+  verify-on-device queue: (1) suspected 2d-page param clamp bug (two notes
+  up) — open a filter's 2d page and touch E2; (2) owner listening check of
+  all 16 presets (only amp-meter verified so far) + K1+E1 focus-flight feel;
+  (3) decide v3.1.0: release branch is still v3.0.1 — everything since
+  (16 presets, sample library, metro hardening, include-leak fix, K1+E1,
+  docs) is main-only. tools/presets.py rebuilds any preset via the REST
+  harness (`python3 tools/presets.py N`, `--pull` fetches slots back).
