@@ -463,3 +463,8 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   `UI.tick` now pins the camera to the block while gliding
   (`cam.x, cam.y = nx, ny`, clears `cam_target`); E1 hops still ease via
   `cam_target` since they reset move physics first.
+- 2026-09-29: **v3.2.0 released** (main + release branch, tag v3.2.0).
+  Ships: world-scaled slot boxes + MOVE camera follow. Device checksum-
+  verified against the tag. Note: matron segfaulted once (signal 11 in
+  ndi-script-post-init) on the post-deploy reload — did not recur after
+  `systemctl restart norns-matron` + reload; one-off, but watch ndi-mod.
