@@ -109,6 +109,13 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   Symptom tells: clock ticking + clean lua + silence = engine wedge; check
   `journalctl -u norns-sclang` for `alloc failed`. Only the full stack
   restart (gotcha 3) recovers a wedged scsynth.
+  (14) SuperCollider has NO operator precedence — every binary op is
+  left-associative. `dry * (1 - dw) + wet * dw` parses as
+  `((dry * (1 - dw)) + wet) * dw`, which muted rot_mod/rot_shaper at
+  drywet=0 (found 2026-09-29). Parenthesize every mixed-expression
+  defensively: `((dry * (1 - dw)) + (wet * dw))`. Also: never leave a
+  copy of a script dir inside dust/code — duplicate engine class names
+  fail sclang's ENTIRE class library compile (all engines die).
 
 ## Repo layout
 
@@ -139,10 +146,3 @@ maiden `;install`): `rotatable.lua` + `lib/` at root.
 - Publish flow: commit dev work to `main`; when releasing, update `release`
   with just the script files (checkout release, copy from main, commit, push,
   tag). Never commit `.device/` or `reference/` anywhere (gitignored).
-  (14) SuperCollider has NO operator precedence — every binary op is
-  left-associative. `dry * (1 - dw) + wet * dw` parses as
-  `((dry * (1 - dw)) + wet) * dw`, which muted rot_mod/rot_shaper at
-  drywet=0 (found 2026-09-29). Parenthesize every mixed-expression
-  defensively: `((dry * (1 - dw)) + (wet * dw))`. Also: never leave a
-  copy of a script dir inside dust/code — duplicate engine class names
-  fail sclang's ENTIRE class library compile (all engines die).
