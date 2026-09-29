@@ -385,24 +385,31 @@ def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     tempo_obj(112)
     output_obj(vol=0.8, rev=0.3, room=0.5)
 
-def b12():  # DUB — loop player, quantized feedback delay, delay-time LFO
-    lop = place("loop", 0.55, -0.10, a_rate(0.5))
-    st(lop, "subtype", 1)
-    load(lop, f"{D}/TR909-Dark_Bd.wav")
-    st(lop, "sync", 1)  # quarter-note grid entry
-    st(lop, "amp", 0.85)
-    dly = place("delay", 0.28, 0.0, a_time(0.5))
-    st(dly, "subtype", 1)
-    st(dly, "sync", 1)  # dotted-eighth at 90 bpm
-    st(dly, "feedback", 0.6)
-    lfo = place("lfo", 0.30, 0.30, a_lfo(0.3))
+def b12():  # STACK — three detuned oscillators into one LP filter, slow cutoff LFO
+    o1 = place("oscillator", 0.50, -0.15, a_freq(110))
+    st(o1, "subtype", 2)  # saw
+    st(o1, "amp", 0.55)
+    sub(o1, 1, wave=1, amp=0.5, off=-12)      # octave down
+    sub(o1, 2, wave=1, amp=0.3, off=7, det=6) # detuned fifth
+    subfollow(o1, 1)                           # subs snap to the tonality
+    o2 = place("oscillator", 0.50, 0.12, a_freq(110.8))  # beating detune
+    st(o2, "subtype", 3)  # square
+    st(o2, "amp", 0.45)
+    sub(o2, 1, wave=3, amp=0.25, off=12, det=8)  # detuned octave up
+    subfollow(o2, 1)
+    o3 = place("oscillator", 0.28, 0.30, a_freq(55))
+    st(o3, "subtype", 1)  # sine sub-bass
+    st(o3, "amp", 0.6)
+    flt = place("filter", 0.22, 0.0, a_cut(700))
+    st(flt, "subtype", 1)  # lp
+    st(flt, "res", 0.4)
+    lfo = place("lfo", 0.02, 0.24, a_lfo(0.15))
     st(lfo, "subtype", 1)
-    st(lfo, "sync", 1)
-    st(lfo, "mult", 24)  # three beats
-    st(lfo, "depth", 0.25)
-    link(lfo, dly)       # wow-and-flutter on the delay time
-    tempo_obj(90)
-    output_obj(vol=0.85, rev=0.3, room=0.6)
+    st(lfo, "depth", 0.3)
+    link(lfo, flt)       # slow cutoff drift (osc3 is closer; hardlink wins)
+    ton = place("tonality", -0.45, -0.35, a_root(9))  # A minor
+    st(ton, "subtype", 2)
+    output_obj(vol=0.8, rev=0.35, room=0.6, comp=0.25)
 
 def b13():  # CRUSH — resampler, HP filter, random LFO on dry-wet
     lop = place("loop", 0.60, -0.10, a_rate(2))

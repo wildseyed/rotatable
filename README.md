@@ -218,7 +218,7 @@ per block (rotation / slider / subtypes, then its panels):
 - **loop** — playback rate (0.25–4×) / amp / loop·oneshot. panels:
   **browser** (scroll `dust/audio`, `K3` loads), **set** (`sync`: restart
   on the next quarter/bar boundary — keeps loops in phase), **env**.
-  tips: rate < 0.5 turns drum hits into bass drones (DUB, ZOO); oneshot
+  tips: rate < 0.5 turns drum hits into bass drones (ZOO); oneshot
   fires the whole sample once per trigger instead of free-running.
 - **sampler** — played pitch / amp / instrument·drum. panels: **browser**,
   **set** (`base`: the loaded sample's natural pitch — set this to the
@@ -303,7 +303,7 @@ musical sketch that also teaches one or two concepts.
 | 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
 | 10 | POLY | 108 | poly sequencer, pattern presets 1–6 (rotate to compare) | poly sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
 | 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
-| 12 | DUB | 90 | loop player, quantized feedback delay, delay-time LFO | half-speed kick loop as bass pulse → dotted-eighth delay, slow LFO on delay time, roomy output |
+| 12 | STACK | — | multiple generators into one effect, detune = width, sub stacking | saw + detuned square + sine sub-bass, each with sub-oscillators, stacked into one LP filter; slow LFO drifts the cutoff |
 | 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
 | 14 | PLUCK | 118 | instrument sampler + tonality, oneshot loops, call-and-response | mandolin and saxophone trade a D-minor melody (two sequencers), oneshot snare backbeat |
 | 15 | ZOO | 80 | sound design: generators don't have to be musical | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots |
@@ -344,9 +344,10 @@ from the block settings guide above:
     and the pentatonic tonality keeps every roll musical. open its steps
     page to watch the note history appear. raise the delay's feedback
     slider for a longer trail.
-12. **DUB** — space is the instrument. try: delay feedback toward 0.9
-    (self-oscillation territory), then tame it with the output's `comp`.
-    the LFO on delay time is the wooze.
+12. **STACK** — width from numbers. try: rotate any oscillator to retune
+    its stack; the subs follow the A-minor tonality. nudge one osc away
+    from the filter and it patches straight to the output — an unfiltered
+    layer. the LFO on the cutoff is the slow breathe.
 13. **CRUSH** — deliberate ugliness. try: the random LFO is modulating the
     bitcrusher's dry-wet — watch the connection dots. filter rotation
     (HP) decides how much of the dirt survives.

@@ -468,3 +468,14 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   verified against the tag. Note: matron segfaulted once (signal 11 in
   ndi-script-post-init) on the post-deploy reload — did not recur after
   `systemctl restart norns-matron` + reload; one-off, but watch ndi-mod.
+- 2026-09-29: **preset 12 replaced: DUB → STACK** (owner request, multi-osc
+  patch). Three oscillators (saw 110 Hz + square 110.8 Hz beating detune +
+  sine 55 Hz sub-bass), each with sub-oscillators following an A-minor
+  tonality, all stacked into one LP filter; slow free-running LFO (0.15 Hz)
+  hardlinked to the filter for cutoff drift (osc3 is nearer to the LFO —
+  hardlink wins over proximity). No tempo object (no sequencers/synced
+  modulation). Builder rewritten in tools/presets.py b12; built on device,
+  saved to data slot 12, pulled back to presets/slots/12.lua, and copied
+  over the code-dir factory file so RESTORE PRESETS yields STACK. Recall
+  path verified end-to-end (amps ~0.37). README table/tour/loop-tip
+  updated. Release branch NOT synced (preset content changed since v3.2.0).
