@@ -28,6 +28,7 @@ local k3_down = false
 local clear_armed = false   -- K1+K2 at L1 arms table-clear; K3 confirms, K2 cancels
 local k3_slot_press = nil   -- util.time() of K3 press when armed on a slot
 local slot_cand = nil       -- slot index near reticle at L1 (nil = none)
+local slot_focus = nil      -- K1+E1 slot focus at L1: K3 acts on it, no load on move
 local SLOT_LONG = 0.8       -- s; long-press threshold for slot store/delete
 -- SYSTEM master menu: hold K1+K2+K3 for MASTER_LONG seconds (owner, 2026-09-27)
 local master_t = nil        -- util.time() when the third key came down
@@ -71,6 +72,16 @@ local function nearest_slot()
     if d < best_d then best, best_d = i, d end
   end
   return best
+end
+
+-- next occupied slot after `from` in direction dir (wraps; nil if none).
+-- from=nil starts at the reticle's slot when there is one, else the ends
+local function next_occupied_slot(from, dir)
+  local start = from or nearest_slot() or (dir > 0 and 0 or 1)
+  for step = 1, Slots.N do
+    local i = ((start - 1 + step * dir) % Slots.N) + 1
+    if Slots.occupied(i) then return i end
+  end
 end
 
 local function menu_selectables()
@@ -268,6 +279,7 @@ function UI.deselect()
   mode = "MOVE"
   reset_move_physics()
   clear_armed = false
+  slot_focus = nil
 end
 
 -- deferred solo-K3 (combo detection window, NDI-agent feedback 2026-09-28):
@@ -280,6 +292,7 @@ local cycle_mode -- forward decl: fire_k3_solo runs before its definition
 -- ^K3 shifted action: place menu at L1, dive to config at L2, mute in LINK
 local function fire_k3_combo()
   if level == "L1" then
+    slot_focus = nil
     level = "L0"; menu_idx = 1
   elseif level == "L2" and selected then
     if mode == "LINK" and link_candidates[link_idx] then
@@ -294,7 +307,11 @@ end
 -- solo K3 action (fires on window expiry, or on release for a quick tap)
 local function fire_k3_solo()
   if level == "L1" then
-    if nearest_to_reticle() == nil then
+    if slot_focus then
+      -- focused slot (K1+E1): K3 acts on it regardless of the reticle
+      slot_cand = slot_focus
+      k3_slot_press = util.time()
+    elseif nearest_to_reticle() == nil then
       slot_cand = nearest_slot()
       if slot_cand then
         k3_slot_press = util.time()
@@ -398,12 +415,19 @@ function UI.enc(n, d)
     return
   end
   if level == "L1" then
-    if n == 1 then
+    if n == 1 and k1_down then
+      -- K1+E1: move slot focus without loading (owner, 2026-09-29);
+      -- K3 acts on the focused slot, plain camera moves dismiss focus
+      slot_focus = next_occupied_slot(slot_focus, d > 0 and 1 or -1)
+    elseif n == 1 then
+      slot_focus = nil
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
     elseif n == 2 then
+      slot_focus = nil
       cam_target = nil
       cam.x = cam.x + d * 0.01 * (48 / cam.zoom)
     elseif n == 3 then
+      slot_focus = nil
       cam_target = nil
       cam.y = cam.y + d * 0.01 * (48 / cam.zoom)
     end
@@ -533,6 +557,7 @@ local function master_check()
     clear_armed = false
     k3_slot_press = nil -- a slot press superseded by the gesture must not
     slot_cand = nil     -- fire store/recall on release
+    slot_focus = nil    -- nor keep a slot focus into the SYSTEM level
     k3_pending = nil    -- nor a deferred solo-K3
     if level == "L0" then level = "L1" end
   end
@@ -624,6 +649,7 @@ function UI.key(n, z)
         local held = util.time() - k3_slot_press
         if held >= SLOT_LONG then
           if Slots.occupied(slot_cand) then Slots.delete(slot_cand)
+            if slot_focus == slot_cand then slot_focus = nil end
           else Slots.save(slot_cand) end
         else
           if Slots.occupied(slot_cand) then Slots.recall(slot_cand) end
@@ -967,7 +993,7 @@ end
 
 function UI.slot_candidate()
   if level == "L1" and nearest_to_reticle() == nil then
-    return nearest_slot()
+    return slot_focus or nearest_slot()
   end
 end
 
@@ -976,6 +1002,9 @@ function UI.status()
     return "CLEAR TABLE?  K3 yes  K2 no"
   end
   if level == "L1" then
+    if slot_focus then
+      return "SLOT " .. slot_focus .. "  ^E1 move | K3 load"
+    end
     return "NAV  E1 zoom E2 x E3 y | K3 sel ^K3 place"
   elseif level == "L0" then
     return "PLACE  E2 scroll | K3 place K2 back"

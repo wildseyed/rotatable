@@ -229,12 +229,16 @@ object's rotation.
 
 ## patch slots
 
-pan outside the table edge: 8 numbered slots in a ring.
+pan outside the table edge: 16 numbered slots in a ring.
 
 - **long-press K3** empty slot → store the whole patch (objects, params,
   sequences, samples, links, tempo)
 - **short press K3** occupied slot → recall
 - **long-press K3** occupied slot → delete
+- **K1+E1** → move a slot focus without loading (status line shows
+  `SLOT n`; the focused slot is highlighted on the ring); **K3** loads the
+  focused slot. quick A/B: flick to a slot, K3, flick back, K3. any plain
+  camera move (E1/E2/E3) dismisses the focus
 
 slots persist as files (`~/dust/data/rotatable/slots/`) — they survive
 restarts and reinstalls.

@@ -400,3 +400,14 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   stack restart. Yesterday's pos=0 incident was likely a genuinely dead
   metro (separate failure, now pcall+watchdogged); today's was this wedge.
   Same symptom, two causes — both now hardened. AGENTS.md gotcha 13 added.
+- 2026-09-29 (later still): **K1+E1 slot focus** (owner request): at L1,
+  K1+E1 walks a slot focus across occupied slots without loading; K3 then
+  acts on the focused slot (tap = recall, long = delete) regardless of
+  reticle. Status line shows `SLOT n  ^E1 move | K3 load`; ring highlight
+  follows focus via UI.slot_candidate. Focus dismisses on any plain camera
+  move (E1/E2/E3), place menu, SYSTEM gesture, table clear, or deleting
+  the focused slot; survives a recall (A/B switching). Gotcha while
+  testing: K1 must be released before the K3 tap or you get the place
+  menu (K1+K3) — same as physical. Verified on device via harness-driven
+  gestures: focus walk, focused recall (slots 3/1), dismiss, focused
+  delete + restore. Also fixed the stale "8 numbered slots" README line.
