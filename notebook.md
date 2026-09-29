@@ -518,3 +518,7 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   dust/code (rotatable.bak-*) makes sclang fail the whole class library
   with "duplicate Class found: 'Engine_Rotatable'" — backups must live
   OUTSIDE dust/code (moved to ~/rotatable.bak-20260929).
+- 2026-09-29: **v3.2.1 released** (main + release branch, tag v3.2.1).
+  Ships: SC-precedence dry/wet fix (rot_mod + rot_shaper — un-breaks
+  CHOIR/SOLO/CRUSH levels), preset 12 DUB → DRIFT. Device checksum-
+  verified against the tag; stack restart clean this time.
