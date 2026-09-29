@@ -1,5 +1,5 @@
 -- rotatable
--- v3.2.0 @wildseyed
+-- v3.2.1 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:

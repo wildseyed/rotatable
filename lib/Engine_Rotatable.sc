@@ -152,7 +152,10 @@ Engine_Rotatable : CroneEngine {
 			var wet = SelectX.ar(Lag.kr(select, 0.05), [ring, chorus, flang]);
 			var dw0 = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
 			var dw = (dw0 + (env * (1 - dw0))).clip(0, 1);
-			wet = (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05);
+			// parens are load-bearing: SC binary ops are left-associative with no
+			// precedence — a * x + b * y parses as ((a * x) + b) * y, which
+			// muted the whole synth at drywet=0 (found 2026-09-29)
+			wet = ((dry * (1 - dw)) + (wet * dw)) * Lag.kr(amp, 0.05);
 			Out.ar(out, wet);
 			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
 		}).add;
@@ -188,7 +191,8 @@ Engine_Rotatable : CroneEngine {
 			wet = SelectX.ar(Lag.kr(select, 0.05), [resamp, comp, dist]);
 			dw0 = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
 			dw = (dw0 + (env * (1 - dw0))).clip(0, 1);
-			wet = (dry * (1 - dw) + wet * dw) * Lag.kr(amp, 0.05);
+			// parens are load-bearing (see rot_mod): SC is left-associative
+			wet = ((dry * (1 - dw)) + (wet * dw)) * Lag.kr(amp, 0.05);
 			Out.ar(out, wet);
 			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
 		}).add;
