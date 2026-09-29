@@ -411,3 +411,10 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   menu (K1+K3) — same as physical. Verified on device via harness-driven
   gestures: focus walk, focused recall (slots 3/1), dismiss, focused
   delete + restore. Also fixed the stale "8 numbered slots" README line.
+- 2026-09-29 (evening): **K1+E1 camera coupling** (owner correction): the
+  point of slot focus was to NAVIGATE to each preset — focus alone wasn't
+  visible enough. K1+E1 now also sets `cam_target` to the focused slot, so
+  the existing hop-easing flies the camera and centers the slot on screen;
+  plain E1 (zoom) now also cancels a camera flight, matching E2/E3.
+  Verified: camera converges exactly onto Slots.pos(focus), K3 loads the
+  centered slot, screenshot shows the focused slot under the reticle.

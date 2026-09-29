@@ -417,10 +417,16 @@ function UI.enc(n, d)
   if level == "L1" then
     if n == 1 and k1_down then
       -- K1+E1: move slot focus without loading (owner, 2026-09-29);
-      -- K3 acts on the focused slot, plain camera moves dismiss focus
+      -- the camera flies to center the focused slot; K3 acts on it,
+      -- plain camera moves dismiss focus
       slot_focus = next_occupied_slot(slot_focus, d > 0 and 1 or -1)
+      if slot_focus then
+        local wx, wy = Slots.pos(slot_focus)
+        cam_target = { x = wx, y = wy }
+      end
     elseif n == 1 then
       slot_focus = nil
+      cam_target = nil
       cam.zoom = util.clamp(cam.zoom * (1 + d * 0.04), 8, 480)
     elseif n == 2 then
       slot_focus = nil
