@@ -18,6 +18,7 @@ local World, Audio
 function Slots.init(world, audio)
   World, Audio = world, audio
   util.make_dir(DIR)
+  Slots.install_samples()
 end
 
 -- world position of slot i (1..N); slot 1 at top, clockwise
@@ -30,18 +31,41 @@ function Slots.path(i)
   return DIR .. i .. ".lua"
 end
 
--- factory presets bundled in the repo (presets/ deploys to the code dir)
-Slots.FACTORY_DIR = _path.code .. "rotatable/presets/slots/"
--- slot files store absolute sample paths; rewrite them to the bundled copies
-local FACTORY_SAMPLE_SRC = "/home/we/dust/audio/rotatable%-drums/"
-local FACTORY_SAMPLE_DST = _path.code .. "rotatable/presets/audio/"
+-- factory presets bundled in the repo (data/ deploys to the code dir; norns
+-- hides lua files under data/ from the SELECT menu)
+Slots.FACTORY_DIR = _path.code .. "rotatable/data/slots/"
+
+-- samples ship in the repo for ;install, but their canonical on-device home
+-- is the shared audio pool (norns file-tree convention) — that's also where
+-- the loop/sampler browser looks, so install them there on first run
+local SAMPLE_SRC = _path.code .. "rotatable/presets/audio/"
+Slots.SAMPLE_DIR = _path.audio .. "rotatable/"
+
+function Slots.install_samples()
+  if util.file_exists(Slots.SAMPLE_DIR .. "SOURCES.md") then return end
+  os.execute("mkdir -p '" .. Slots.SAMPLE_DIR .. "' && cp -r '" ..
+    SAMPLE_SRC .. ".' '" .. Slots.SAMPLE_DIR .. "'")
+  if util.file_exists(Slots.SAMPLE_DIR .. "SOURCES.md") then
+    print("rotatable: sample library installed to " .. Slots.SAMPLE_DIR)
+  else
+    print("rotatable: WARNING sample copy failed; factory presets may be silent")
+  end
+end
 
 function Slots.factory_available()
   return util.file_exists(Slots.FACTORY_DIR .. "1.lua")
 end
 
--- overwrite all 8 slots with the bundled factory presets; returns count
+-- slot files store absolute sample paths; rewrite historical prefixes to the
+-- shared audio pool so restored presets stay browsable and survive reinstalls
+local SAMPLE_PREFIX_OLD = {
+  "/home/we/dust/audio/rotatable%-drums/",        -- v3.1 build-time path
+  "/home/we/dust/code/rotatable/presets/audio/",  -- v3.1–v3.2 bundled path
+}
+
+-- overwrite all 16 slots with the bundled factory presets; returns count
 function Slots.restore_factory()
+  Slots.install_samples()
   local n = 0
   for i = 1, Slots.N do
     local src = Slots.FACTORY_DIR .. i .. ".lua"
@@ -49,7 +73,9 @@ function Slots.restore_factory()
     if f then
       local body = f:read("*a")
       f:close()
-      body = body:gsub(FACTORY_SAMPLE_SRC, FACTORY_SAMPLE_DST)
+      for _, p in ipairs(SAMPLE_PREFIX_OLD) do
+        body = body:gsub(p, Slots.SAMPLE_DIR)
+      end
       local out = io.open(Slots.path(i), "w")
       if out then out:write(body); out:close(); n = n + 1 end
     end

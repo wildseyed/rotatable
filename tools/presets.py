@@ -3,7 +3,7 @@
 
 Builds the 16 factory preset tables on the device through tools/api.py,
 saving each to its patch slot. Then `--pull` fetches the slot files back
-into presets/slots/.
+into data/slots/ (data/ is hidden from norns' SELECT menu).
 
     python3 tools/presets.py 1          # build preset 1 only
     python3 tools/presets.py 1-16       # build a range
@@ -15,7 +15,7 @@ helpers invert those mappings so builders can think in real values.
 import json, math, os, sys, time, urllib.request
 
 API = "http://localhost:8787"
-D = "/home/we/dust/audio/rotatable-drums"
+D = "/home/we/dust/audio/rotatable"
 TAU = 2 * math.pi
 
 # ---------- REST helpers (djset.py pattern) ----------
@@ -627,11 +627,11 @@ def pull():
     host, user, pw = creds()
     t = paramiko.Transport((host, 22)); t.connect(username=user, password=pw)
     sftp = paramiko.SFTPClient.from_transport(t)
-    os.makedirs("presets/slots", exist_ok=True)
+    os.makedirs("data/slots", exist_ok=True)
     for i in range(1, 17):
         remote = f"/home/we/dust/data/rotatable/slots/{i}.lua"
         try:
-            sftp.get(remote, f"presets/slots/{i}.lua")
+            sftp.get(remote, f"data/slots/{i}.lua")
             print(f"pulled slot {i}")
         except FileNotFoundError:
             print(f"slot {i} missing on device")

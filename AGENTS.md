@@ -122,6 +122,9 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
 ```
 rotatable.lua       main script (repo root = installable script dir)
 lib/                world/ui/render/audio/slots + Engine_Rotatable.sc
+presets/audio/      bundled sample library (copied to ~/dust/audio/rotatable/
+                    on first run — the canonical norns audio location)
+data/slots/         factory presets (lua under data/ is hidden from SELECT)
 README.md           user-facing usage + install docs
 notebook.md         running notes/braindump (authoritative current state)
 plan.md             milestone index only — links into plan/
@@ -141,8 +144,8 @@ maiden `;install`): `rotatable.lua` + `lib/` at root.
 
 - `main` = development branch (all project files: docs, plans, tools).
 - `release` = **default branch, orphan, lean** — only `rotatable.lua`, `lib/`,
-  `presets/` (factory presets; added v2), `README.md`, `.gitignore`. This is
-  what users get via `;install`.
+  `presets/` (bundled samples; added v2), `data/` (factory presets), `README.md`,
+  `.gitignore`. This is what users get via `;install`.
 - Publish flow: commit dev work to `main`; when releasing, update `release`
   with just the script files (checkout release, copy from main, commit, push,
   tag). Never commit `.device/` or `reference/` anywhere (gitignored).

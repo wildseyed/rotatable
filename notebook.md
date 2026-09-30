@@ -522,3 +522,13 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   Ships: SC-precedence dry/wet fix (rot_mod + rot_shaper — un-breaks
   CHOIR/SOLO/CRUSH levels), preset 12 DUB → DRIFT. Device checksum-
   verified against the tag; stack restart clean this time.
+- 2026-09-30: **file-layout conformance (norns conventions)**. Two fixes:
+  (1) factory slot files moved `presets/slots/` → `data/slots/` — norns'
+  SELECT menu lists every .lua under dust/code except in lib/data/crow/
+  test/docs, so the 16 presets showed up as runnable "scripts"
+  (ROTATABLE/PRESETS/SLOTS/n). (2) bundled samples now copy to
+  `~/dust/audio/rotatable/` on first run (`Slots.install_samples`,
+  SOURCES.md marker) — the canonical audio location, visible to the loop
+  browser; `restore_factory` rewrites historical sample prefixes
+  (rotatable-drums/, code-dir presets/audio/) to the pool. Also backported
+  v3.2.2 (was release-only) onto main via cherry-pick first.

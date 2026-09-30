@@ -50,7 +50,9 @@ on your norns, in maiden's REPL:
 
 then **SYSTEM > RESTART** (first run compiles the engine), and SELECT > rotatable.
 
-samples for the loop browser: drop WAVs anywhere under `~/dust/audio/`.
+on first run the bundled sample library is copied to `~/dust/audio/rotatable/`,
+so the factory presets and the loop browser share the norns audio pool.
+your own samples for the loop browser: drop WAVs anywhere under `~/dust/audio/`.
 
 ## the idea
 
