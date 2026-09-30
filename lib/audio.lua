@@ -323,7 +323,7 @@ function Audio.seq_tick(tick)
                 -- pitched target (osc/sampler): snap the ABSOLUTE note to
                 -- the tonality (offset-snapping left the base out of key)
                 local pitch = st.pitch
-                local is_random = o.subtype == 3
+                local is_random = o.subtype == 2
                 if is_random then pitch = math.random(-12, 24) end
                 local base = 69 + 12 * math.log(t.freq / 440, 2)
                 local nn = base + pitch

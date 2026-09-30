@@ -1,6 +1,7 @@
 return {
 -- Table: {1}
 {
+   ["v"]=3,
    ["tempo"]=60,
    ["hardlinks"]={2},
    ["objects"]={3},
@@ -121,7 +122,7 @@ return {
 {
    ["angle"]=0.52368605660773,
    ["y"]=0.3,
-   ["subtype"]=3,
+   ["subtype"]=2,
    ["params"]={36},
    ["x"]=0.05,
    ["type"]="sequencer",

@@ -119,9 +119,6 @@ local function sub_mark(o, px, py, s)
   elseif t == "sequencer" then
     if sub == 1 then -- mono: 3 dots in a row
       mdot(px - s * 0.6, py) mdot(px, py) mdot(px + s * 0.6, py)
-    elseif sub == 2 then -- poly: dot grid
-      mdot(px - s * 0.4, py - s * 0.4) mdot(px + s * 0.4, py - s * 0.4)
-      mdot(px - s * 0.4, py + s * 0.4) mdot(px + s * 0.4, py + s * 0.4)
     else -- random: scatter
       mdot(px - s * 0.5, py + s * 0.3) mdot(px + s * 0.1, py - s * 0.5) mdot(px + s * 0.5, py + s * 0.2)
     end

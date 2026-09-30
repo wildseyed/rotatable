@@ -4,7 +4,7 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.2.1** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.2.2** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
 **new in v3.1**: **16 factory presets** — a tutorial arc of full musical
 tables, with a bundled sample library (synthesized drums, orchestral
@@ -114,7 +114,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | modulator | effect | main (pitch/depth/rate) | dry-wet | ring / chorus / flanger |
 | waveshaper | effect | main | dry-wet | resampler / compressor / distortion |
 | lfo | controller | rate | depth | sine / saw / square / random |
-| sequencer | controller | pattern preset (1–6) | — | mono / poly / random |
+| sequencer | controller | pattern preset (1–6) | — | mono / random |
 | midi | controller | transpose ±24 st | — | in |
 | tonality | global | root key | — | major / minor / pentatonic / chromatic |
 | tempo | global | BPM (40–240) | — | bpm (label shows the value) |
@@ -248,7 +248,7 @@ per block (rotation / slider / subtypes, then its panels):
   signature parameter (pitch, cutoff, time, dry-wet...); hardlink it to
   choose the target.
 - **sequencer** — rotation switches 6 stored patterns (`p1`–`p6` in the
-  header) / — / mono·poly·random. panels: **steps** (E2 step, E3 pitch
+  header) / — / mono·random. panels: **steps** (E2 step, E3 pitch
   ±24 st, `K1+E3` velocity, `K3` toggle), **vel**, **dur** (step length in
   32nds, 1–8; 2 = a 16th). random subtype improvises into the tonality;
   its steps page shows the note history it has played.
@@ -301,7 +301,7 @@ musical sketch that also teaches one or two concepts.
 | 7 | PING | 100 | delay subtypes, pingpong, effect envelopes | clave + cowbell → tempo-quantized pingpong; a third sequencer's notes retrigger the delay's envelope so feedback swells |
 | 8 | WASH | — | audio input, compressor, reverb delay, output FX | line in → compressor → reverb — run a radio/synth through the table (silent until you plug something in) |
 | 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
-| 10 | POLY | 108 | poly sequencer, pattern presets 1–6 (rotate to compare) | poly sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
+| 10 | RIFF | 108 | pattern presets 1–6 (rotate to compare) | mono sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
 | 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
 | 12 | DRIFT | 60 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | saw + detuned square + sine sub-bass, each with subs, into one LP filter; each osc has its own slow pitch-drift LFO; a random sequencer retriggers the filter's cutoff envelope; reverb-delay insert for space |
 | 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
@@ -338,8 +338,9 @@ from the block settings guide above:
    output `rev` on its set page. (silent until then — that's correct.)
 9. **CHOIR** — patience. try: nothing, for a minute — the vibrato LFO has
    a whole-note period. then open the chorus 2d page and push depth up.
-10. **POLY** — chords from one sequencer. try: rotate the poly sequencer
-    (E2) from p1 to p2 — two contrasting rhythms were written in for you.
+10. **RIFF** — one sequencer, six pattern slots. try: rotate the trumpet's
+    sequencer (E2) from p1 to p2 — two contrasting rhythms were written in
+    for you.
 11. **SOLO** — hands off. try: nothing — the random sequencer improvises
     and the pentatonic tonality keeps every roll musical. open its steps
     page to watch the note history appear. raise the delay's feedback

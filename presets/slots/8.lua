@@ -1,6 +1,7 @@
 return {
 -- Table: {1}
 {
+   ["v"]=3,
    ["mutes"]={2},
    ["tempo"]=90,
    ["objects"]={3},

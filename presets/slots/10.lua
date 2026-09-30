@@ -1,6 +1,7 @@
 return {
 -- Table: {1}
 {
+   ["v"]=3,
    ["mutes"]={2},
    ["tempo"]=108,
    ["objects"]={3},
@@ -55,7 +56,7 @@ return {
    ["type"]="sequencer",
    ["patterns"]={20},
    ["env"]={21},
-   ["subtype"]=2,
+   ["subtype"]=1,
 },
 -- Table: {8}
 {

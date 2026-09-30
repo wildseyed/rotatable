@@ -91,7 +91,7 @@ local function gather()
       })
     end
   end
-  return { objects = objs, hardlinks = links, mutes = mutes,
+  return { v = 3, objects = objs, hardlinks = links, mutes = mutes,
     tempo = params:get("rot_tempo") }
 end
 
@@ -114,6 +114,11 @@ function Slots.recall(i)
     local o = World.add(e.type, e.x, e.y, e.angle)
     o.angle = e.angle -- re-assert: tempo/output adopt live values on add
     o.subtype = e.subtype
+    -- v3.2.2 migration: poly sequencer subtype dropped. pre-v files numbered
+    -- mono=1 poly=2 random=3; v-marked files use mono=1 random=2
+    if not data.v and o.type == "sequencer" and o.subtype > 1 then
+      o.subtype = o.subtype - 1
+    end
     for k, v in pairs(e.params) do o.params[k] = v end
     o.env = { a = e.env.a, d = e.env.d, s = e.env.s, r = e.env.r }
     -- v2.1 migration: effect envs were inert before param envelopes, so

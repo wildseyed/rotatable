@@ -49,7 +49,7 @@ World.TYPES = {
     subtypes = { "sine", "saw", "square", "random" },
     params = { freq = 2.0, depth = 0.5, sync = 0, mult = 8 } }, -- mult: period in 32nd notes
   sequencer = { category = "controller", label = "SEQ",
-    subtypes = { "mono", "poly", "random" },
+    subtypes = { "mono", "random" }, -- poly dropped (never implemented; v3.2.2)
     params = { preset = 1 } },
   midi = { category = "controller", label = "MIDI",
     subtypes = { "in" },
