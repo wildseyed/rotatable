@@ -522,7 +522,7 @@ function UI.enc(n, d)
           st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
         elseif page == "dur" then
           st.dur = util.clamp((st.dur or 2) + d, 1, 8)
-        elseif selected.subtype == 3 then
+        elseif selected.subtype == 2 then
           -- random: pitch is improvised; E3 edits velocity here
           st.vel = util.clamp(st.vel + d * 0.02, 0, 1)
         elseif k1_down then
@@ -787,7 +787,7 @@ local function draw_l3()
     -- subtype shows its improvised history instead), vel: bar = velocity,
     -- dur: bar = step length in 32nds. brightness = vel, dot = step off
     local steps = World.seq_steps(selected)
-    local random = selected.subtype == 3
+    local random = selected.subtype == 2
     local x0, mid = 14, 36
     screen.level(3)
     screen.move(x0, mid) screen.line(118, mid)
