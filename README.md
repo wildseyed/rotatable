@@ -6,6 +6,11 @@ round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
 **v3.2.3** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
+**new in v3.2.3**: norns file-layout conformance — factory presets moved out
+of the SELECT menu (no more `rotatable/presets/slots/*` entries), and the
+bundled sample library now installs to `~/dust/audio/rotatable/` on first
+run, so it shows up in the loop browser like every other script's samples
+
 **new in v3.1**: **16 factory presets** — a tutorial arc of full musical
 tables, with a bundled sample library (synthesized drums, orchestral
 instruments, animal sounds; sources in `presets/audio/SOURCES.md`) ·
