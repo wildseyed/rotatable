@@ -36,10 +36,15 @@ ValWey (https://commons.wikimedia.org/wiki/File:Coqu%C3%ADes1.ogg, license:
 CC BY-SA 3.0), trimmed, high-passed at 250 Hz, downmixed to mono,
 peak-normalized. Credit: **ValWey**.
 
-`coqui2 coqui3` — single coquí calls supplied by the project owner
-(2026-09-30; original source/license unknown — replaced the previous
-Wikimedia Commons extractions). Trimmed, high-passed at 250 Hz, downmixed
-to mono, peak-normalized.
+`coqui2` — single call extracted from "Eleutherodactylus_coqui.wav"
+(https://amphibiaweb.org/sounds/Eleutherodactylus_coqui.wav), an *E. coqui*
+advertisement call recorded by **Peter Janzen** (2005, via AmphibiaWeb;
+free for non-commercial use with attribution — for commercial use contact
+the recordist). Trimmed, high-passed at 250 Hz, downmixed to mono,
+peak-normalized.
+
+`coqui3` — single coquí call supplied by the project owner (2026-09-30;
+original source/license unknown). Same processing.
 
 ## root folder — TR-808/909 one-shots (v1 factory kit)
 
