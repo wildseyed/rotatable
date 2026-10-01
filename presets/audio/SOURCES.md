@@ -36,10 +36,10 @@ ValWey (https://commons.wikimedia.org/wiki/File:Coqu%C3%ADes1.ogg, license:
 CC BY-SA 3.0), trimmed, high-passed at 250 Hz, downmixed to mono,
 peak-normalized. Credit: **ValWey**.
 
-`coqui2 coqui3` — two coquí-antillano calls extracted from "Sonido Rana
-Silbadora (Coquí antillano).wav" by Fox221
-(https://commons.wikimedia.org/wiki/File:Sonido_Rana_Silbadora_(Coqu%C3%AD_antillano).wav,
-license: CC BY-SA 3.0), same processing. Credit: **Fox221**.
+`coqui2 coqui3` — single coquí calls supplied by the project owner
+(2026-09-30; original source/license unknown — replaced the previous
+Wikimedia Commons extractions). Trimmed, high-passed at 250 Hz, downmixed
+to mono, peak-normalized.
 
 ## root folder — TR-808/909 one-shots (v1 factory kit)
 
