@@ -31,6 +31,16 @@ license: CC0). Loudest 4 s window extracted, downmixed to mono,
 peak-normalized. Note: `growl` is a human-performed animal growl (as named
 in the source library).
 
+`coqui1` — single common-coquí call extracted from "Coquíes1.ogg" by
+ValWey (https://commons.wikimedia.org/wiki/File:Coqu%C3%ADes1.ogg, license:
+CC BY-SA 3.0), trimmed, high-passed at 250 Hz, downmixed to mono,
+peak-normalized. Credit: **ValWey**.
+
+`coqui2 coqui3` — two coquí-antillano calls extracted from "Sonido Rana
+Silbadora (Coquí antillano).wav" by Fox221
+(https://commons.wikimedia.org/wiki/File:Sonido_Rana_Silbadora_(Coqu%C3%AD_antillano).wav,
+license: CC BY-SA 3.0), same processing. Credit: **Fox221**.
+
 ## root folder — TR-808/909 one-shots (v1 factory kit)
 
 `TR808-Clhh TR909-909_Sd TR909-Dark_Bd TR909-Rough_Sd TR909-Syn_Rim` —

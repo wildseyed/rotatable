@@ -49,8 +49,10 @@ World.TYPES = {
     subtypes = { "sine", "saw", "square", "random" },
     params = { freq = 2.0, depth = 0.5, sync = 0, mult = 8 } }, -- mult: period in 32nd notes
   sequencer = { category = "controller", label = "SEQ",
-    subtypes = { "mono", "random" }, -- poly dropped (never implemented; v3.2.2)
-    params = { preset = 1 } },
+    subtypes = { "mono", "random", "drift" }, -- poly dropped (never implemented; v3.2.2)
+    -- drift ignores patterns: fires at random intervals, gaplo..gaphi 32nds;
+    -- rotation drives gaphi (density)
+    params = { preset = 1, gaplo = 4, gaphi = 32 } },
   midi = { category = "controller", label = "MIDI",
     subtypes = { "in" },
     params = { transpose = 0 } }, -- transpose: semitones, rotation ±24

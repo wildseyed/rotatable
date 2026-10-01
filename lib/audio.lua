@@ -68,7 +68,10 @@ local function primary(o)
   elseif o.type == "modulator" then return "main", f
   elseif o.type == "waveshaper" then return "main", f
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz
-  elseif o.type == "sequencer" then return "preset", 1 + math.floor(f * 5.999)
+  elseif o.type == "sequencer" then
+    -- drift: rotation = sparseness (max gap, 4..256 32nds), patterns unused
+    if o.subtype == 3 then return "gaphi", 2 ^ (2 + f * 6) end
+    return "preset", 1 + math.floor(f * 5.999)
   elseif o.type == "midi" then return "transpose", math.floor(f * 48.999) - 24
   elseif o.type == "tempo" then return "bpm", 40 + f * 200
   elseif o.type == "tonality" then return "root", math.floor(f * 12)
@@ -303,13 +306,35 @@ end
 -- triggers connected oscillators/samplers. "random" subtype ignores the
 -- pattern's pitch and improvises (quantized to the table's tonality when a
 -- tonality object is present); its last played pitch per step slot is kept
--- in o._hist for the steps-page display.
+-- in o._hist for the steps-page display. "drift" ignores patterns entirely
+-- and fires at random intervals (gaplo..gaphi 32nds) with per-call velocity
+-- and pitch jitter — untimed texture, no tonality snap.
 function Audio.seq_tick(tick)
   local ton = Tonality.current(World)
   for id, n in pairs(nodes) do
     if n.type == "sequencer" then
       local o = World.get(id)
-      if o and o.patterns then
+      if o and o.subtype == 3 then
+        local lo = math.max(1, math.floor(o.params.gaplo or 4))
+        local hi = math.max(lo, math.floor(o.params.gaphi or 32))
+        o._left = o._left or math.random(lo, hi) -- staggered first call
+        o._left = o._left - 1
+        if o._left <= 0 then
+          o._left = math.random(lo, hi)
+          if n.kind == "control" and n.out and not n.muted then
+            local t = nodes[n.out]
+            if t and SEQ_TARGETS[t.type] then
+              if t.freq then
+                engine.set(n.out, "amp", 0.45 + math.random() * 0.4)
+                engine.trigger(n.out,
+                  t.freq * (2 ^ ((math.random() - 0.5) / 12)))
+              else
+                engine.trigger(n.out, 0)
+              end
+            end
+          end
+        end
+      elseif o and o.patterns then
         o._pos = o._pos or 16
         o._left = (o._left or 0) - 1
         if o._left <= 0 then
