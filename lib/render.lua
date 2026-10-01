@@ -119,8 +119,10 @@ local function sub_mark(o, px, py, s)
   elseif t == "sequencer" then
     if sub == 1 then -- mono: 3 dots in a row
       mdot(px - s * 0.6, py) mdot(px, py) mdot(px + s * 0.6, py)
-    else -- random: scatter
+    elseif sub == 2 then -- random: scatter
       mdot(px - s * 0.5, py + s * 0.3) mdot(px + s * 0.1, py - s * 0.5) mdot(px + s * 0.5, py + s * 0.2)
+    else -- drift: unevenly spaced dots (irregular timing)
+      mdot(px - s * 0.6, py) mdot(px - s * 0.1, py) mdot(px + s * 0.6, py)
     end
   end
   -- input/tonality/output: single or non-iconic subtypes, no mark

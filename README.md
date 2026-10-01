@@ -4,7 +4,14 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.2.3** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.3.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.3.0**: **drift sequencer subtype** — no pattern, fires at random
+intervals (gap range in seconds on its set page, rotation = sparseness) with
+per-call velocity/pitch jitter, for untimed texture like frogs, rain, crowd
+murmur · ZOO preset gains three coquí frogs, each its own call, pitch, and
+density · bundled samples now sync on every launch, so library additions
+reach existing installs
 
 **new in v3.2.3**: norns file-layout conformance — factory presets moved out
 of the SELECT menu (no more `rotatable/presets/slots/*` entries), and the
@@ -121,7 +128,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | modulator | effect | main (pitch/depth/rate) | dry-wet | ring / chorus / flanger |
 | waveshaper | effect | main | dry-wet | resampler / compressor / distortion |
 | lfo | controller | rate | depth | sine / saw / square / random |
-| sequencer | controller | pattern preset (1–6) | — | mono / random |
+| sequencer | controller | pattern preset (1–6); drift: sparseness | — | mono / random / drift |
 | midi | controller | transpose ±24 st | — | in |
 | tonality | global | root key | — | major / minor / pentatonic / chromatic |
 | tempo | global | BPM (40–240) | — | bpm (label shows the value) |
@@ -174,6 +181,10 @@ puts it on the table (rotation = BPM) and the output point pulses it:
 - **random subtype**: improvises, snapped to the table tonality —
   with a restricted scale this is the original's "automatic solos";
   the steps page shows the improvised-note history live
+- **drift subtype**: no pattern — fires at random intervals (`gaplo`–`gaphi`
+  32nds on the set page, shown in seconds), with per-call velocity and
+  pitch jitter; rotation sets sparseness. for untimed texture: frogs,
+  rain, crowd murmur
 
 ### tonality
 
@@ -255,10 +266,13 @@ per block (rotation / slider / subtypes, then its panels):
   signature parameter (pitch, cutoff, time, dry-wet...); hardlink it to
   choose the target.
 - **sequencer** — rotation switches 6 stored patterns (`p1`–`p6` in the
-  header) / — / mono·random. panels: **steps** (E2 step, E3 pitch
+  header) / — / mono·random·drift. panels: **steps** (E2 step, E3 pitch
   ±24 st, `K1+E3` velocity, `K3` toggle), **vel**, **dur** (step length in
   32nds, 1–8; 2 = a 16th). random subtype improvises into the tonality;
-  its steps page shows the note history it has played.
+  its steps page shows the note history it has played. drift subtype
+  drops the pattern: it fires at random intervals with slight velocity
+  and pitch jitter — rotation sets the maximum gap (sparseness), and its
+  **set** page edits `gaplo`/`gaphi` in seconds.
 - **midi** — transpose ±24 st / — / in only. no panels; vport + channel
   live in PARAMETERS.
 - **tonality** — root key / — / major·minor·pentatonic·chromatic. panel:
@@ -313,7 +327,7 @@ musical sketch that also teaches one or two concepts.
 | 12 | DRIFT | 60 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | saw + detuned square + sine sub-bass, each with subs, into one LP filter; each osc has its own slow pitch-drift LFO; a random sequencer retriggers the filter's cutoff envelope; reverb-delay insert for space |
 | 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
 | 14 | PLUCK | 118 | instrument sampler + tonality, oneshot loops, call-and-response | mandolin and saxophone trade a D-minor melody (two sequencers), oneshot snare backbeat |
-| 15 | ZOO | 80 | sound design: generators don't have to be musical | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots |
+| 15 | ZOO | 80 | sound design: generators don't have to be musical; drift sequencers | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots; three coquí frogs calling at random intervals, each its own pitch and density |
 | 16 | FINALE | 122 | everything at once | 15 objects: drum kit, tuba bass, horn stabs, theremin pad, A-minor tonality, full master FX — the demo you play people |
 
 **playing the presets** — a tour, in order; each "try" uses the gestures
@@ -366,7 +380,9 @@ from the block settings guide above:
 15. **ZOO** — the weird one. try: rotate the crickets loop — rate 2 is a
     shaker, rate 0.5 is a swamp. the elephant goes through a bandpass and
     a pingpong; the bear drone is a loop at quarter speed into the
-    bitcrusher.
+    bitcrusher. the three coquís on the left are drift sequencers —
+    rotate one to thin its calls out, or open its set page for the gap
+    range.
 16. **FINALE** — perform it. try: mute parts in LINK mode (`K1+K3`) and
     bring them back; ride the output's rotation (master volume); the
     master reverb/compression live on the output's set page.

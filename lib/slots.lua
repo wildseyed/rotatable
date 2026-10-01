@@ -37,16 +37,19 @@ Slots.FACTORY_DIR = _path.code .. "rotatable/data/slots/"
 
 -- samples ship in the repo for ;install, but their canonical on-device home
 -- is the shared audio pool (norns file-tree convention) — that's also where
--- the loop/sampler browser looks, so install them there on first run
+-- the loop/sampler browser looks, so sync them there on every launch (cp -r
+-- is cheap and idempotent; new library additions reach existing installs)
 local SAMPLE_SRC = _path.code .. "rotatable/presets/audio/"
 Slots.SAMPLE_DIR = _path.audio .. "rotatable/"
 
 function Slots.install_samples()
-  if util.file_exists(Slots.SAMPLE_DIR .. "SOURCES.md") then return end
+  local fresh = not util.file_exists(Slots.SAMPLE_DIR .. "SOURCES.md")
   os.execute("mkdir -p '" .. Slots.SAMPLE_DIR .. "' && cp -r '" ..
     SAMPLE_SRC .. ".' '" .. Slots.SAMPLE_DIR .. "'")
   if util.file_exists(Slots.SAMPLE_DIR .. "SOURCES.md") then
-    print("rotatable: sample library installed to " .. Slots.SAMPLE_DIR)
+    if fresh then
+      print("rotatable: sample library installed to " .. Slots.SAMPLE_DIR)
+    end
   else
     print("rotatable: WARNING sample copy failed; factory presets may be silent")
   end

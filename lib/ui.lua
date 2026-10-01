@@ -123,6 +123,10 @@ local SET_FIELDS = {
   sampler = {
     { k = "base", min = -48, max = 48, step = 1 }, -- semitones from C4
   },
+  sequencer = { -- drift subtype only (see pages_for); gaps in 32nd notes
+    { k = "gaplo", min = 1, max = 64, step = 1 },
+    { k = "gaphi", min = 1, max = 256, step = 1 },
+  },
   output = { -- global FX (spec §3.13): master reverb + compression
     { k = "rev", min = 0, max = 1, step = 0.02 },
     { k = "room", min = 0, max = 1, step = 0.02 },
@@ -152,6 +156,9 @@ local function set_field_str(o, f)
     local st = base_semis(o)
     return string.format("%s%d (%d Hz)",
       NOTE_NAMES[(st % 12) + 1], 4 + math.floor(st / 12), math.floor(v + 0.5))
+  elseif f.k == "gaplo" or f.k == "gaphi" then
+    -- gaps are in 32nd notes; show seconds at the current tempo
+    return string.format("%.2f s", v * 60 / (params:get("rot_tempo") or 120) / 8)
   end
   return tostring(v)
 end
@@ -173,14 +180,15 @@ local ENV_TARGET = { filter = "cutoff", delay = "fdbk",
   modulator = "drywet", waveshaper = "drywet" }
 
 -- L3 pages per object: 2d for two-param effects; steps/vel/dur for
--- sequencer; sample browser for loop+sampler; settings page for syncable
--- types + sampler; subs for oscillator; notes for tonality;
+-- mono/random sequencers (drift gets a gap set-page instead); sample
+-- browser for loop+sampler; settings page for syncable types + sampler +
+-- drift sequencer; subs for oscillator; notes for tonality;
 -- envelope for envelope-driven generators
 local function pages_for(o)
   local p = {}
   local c = World.TYPES[o.type].category
   if c == "effect" then table.insert(p, "2d") end
-  if o.type == "sequencer" then
+  if o.type == "sequencer" and o.subtype ~= 3 then
     table.insert(p, 1, "dur")
     table.insert(p, 1, "vel")
     table.insert(p, 1, "steps")
@@ -188,7 +196,9 @@ local function pages_for(o)
   if o.type == "oscillator" then table.insert(p, 1, "subs") end
   if o.type == "tonality" then table.insert(p, 1, "notes") end
   if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
-  if SET_FIELDS[o.type] then table.insert(p, 1, "set") end
+  if SET_FIELDS[o.type] and (o.type ~= "sequencer" or o.subtype == 3) then
+    table.insert(p, 1, "set")
+  end
   if ENV_TYPES[o.type] then table.insert(p, "env") end
   return p
 end
@@ -763,7 +773,8 @@ local function draw_l3()
   screen.move(12, 10)
   screen.text(World.TYPES[selected.type].label .. "#" .. selected.id ..
     " " .. World.subtype_name(selected) ..
-    (selected.type == "sequencer" and " p" .. (selected.params.preset or 1) or "") ..
+    (selected.type == "sequencer" and selected.subtype ~= 3 and
+      " p" .. (selected.params.preset or 1) or "") ..
     "  [" .. page .. " " .. page_idx .. "/" .. #pages .. "]")
   if page == "env" then
     for i, f in ipairs(ENV_FIELDS) do
