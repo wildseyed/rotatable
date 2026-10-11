@@ -673,3 +673,12 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   crowd; CONNECT_DIST 0.35 vs label width ~0.3wu → route staged chains
   diagonally, keep labeled objects y ≤ 0.25 (status bar), matron T.sub
   works but the panel redraw lags one export behind — shoot twice.
+- 2026-10-11 (post-v3.4.2): **factory presets weren't actually updated on
+  device** — deploy.py SYNC_DIRS was ["lib","presets"], never "data", so
+  the bundled factory set (code/rotatable/data/slots/, the RESTORE
+  PRESETS source) stayed stale even though the repo and the device's
+  USER slots had the new tables. Fixed: SYNC_DIRS += "data", deployed,
+  ran T.restore_factory() (16 restored), slot 8 verified = SIREN
+  (md5-matched, audible). Committed f0fcdf9. Lesson: after a preset
+  rework the full path is build-via-REST → pull to repo → deploy (data/)
+  → restore_factory on device.
