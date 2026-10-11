@@ -1,5 +1,5 @@
 -- rotatable
--- v3.3.0 @wildseyed
+-- v3.4.0 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -65,7 +65,7 @@ T = {
     local o = World.get(id); o.x, o.y = x, y; World.recompute(); dirty = true
   end,
   rot = function(id, a)
-    local o = World.get(id); o.angle = a; Audio.sync_object(o); dirty = true
+    local o = World.get(id); o.angle = a; Audio.rotate(o); dirty = true
   end,
   clear = function()
     Audio.reset()
@@ -113,7 +113,9 @@ T = {
     elseif o.env[k] ~= nil then
       o.env[k] = v
     end
-    Audio.sync_object(o); dirty = true
+    -- angle write = rotation: sampler retrigs (Audio.rotate); else plain sync
+    if k == "angle" then Audio.rotate(o) else Audio.sync_object(o) end
+    dirty = true
   end,
   load = function(id, path)
     local o = World.get(id)
@@ -260,10 +262,13 @@ function init()
 end
 
 function enc(n, d)
+  local pre = UI.selected()
+  local a0 = pre and pre.angle
   UI.enc(n, d)
   local o = UI.selected()
   if o then
-    Audio.sync_object(o)
+    -- same object, angle moved = rotation: sampler retrigs (Audio.rotate)
+    if o == pre and o.angle ~= a0 then Audio.rotate(o) else Audio.sync_object(o) end
     if o.type == "tonality" then Audio.resync_follow() end
   end
 end

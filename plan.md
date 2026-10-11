@@ -39,6 +39,22 @@ add new files as work evolves, and keep this index stable.*
   include() singleton leak fix, K1+E1 preset navigation with camera flight,
   2d-panel angle-mapping fix (owner-verified). **v3.1.0 tagged and published**
 
+### v3.2.x–v3.3 (released 2026-09-29 → 10-11, other-PC sessions)
+- [x] world-scaled slot boxes + MOVE camera follow (v3.2.0)
+- [x] SC precedence fix (rot_mod/shaper mute at drywet=0 — gotcha 14),
+  poly subtype dropped (v3.2.1/v3.2.2)
+- [x] norns file-layout conformance: factory slots → data/, samples →
+  dust/audio (v3.2.3)
+- [x] drift sequencer subtype + coqui frogs in ZOO (v3.3.0)
+
+### v3.4 (released 2026-10-11)
+- [x] **Phase 12 — Reactable fidelity gap closure** → [gap-closure](plan/phase-12/gap-closure.md) —
+  from `docs/gap-analysis-2026-10-10.md` (verified): placement/rotation triggers,
+  seq note → effect params + velocity, seq→loop oneshots, LFO→shaper main,
+  chorus depth + modulator settings, drum octave pinning, pitch readout,
+  slider perimeter-arc gauge. Plus latent engine fix (envelope retrig,
+  gotcha 15). All device-verified. Owner calls parked in the plan file.
+
 ## Parking lot (undecided / later)
 
 - Grid/MIDI controller support

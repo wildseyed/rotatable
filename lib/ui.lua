@@ -127,6 +127,14 @@ local SET_FIELDS = {
     { k = "gaplo", min = 1, max = 64, step = 1 },
     { k = "gaphi", min = 1, max = 256, step = 1 },
   },
+  -- modulator (modulator.md: chorus settings = rate; flanger = depth,
+  -- min delay, feedback; ring = none). sub = only shown for that subtype
+  modulator = {
+    { k = "rate", min = 0, max = 1, step = 0.02, sub = 2 },
+    { k = "fdepth", min = 0, max = 1, step = 0.02, sub = 3 },
+    { k = "mindelay", min = 0.0005, max = 0.01, step = 0.0002, sub = 3 },
+    { k = "ffb", min = 0, max = 1, step = 0.02, sub = 3 },
+  },
   output = { -- global FX (spec §3.13): master reverb + compression
     { k = "rev", min = 0, max = 1, step = 0.02 },
     { k = "room", min = 0, max = 1, step = 0.02 },
@@ -136,6 +144,18 @@ local SET_FIELDS = {
 
 local C4 = 261.6256 -- sampler base reference pitch (params.base is in Hz)
 local NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }
+
+-- set-page fields visible for this object right now (f.sub = only that
+-- subtype; e.g. modulator chorus rate vs flanger depth/mindelay/ffb)
+local function set_fields_for(o)
+  local fields = SET_FIELDS[o.type]
+  if not fields then return nil end
+  local out = {}
+  for _, f in ipairs(fields) do
+    if not f.sub or f.sub == o.subtype then out[#out + 1] = f end
+  end
+  return out
+end
 
 local function base_semis(o)
   return math.floor(12 * math.log((o.params.base or C4) / C4) / math.log(2) + 0.5)
@@ -152,6 +172,8 @@ local function set_field_str(o, f)
     return string.format("%d 32nds", math.floor(v + 0.5))
   elseif f.k == "sweep" then
     return string.format("%.2f s", v)
+  elseif f.k == "mindelay" then
+    return string.format("%.1f ms", v * 1000)
   elseif f.k == "base" then
     local st = base_semis(o)
     return string.format("%s%d (%d Hz)",
@@ -196,7 +218,8 @@ local function pages_for(o)
   if o.type == "oscillator" then table.insert(p, 1, "subs") end
   if o.type == "tonality" then table.insert(p, 1, "notes") end
   if o.type == "loop" or o.type == "sampler" then table.insert(p, 1, "browser") end
-  if SET_FIELDS[o.type] and (o.type ~= "sequencer" or o.subtype == 3) then
+  local sf = set_fields_for(o)
+  if sf and #sf > 0 and (o.type ~= "sequencer" or o.subtype == 3) then
     table.insert(p, 1, "set")
   end
   if ENV_TYPES[o.type] then table.insert(p, "env") end
@@ -542,7 +565,8 @@ function UI.enc(n, d)
         end
       end
     elseif page == "set" then
-      local fields = SET_FIELDS[selected.type]
+      local fields = set_fields_for(selected)
+      field_idx = util.clamp(field_idx, 1, #fields) -- subtype switch can shrink the list
       if n == 2 then
         field_idx = util.clamp(field_idx + d, 1, #fields)
       elseif n == 3 then
@@ -854,7 +878,7 @@ local function draw_l3()
         st.on and "ON" or "off", st.dur or 2))
     end
   elseif page == "set" then
-    local fields = SET_FIELDS[selected.type]
+    local fields = set_fields_for(selected)
     local y = 24
     for i, f in ipairs(fields) do
       if i == field_idx then

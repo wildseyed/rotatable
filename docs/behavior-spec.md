@@ -266,3 +266,9 @@ double-tap-hold + drag = rotate, two-finger rotate.
     deviation from §3.1): encoder rotation is a continuous sweep, retrigger
     would stutter; envelopes fire on placement + sequencer/MIDI notes.
     (owner decision 2026-09-27)
+15. **Sampler rotation DOES retrigger** (sampler.md:3 "rotating the object
+    also triggers a note"): the sampler's PlayBuf restart is percussive, so
+    the per-detent retrig reads as drumming, not stutter. Placement/load
+    trigger fires engine-side in `loadbuf` (after the buffer swap; covers
+    sampler + oneshot loop). Oscillator keeps decision 14.
+    (implemented 2026-10-10, phase 12; device-verified)

@@ -532,3 +532,98 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   browser; `restore_factory` rewrites historical sample prefixes
   (rotatable-drums/, code-dir presets/audio/) to the pool. Also backported
   v3.2.2 (was release-only) onto main via cherry-pick first.
+- 2026-10-10: **Gap analysis vs. original Reactable Live!** — full manual
+  read vs. code; deliverable `docs/gap-analysis-2026-10-10.md` (owner-
+  revised + verification pass, all claims code-checked). Key findings:
+  sequencer note should drive effect main params (waveshaper/delay — we
+  bare-retrigger only, velocity discarded too); LFO→waveshaper MAIN param
+  (manual explicit; modulator version was my inference, not in manual —
+  and mod→drywet half-ratified by §9 decision 8); oneshot loop + sampler
+  silent on placement (no t_trig anywhere outside seq/MIDI; rotation
+  never retriggers either — draft error, corrected); seq→loop envelope
+  missing (loop absent from SEQ_TARGETS, engine branch exists); loop mode
+  not tempo-synced; chorus rotation=rate not depth; poly sequencer is a
+  label; modulator settings panel missing; parameter-lock gesture absent;
+  drum sampler follows seq pitch (manual pins octave); song-switch is
+  wipe-rebuild vs. original's seamless. Awaiting owner triage.
+- 2026-10-10 (cont.): **Owner triage → Phase 12 created**
+  (`plan/phase-12/gap-closure.md`, indexed in plan.md as v3.2). Owner
+  ratified: dotted/dashed connection lines stay (clean at 128×64); slider
+  dot-on-stub REPLACED with Reactable-style perimeter arc gauge in
+  `Render.object` (value = 270° arc sweep anchored at rotation+90°, dot at
+  tip, dim track when r≥6; VU bar moved r+2→r+5 to clear the ring).
+  DEPLOY BLOCKED: norns unreachable at 192.168.1.139 (ping 100% loss) —
+  gauge not device-verified; deploy + screenshot when it's back. LINK
+  candidate ring sits at r+3 vs gauge at r+2 — check for ring clash on the
+  screenshot when both show.
+- 2026-10-10 (evening): **gauge device-verified** — rebooted norns (found
+  seq metro wedged: tick=0, running=nil, watchdog didn't recover; reboot
+  fixed), placed osc/filter/lfo via REST, screenshots show the perimeter
+  arc reading clearly at NAV + ROTATE. Plan item marked verified.
+  Tooling notes: `deploy.py --shot` reloads the script (wipes state) — for
+  live screenshots use `/lua screen.export_screenshot(...)` + SFTP pull.
+  The numbered squares at the table rim in min-zoom shots are preset-slot
+  markers.
+- 2026-10-10 (night): **Phase 12 item 1 DONE — placement/rotation
+  triggers.** Engine `loadbuf` fires t_trig+gate after the buffer swap
+  (sampler + oneshot loop now sound on sample load; loop mode still
+  restarts via Changed.kr). New `Audio.rotate` = sync + sampler retrig
+  (sampler.md:3); wired into the global enc handler via angle-change
+  detection (`o == pre and o.angle ~= a0`), T.rot, T.set angle. Ratified as
+  spec §9 decision 15 (osc stays trigger-free, decision 14). Device-verified
+  after full restart ritual: sampler load amp 0.005–0.05, rotation 0.05
+  (enc) / 0.59 (T.rot), standalone oneshot loop 0.21 (first time ever),
+  loop-mode restart 0.075. Debug gotchas: matron prints are NOT buffered
+  for later ws connections (probe over the same connection); `Audio` is a
+  local — global is `RotatableAudio`; owner was physically at the device
+  mid-test (angle moved on its own — coordinate before measuring).
+- 2026-10-11: **Phase 12 items 2+3 DONE + latent engine bug found.**
+  Seq/MIDI note number now drives waveshaper `main` (linlin 36..84→0..1)
+  and delay `time` (linexp→0.01..2s) engine-side in `trigger`; effect
+  envelopes get per-note velocity via new `vel` arg (scales ADSR depth);
+  loop added to SEQ_TARGETS (oneshot retrigs per step — full loop ADSR
+  deferred). WHILE VERIFYING found: **effect/osc envelopes have NEVER
+  retriggered** — `set(\gate,-1); set(\gate,1)` back-to-back lands in one
+  scsynth control period, EnvGen never sees the edge (masked because
+  generators drone at s>0; proven by separated-edge test firing at 0.39 vs
+  same-block 0.036). Fix: `t_retrig` TrigControl arg on osc + 4 effects,
+  env gate = `gate * (1 - t_retrig)`; trigger command single-sets
+  `\t_retrig, 1`. All device-verified (vel 1.0/0.1 → 0.47/0.05 on filter;
+  note→shaper main 0.33↔0.74; note→delay time obvious; seq→oneshot 0.47;
+  seq→osc regression fine). AGENTS.md gotcha 15 added. QUIRK flagged for
+  item 4: mod=0 at rest halves shaper/mod drywet
+  (`drywet * (1-(mod*0.5+0.5))` = ×0.5) — likely not what §9 decision 8
+  intended. Rig lesson: fresh sequencers default to preset 1 = pentatonic
+  demo with odd steps ON — silence steps before measuring baselines.
+- 2026-10-11 (later): **Phase 12 items 4+5 DONE.** (4) rot_shaper mod →
+  main (bipolar wobble; spec §3.8/waveshaper.md both wanted it — decision
+  8 only covered amp/dry-wet); fixed the rest-halving quirk:
+  `(1-(mod*0.5+0.5))` → `(1+mod).clip(0,1)` on rot_mod + rot_input (rest =
+  untouched, dipper to 0). Verified: full-wet dist mean 0.766 (= theory),
+  LFO depth 1/0 spread 0.53/0.08. (5) chorus rotation → depth (rate moved
+  to settings); flanger rebuilt as CombL with fdepth/mindelay/ffb args;
+  SET_FIELDS learned per-subtype fields (`f.sub`); ring subtype correctly
+  gets NO set page; slots backward-compat free (World.add defaults fill).
+  Verified: chorus comb swing 0.06↔0.32 at the set 0.1 Hz rate in raw amp
+  series; flanger ffb 0.35→0.49; screenshots: flanger page shows
+  fdepth/mindelay(ms)/ffb, chorus page rate only. Rig lessons: (a)
+  angle-driven primaries (main/cutoff/etc.) are stomped by sync_object —
+  drive `/set angle` not `/set main` in tests; (b) full-wet chorus shows
+  NO amp modulation (a delayed sine has constant amplitude — comb nulls
+  only exist in the dry+wet mix); (c) the amp poll can't track >2 Hz
+  wobble — use slow rates + long windows for LFO-ish verification.
+- 2026-10-11 (late): **Phase 12 queue COMPLETE (items 6+7 done).** (6)
+  drum sampler pins sequencer/MIDI pitch to the rotation-set pitch
+  (sampler.md:29) — seq_tick/midi_note send `t.freq` for drum subtype;
+  verified by decay-duration (melodic 5.96/2.37s for rate 1/4, drum
+  2.37/2.72s pinned; drum < melodic rate-1 because the perc env decays).
+  (7) pitch/octave readout on osc+sampler: semitone marker on the left
+  half-circle (0.62r, C=bottom→B=top via left), inner octave arc (0.34r,
+  eighths of a circle from 12 o'clock), gated r≥6; shows rotation pitch
+  (seq-played notes don't move it — simplification vs the original).
+  Screenshot-verified. ALL 7 queue items done; only owner-call items
+  remain (poly seq, loop bundle, param lock, auto-sync defaults,
+  song-switch). lua-only deploy this time (no engine change). NOTE: a
+  `clock.lua:62 bad argument #1 to 'resume'` error appears at script load
+  — it's the PREVIOUS instance's leftover clock, harmless, new instance
+  healthy (tick advancing).

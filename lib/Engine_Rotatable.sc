@@ -24,7 +24,7 @@ Engine_Rotatable : CroneEngine {
 		// sub-oscillators (spec §3.1): 4 subs x (waveform/amp/detune/offset),
 		// summed pre-envelope. off = semitones, det = cents.
 		SynthDef(\rot_osc, { arg in=0, out=0, gate=1, freq=220, amp=0.8, select=0,
-			a=0.01, d=0.1, s=0.7, r=0.3, mod=0, lvl=0,
+			a=0.01, d=0.1, s=0.7, r=0.3, mod=0, lvl=0, t_retrig=0,
 			sub1w=0, sub1a=0, sub1d=0, sub1o=0,
 			sub2w=0, sub2a=0, sub2d=0, sub2o=0,
 			sub3w=0, sub3a=0, sub3d=0, sub3o=0,
@@ -51,7 +51,7 @@ Engine_Rotatable : CroneEngine {
 				+ mkSub.(freq, sub3w, sub3a, sub3d, sub3o)
 				+ mkSub.(freq, sub4w, sub4a, sub4d, sub4o);
 			sig = sig + subSig;
-			env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
+			env = EnvGen.kr(Env.adsr(a, d, s, r), gate * (1 - t_retrig));
 			// mod = LFO control-bus input (dedicated arg: .set never breaks its mapping)
 			outSig = sig * env * Lag.kr(amp, 0.05);
 			Out.ar(out, outSig);
@@ -91,9 +91,9 @@ Engine_Rotatable : CroneEngine {
 		// envelope -> cutoff (x2^(env*3), idle-neutral at env=0);
 		// gate retrigs on sequencer notes
 		SynthDef(\rot_filter, { arg in=0, out=0, select=0, cutoff=1200, rq=0.5, amp=1,
-			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3;
+			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3, vel=1, t_retrig=0;
 			var sig = In.ar(in, 1);
-			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
+			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate * (1 - t_retrig)) * Lag.kr(vel, 0.02);
 			cutoff = (Lag.kr(cutoff, 0.05) * (2 ** mod.clip(-1, 1)) * (2 ** (env * 3))).clip(40, 12000);
 			rq = Lag.kr(rq, 0.1).clip(0.05, 1);
 			sig = SelectX.ar(Lag.kr(select, 0.05), [
@@ -112,10 +112,10 @@ Engine_Rotatable : CroneEngine {
 		// (swells toward 0.99, idle-neutral at env=0); gate retrigs on seq notes.
 		SynthDef(\rot_delay, { arg in=0, out=0, time=0.3, feedback=0.4, amp=1,
 			select=0, sync=0, sweep=0.2, tbus=0, mod=0, lvl=0, room=0.4,
-			gate=1, a=0.01, d=0.4, s=0, r=0.3;
+			gate=1, a=0.01, d=0.4, s=0, r=0.3, vel=1, t_retrig=0;
 			var dry = In.ar(in, 1);
 			var bpm = In.kr(tbus).max(1);
-			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
+			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate * (1 - t_retrig)) * Lag.kr(vel, 0.02);
 			var t, fb, fb0, local, wet1, ppA, ppB, pingpong, reverb, wet;
 			t = Lag.kr(time, sweep.clip(0.01, 2));
 			t = t * (2 ** (mod.clip(-1, 1) * 0.5)); // bipolar, +-half octave
@@ -139,18 +139,29 @@ Engine_Rotatable : CroneEngine {
 		}).add;
 
 		// select: 0 ring, 1 chorus, 2 flanger
-		// mod target = dry-wet, unipolar: (1 - mod01)
+		// rotation (main): ring = pitch, chorus = DEPTH, flanger = flanging
+		// frequency (modulator.md). Settings page: chorus rate; flanger depth
+		// (fdepth), min delay (mindelay), feedback (ffb).
+		// mod target = dry-wet, unipolar dipper: x(1+mod).clip(0,1) — rest
+		// (mod=0) leaves drywet untouched, negative LFO swing dips toward 0
+		// (fixed 2026-10-11: the old (1-(mod*0.5+0.5)) halved drywet at rest)
 		// envelope swells dry-wet toward 1 (idle-neutral at env=0)
 		SynthDef(\rot_mod, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1,
-			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3;
+			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3, vel=1, t_retrig=0,
+			rate=0.5, fdepth=0.5, mindelay=0.001, ffb=0.3;
 			var dry = In.ar(in, 1);
-			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
+			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate * (1 - t_retrig)) * Lag.kr(vel, 0.02);
 			var m = Lag.kr(main, 0.05);
 			var ring = dry * SinOsc.ar(m.linexp(0, 1, 10, 2000));
-			var chorus = DelayL.ar(dry, 0.05, SinOsc.kr(m.linexp(0, 1, 0.1, 8), 0, 0.002, 0.005));
-			var flang = DelayL.ar(dry, 0.02, SinOsc.kr(m.linexp(0, 1, 0.05, 2), 0, 0.001, 0.0025));
+			var chorus = DelayL.ar(dry, 0.05,
+				SinOsc.kr(Lag.kr(rate, 0.05).linexp(0, 1, 0.1, 8), 0, m * 0.004, 0.005));
+			var fdep = fdepth.linlin(0, 1, 0.0001, 0.004);
+			var flang = CombL.ar(dry, 0.02,
+				SinOsc.kr(m.linexp(0, 1, 0.05, 2), 0, fdep,
+					mindelay.clip(0.0005, 0.01) + fdep),
+				ffb.linexp(0, 1, 0.005, 0.3));
 			var wet = SelectX.ar(Lag.kr(select, 0.05), [ring, chorus, flang]);
-			var dw0 = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			var dw0 = (Lag.kr(drywet, 0.05) * (1 + mod.clip(-1, 1))).clip(0, 1);
 			var dw = (dw0 + (env * (1 - dw0))).clip(0, 1);
 			// parens are load-bearing: SC binary ops are left-associative with no
 			// precedence — a * x + b * y parses as ((a * x) + b) * y, which
@@ -176,20 +187,22 @@ Engine_Rotatable : CroneEngine {
 		}).add;
 
 		// select: 0 resampler (downsample+bitcrush), 1 compressor, 2 distortion.
-		// main = effect intensity, drywet = mix. mod -> dry-wet (unipolar).
+		// main = effect intensity, drywet = mix.
+		// mod -> MAIN, bipolar wobble around the set value (waveshaper.md:50
+		// "LFO controllers change the values of the main parameter"; spec §3.8).
 		// envelope swells dry-wet toward 1 (idle-neutral at env=0)
 		SynthDef(\rot_shaper, { arg in=0, out=0, select=0, main=0.5, drywet=0.5, amp=1,
-			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3;
+			mod=0, lvl=0, gate=1, a=0.01, d=0.4, s=0, r=0.3, vel=1, t_retrig=0;
 			var dry = In.ar(in, 1);
-			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate);
-			var m = Lag.kr(main, 0.05);
+			var env = EnvGen.kr(Env.adsr(a, d, s, r), gate * (1 - t_retrig)) * Lag.kr(vel, 0.02);
+			var m = (Lag.kr(main, 0.05) + (mod.clip(-1, 1) * 0.5)).clip(0, 1);
 			var resamp, comp, dist, wet, dw, dw0;
 			resamp = Latch.ar(dry, Impulse.ar(m.linexp(0, 1, 400, 16000)));
 			resamp = (resamp * m.linexp(0, 1, 16, 4)).round / m.linexp(0, 1, 16, 4);
 			comp = Compander.ar(dry, dry, 0.5, 1, m.linlin(0, 1, 1, 0.05).clip(0.05, 1), 0.01, 0.1);
 			dist = (dry * m.linexp(0, 1, 1, 30)).tanh;
 			wet = SelectX.ar(Lag.kr(select, 0.05), [resamp, comp, dist]);
-			dw0 = (Lag.kr(drywet, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			dw0 = Lag.kr(drywet, 0.05).clip(0, 1);
 			dw = (dw0 + (env * (1 - dw0))).clip(0, 1);
 			// parens are load-bearing (see rot_mod): SC is left-associative
 			wet = ((dry * (1 - dw)) + (wet * dw)) * Lag.kr(amp, 0.05);
@@ -197,10 +210,11 @@ Engine_Rotatable : CroneEngine {
 			Out.kr(lvl, Amplitude.kr(wet, 0.01, 0.15));
 		}).add;
 
-		// line in (shield has no mic); rotation = gain. mod -> gain (unipolar).
+		// line in (shield has no mic); rotation = gain. mod -> gain: same
+		// unipolar dipper as rot_mod (rest leaves gain untouched).
 		SynthDef(\rot_input, { arg in=0, out=0, gain=0.8, mod=0, lvl=0;
 			var sig = SoundIn.ar([0, 1]).sum * 0.5;
-			var g = (Lag.kr(gain, 0.05) * (1 - (mod * 0.5 + 0.5))).clip(0, 1);
+			var g = (Lag.kr(gain, 0.05) * (1 + mod.clip(-1, 1))).clip(0, 1);
 			sig = sig * g;
 			Out.ar(out, sig);
 			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
@@ -320,9 +334,10 @@ Engine_Rotatable : CroneEngine {
 			};
 		});
 		// sequencer note: sampler/loop one-shots fire PlayBuf via t_trig
-		// (single-pair set, auto-clearing trigger arg); oscillators retrigger
-		// via the classic gate -1 -> 1 edge; effects (filter/delay/mod/shaper)
-		// get the bare gate edge for their param envelopes.
+		// (single-pair set, auto-clearing trigger arg); oscillators and effects
+		// retrigger via t_retrig (same TrigControl trick — a same-block
+		// gate -1 -> 1 pair is invisible to EnvGen); waveshaper/delay also map
+		// the note number (msg[2]) to their main parameter.
 		this.addCommand("trigger", "if", { arg msg;
 			var node = nodes[msg[1]];
 			if (node.notNil and: { node[\synth].notNil }) {
@@ -334,11 +349,24 @@ Engine_Rotatable : CroneEngine {
 					node[\synth].set(\t_trig, 1);
 				} {
 					if (#[\filter, \delay, \modulator, \waveshaper].includes(node[\type])) {
-						node[\synth].set(\gate, -1);
-						node[\synth].set(\gate, 1);
+						// note -> main parameter (waveshaper.md:55, delay.md:45);
+						// msg[2] is a midi note number (60 = center), 0 = bare retrig.
+						// manual is silent for filter/modulator: envelope only.
+						if (msg[2] > 0) {
+							switch(node[\type],
+								\waveshaper, { node[\synth].set(\main,
+									msg[2].linlin(36, 84, 0, 1).clip(0, 1)) },
+								\delay, { node[\synth].set(\time,
+									msg[2].linexp(36, 84, 0.01, 2).clip(0.01, 2)) }
+							);
+						};
+						// t_retrig (TrigControl, auto-resets): a back-to-back
+						// gate -1 -> 1 pair lands in one control period and the
+						// edge is never seen (found 2026-10-11: effect envelopes
+						// never actually retriggered)
+						node[\synth].set(\t_retrig, 1);
 					} {
-						node[\synth].set(\gate, -1);
-						node[\synth].set(\freq, msg[2], \gate, 1);
+						node[\synth].set(\freq, msg[2], \gate, 1, \t_retrig, 1);
 					};
 				};
 			};
@@ -350,6 +378,14 @@ Engine_Rotatable : CroneEngine {
 				Buffer.readChannel(s, msg[2].asString, channels: [0], action: { arg b;
 					("LOAD done bufnum " ++ b.bufnum ++ " frames " ++ b.numFrames).postln;
 					node[\synth].set(\buf, b.bufnum);
+					// placement trigger (sampler.md:3, loop.md:33): fire AFTER the
+					// buffer swap, not at add — a fresh node only has silentBuf.
+					// loop mode ignores t_trig (Changed.kr(buf) restarts its
+					// phasor); oneshot loop + sampler both live on PlayBuf's edge.
+					if (node[\type] == \sampler or: { node[\type] == \loop }) {
+						node[\synth].set(\gate, 1);
+						node[\synth].set(\t_trig, 1);
+					};
 				});
 			};
 		});

@@ -17,10 +17,11 @@ local HAS_SYNTH = { oscillator = true, loop = true, sampler = true,
   input = true, filter = true, delay = true, modulator = true,
   waveshaper = true, lfo = true }
 
--- sequencer/MIDI note targets: osc+sampler get the pitched note, effects
--- get a bare envelope retrigger (filter cutoff, delay feedback, dry-wet)
-local SEQ_TARGETS = { oscillator = true, sampler = true, filter = true,
-  delay = true, modulator = true, waveshaper = true }
+-- sequencer/MIDI note targets: osc+sampler get the pitched note; loop gets
+-- a oneshot retrigger; effects get an envelope retrigger + the note number
+-- (waveshaper/delay map it to their main param) + velocity as env depth
+local SEQ_TARGETS = { oscillator = true, sampler = true, loop = true,
+  filter = true, delay = true, modulator = true, waveshaper = true }
 
 -- types whose ADSR the engine runs (env page + sync push)
 local ENV_TYPES = { oscillator = true, loop = true, sampler = true,
@@ -82,7 +83,8 @@ end
 -- engine params pushed verbatim from o.params (everything not type-special)
 local PASS_PARAMS = { freq = true, amp = true, cutoff = true, time = true,
   feedback = true, main = true, drywet = true, depth = true, gain = true,
-  base = true, sync = true, sweep = true, mult = true, room = true }
+  base = true, sync = true, sweep = true, mult = true, room = true,
+  rate = true, fdepth = true, mindelay = true, ffb = true }
 
 -- which param rotation drives for this object (ui 2d page: primary params
 -- are angle-driven — editing the param directly would be stomped by the
@@ -156,6 +158,19 @@ function Audio.sync_object(o)
   if o.type == "oscillator" or o.type == "sampler" then nodes[o.id].freq = v end
 end
 
+-- rotation write: sync + sampler retrig (sampler.md:3 "rotating the object
+-- also triggers a note"). Oscillator stays trigger-free (spec §9 decision
+-- 14: continuous sweep would stutter the gated ADSR); the sampler's PlayBuf
+-- restart is percussive and survives it. Callers: every path that writes
+-- o.angle (global enc handler on angle change, T.rot, T.set angle).
+function Audio.rotate(o)
+  Audio.sync_object(o)
+  local n = nodes[o.id]
+  if o.type == "sampler" and n then
+    engine.trigger(o.id, n.freq or 220)
+  end
+end
+
 -- re-push all follow-tonality oscillators (call when tonality changes)
 function Audio.resync_follow()
   for _, o in ipairs(World.objects) do
@@ -166,8 +181,10 @@ function Audio.resync_follow()
 end
 
 -- LFO target: all targets take the dedicated \mod arg (bipolar -1..1);
--- each engine synth applies its own scale (pitch-like bipolar, amp/dry-wet
--- unipolar — spec §9 decision 8); user .set calls can't break the mapping
+-- each engine synth applies its own scale (pitch-like bipolar; amp/dry-wet
+-- unipolar dipper, rest = untouched; waveshaper main bipolar — spec §9
+-- decision 8 + waveshaper.md LFO input); user .set calls can't break the
+-- mapping
 local function lfo_target_param(t)
   return "mod"
 end
@@ -303,12 +320,14 @@ end
 
 -- sequencer clock tick (32nd notes): each sequencer free-runs its own
 -- position; a step fires when its countdown (dur, in 32nds) elapses.
--- triggers connected oscillators/samplers. "random" subtype ignores the
--- pattern's pitch and improvises (quantized to the table's tonality when a
--- tonality object is present); its last played pitch per step slot is kept
--- in o._hist for the steps-page display. "drift" ignores patterns entirely
--- and fires at random intervals (gaplo..gaphi 32nds) with per-call velocity
--- and pitch jitter — untimed texture, no tonality snap.
+-- targets: osc/sampler get the pitched note; loop one-shots retrigger;
+-- effects get an envelope retrigger + note->main (waveshaper/delay) +
+-- velocity->env depth. "random" subtype ignores the pattern's pitch and
+-- improvises (quantized to the table's tonality when a tonality object is
+-- present); its last played pitch per step slot is kept in o._hist for the
+-- steps-page display. "drift" ignores patterns entirely and fires at
+-- random intervals (gaplo..gaphi 32nds) with per-call velocity and pitch
+-- jitter — untimed texture, no tonality snap.
 function Audio.seq_tick(tick)
   local ton = Tonality.current(World)
   for id, n in pairs(nodes) do
@@ -357,11 +376,21 @@ function Audio.seq_tick(tick)
                   o._hist = o._hist or {}
                   o._hist[o._pos] = math.floor(nn - math.floor(base + 0.5) + 0.5)
                 end
+                -- drum sampler: sequencer notes stay in one octave
+                -- (sampler.md:29) — trigger at the rotation-set pitch
+                local fo = World.get(n.out)
+                local drum = fo and fo.type == "sampler" and fo.subtype == 2
                 engine.set(n.out, "amp", st.vel)
-                engine.trigger(n.out, 440 * (2 ^ ((nn - 69) / 12)))
+                engine.trigger(n.out,
+                  drum and t.freq or 440 * (2 ^ ((nn - 69) / 12)))
               else
-                -- effect target: bare envelope retrigger
-                engine.trigger(n.out, 0)
+                -- effect/loop target: envelope retrigger; the note number
+                -- (60 = center) drives waveshaper/delay main param engine-
+                -- side; velocity scales the envelope depth (vel arg)
+                local pitch = st.pitch
+                if o.subtype == 2 then pitch = math.random(-12, 24) end
+                engine.set(n.out, "vel", st.vel)
+                engine.trigger(n.out, 60 + pitch)
               end
             end
           end
@@ -387,8 +416,11 @@ function Audio.midi_note(note, vel)
           if vel > 0 then
             o._held[note] = true
             local st = note + (o.params.transpose or 0)
+            local fo = World.get(n.out)
+            local drum = fo and fo.type == "sampler" and fo.subtype == 2
             engine.set(n.out, "amp", util.clamp(vel / 127, 0, 1))
-            engine.trigger(n.out, 440 * (2 ^ ((st - 69) / 12)))
+            engine.trigger(n.out,
+              drum and t.freq or 440 * (2 ^ ((st - 69) / 12)))
           else
             o._held[note] = nil
             if not next(o._held) then
@@ -396,7 +428,9 @@ function Audio.midi_note(note, vel)
             end
           end
         elseif vel > 0 then
-          engine.trigger(n.out, 0) -- effect envelope; note-off ignored
+          -- effect/loop envelope; note number drives waveshaper/delay main
+          engine.set(n.out, "vel", util.clamp(vel / 127, 0, 1))
+          engine.trigger(n.out, note + (o.params.transpose or 0))
         end
       end
     end

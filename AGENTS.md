@@ -60,8 +60,9 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   `bus.sp.nanomsg.org`, plain-text Lua **newline-terminated**; replies are
   NUL-terminated), optionally pulls a screenshot to `/tmp/norns.png`.
 - `screen.export_screenshot('name')` writes `~/dust/data/<script>/name.png`.
-- **REST testing API** (owner request): `python3 tools/api.py [port]`
-  (default 8787, localhost). GET: `/state` `/amps`. POST, direct
+- **REST testing API** (owner request; **permanent feature** — intended
+  for AI-performance agents, documented in README): `python3 tools/api.py
+  [port]` (default 8787, localhost). GET: `/state` `/amps`. POST, direct
   manipulation: `/place /move /rotate /set /load /step /mute /remove /clear`.
   POST, UI simulation (goes through the interaction state machine):
   `/key /enc`. Escape hatch: `/lua`. Each call is one ws message (ordering
@@ -116,6 +117,14 @@ No computer vision. reacTIVision/TUIO is **not** part of this project.
   defensively: `((dry * (1 - dw)) + (wet * dw))`. Also: never leave a
   copy of a script dir inside dust/code — duplicate engine class names
   fail sclang's ENTIRE class library compile (all engines die).
+  (15) A back-to-back `set(\gate, -1); set(\gate, 1)` pair lands in the
+  SAME scsynth control period — EnvGen never sees the edge, so the
+  "classic gate edge" retrigger silently never fires (found 2026-10-11:
+  effect/osc envelopes had never retriggered, masked by generators droning
+  at s>0; proven by separated-edge A/B). For retriggerable envelopes use a
+  `t_retrig` arg (TrigControl auto-resets each control period) with
+  `env = EnvGen.kr(env, gate * (1 - t_retrig))` and a single
+  `set(\t_retrig, 1)`. PlayBuf's `t_trig` works the same way (gotcha 7).
 
 ## Repo layout
 
