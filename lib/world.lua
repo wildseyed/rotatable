@@ -48,7 +48,8 @@ World.TYPES = {
     params = { main = 0.5, drywet = 0.5 } },
   lfo = { category = "controller", label = "LFO",
     subtypes = { "sine", "saw", "square", "random" },
-    params = { freq = 2.0, depth = 0.5, sync = 0, mult = 8 } }, -- mult: period in 32nd notes
+    -- sync default 1 (2026-10-11): the original LFO is always beat-locked
+    params = { freq = 2.0, depth = 0.5, sync = 1, mult = 8 } }, -- mult: period in 32nd notes
   sequencer = { category = "controller", label = "SEQ",
     subtypes = { "mono", "random", "drift" }, -- poly dropped (never implemented; v3.2.2)
     -- drift ignores patterns: fires at random intervals, gaplo..gaphi 32nds;
