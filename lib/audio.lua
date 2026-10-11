@@ -65,7 +65,13 @@ local function primary(o)
   elseif o.type == "delay" then
     -- reverb subtype: rotation = room size (time is meaningless there)
     if o.subtype == 3 then return "room", f end
-    return "time", 0.01 * (200 ^ f)                                        -- 0.01..2 s
+    -- manual hybrid (delay.md:8-10): continuous near zero, snapped to
+    -- 32nd notes of the tempo for long values (threshold: an 8th note);
+    -- the sync toggle stays as the always-quantized mode
+    local t = 0.01 * (200 ^ f)                                             -- 0.01..2 s
+    local q = 60 / params:get("rot_tempo") / 8
+    if t > 4 * q then t = math.floor(t / q + 0.5) * q end
+    return "time", t
   elseif o.type == "modulator" then return "main", f
   elseif o.type == "waveshaper" then return "main", f
   elseif o.type == "lfo" then return "freq", 0.05 * (400 ^ f)             -- 0.05..20 Hz

@@ -107,19 +107,27 @@ do not implement before that.
       (`o.params.freq`) — sequencer-played notes don't move it (the
       original shows the played note; acceptable simplification).
 
-## Owner calls (design needed before implementation)
+## Owner calls — all resolved 2026-10-11 (agent decisions, spec §9)
 
-- [ ] **8. Poly sequencer** (§5): build the tenori-style grid panel, or drop
-      the "poly" subtype label. (Deferral already in §9 decision 9.)
-- [ ] **9. Loop semantics bundle** (§3): adopt 8-loop-slot rotation? Tempo-
-      synced loop rate? Bar-entry default on? Per-loop gain trim? Or ratify
-      current behavior as deviations in spec §9.
-- [ ] **10. Parameter lock gesture** (§2): dot drag-away-to-lock; the arc
-      gauge reserves outward offset for this.
-- [ ] **11. Auto-sync defaults** (§3): delay near-zero-continuous/long-
-      quantized hybrid; LFO always-synced. Or ratify the explicit toggles.
-- [ ] **12. Song-switch semantics** (§10): seamless per-object handoff vs.
-      current wipe-rebuild; likely ratify as DECIDED (slots flattening).
+- [x] **8. Poly sequencer** (§5): RESOLVED by the other-PC session — the
+      label was dropped in v3.2.2 (subtypes now mono/random/drift). A real
+      2D grid sequencer stays on the plan.md parking lot (§9 decision 9).
+- [x] **9. Loop semantics bundle** (§3): RATIFIED as deviations — spec §9
+      decision 16 (speed-rotation, free-running rate, opt-in entry,
+      amp-slider trim).
+- [x] **10. Parameter lock gesture** (§2): DECIDED N/A — spec §9 decision
+      17 (encoder edits are inherently persistent; nothing to lock).
+- [x] **11. Auto-sync defaults** (§3): ADOPTED — spec §9 decision 19.
+      Delay rotation is now the manual's hybrid (continuous near zero,
+      snapped to 32nds past an 8th note, lua-side in `primary()`); new
+      LFOs default `sync=1`. Device-verified 2026-10-11 (delay
+      0.4081→0.4375 at 120 BPM; lfo sync=1 via /state params).
+- [x] **12. Song-switch semantics** (§10): RATIFIED — spec §9 decision 18
+      (instant wipe-rebuild by design).
+
+Bonus shipped in the same pass: `T.state()` now includes each object's
+`params` — the REST bridge (permanent AI-performance feature) can read
+live parameter values.
 
 ## Verification log
 

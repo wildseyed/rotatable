@@ -4,7 +4,14 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.4.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.4.1** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.1**: delay rotation is now the original's hybrid — continuous
+near zero, snapping to tempo-grid values past an 8th note · new LFOs start
+beat-locked (the Reactable LFO is always synced; free-running is one
+toggle away) · the REST bridge's `/state` now reports every object's live
+params · docs: behavior-spec decisions 16–19 (loop semantics, parameter
+lock, song-switch, sync defaults) close out the gap analysis
 
 **new in v3.4.0**: Reactable-fidelity pass (full gap analysis against the
 original manual) — samplers + oneshot loops sound the moment their sample
@@ -266,23 +273,27 @@ per block (rotation / slider / subtypes, then its panels):
   **2d** (X = cutoff, Y = resonance), **env** (param envelope → cutoff;
   triggered by a connected sequencer, it gives the ACID-style bite —
   attack instant, short decay, sustain 0).
-- **delay** — time (0.01–2 s) / feedback / feedback·pingpong·reverb
-  (reverb: rotation = room size, feedback = mix). panels: **2d** (time /
-  feedback), **set** (`sync` quantizes time to 32nd notes of the tempo —
-  the rhythmic-delay trick; `sweep` glides time changes like tape), **env**
+- **delay** — time / feedback / feedback·pingpong·reverb
+  (reverb: rotation = room size, feedback = mix). rotation is a hybrid:
+  continuous near zero, snapping to 32nd notes of the tempo past an 8th
+  note — musical values click in on their own. panels: **2d** (time /
+  feedback), **set** (`sync` = always quantized to the grid;
+  `sweep` glides time changes like tape), **env**
   (param envelope → feedback; a sequencer targeting the delay makes the
-  echoes swell, see PING).
+  echoes swell, see PING — and the note's pitch sets the delay time).
 - **modulator** — effect character / dry-wet / ring·chorus·flanger
   (ring: rotation = mod frequency; chorus: rotation = depth; flanger:
   rotation = flanging frequency). panels: **set** (chorus: `rate`;
   flanger: `fdepth`, `mindelay`, `ffb`), **2d**, **env** (→ dry-wet).
 - **waveshaper** — effect amount / dry-wet / resampler·compressor·
   distortion (resampler = bitcrush). panels: **2d**, **env** (→ dry-wet).
-- **lfo** — rate / depth / sine·saw·square·random. panel: **set**
-  (`sync` locks the rate to the tempo; `mult` = period in 32nd notes —
+- **lfo** — rate / depth / sine·saw·square·random. new LFOs start
+  beat-locked to the tempo. panel: **set**
+  (`sync` = tempo lock (on by default; toggle off for free-running rate);
+  `mult` = period in 32nd notes —
   8 = quarter note, 32 = whole note). an LFO modulates its closest block's
-  signature parameter (pitch, cutoff, time, dry-wet...); hardlink it to
-  choose the target.
+  signature parameter (pitch, cutoff, time, shaper amount, dry-wet...);
+  hardlink it to choose the target.
 - **sequencer** — rotation switches 6 stored patterns (`p1`–`p6` in the
   header) / — / mono·random·drift. panels: **steps** (E2 step, E3 pitch
   ±24 st, `K1+E3` velocity, `K3` toggle), **vel**, **dur** (step length in

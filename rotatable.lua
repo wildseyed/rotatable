@@ -1,5 +1,5 @@
 -- rotatable
--- v3.4.0 @wildseyed
+-- v3.4.1 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -174,9 +174,14 @@ T = {
     -- minimal JSON for tools/api.py (no json lib on stock norns)
     local ob, cb = {}, {}
     for _, o in ipairs(World.objects) do
+      local pb = {}
+      for k, v in pairs(o.params) do
+        table.insert(pb, string.format('"%s":%s', k, tostring(v)))
+      end
       table.insert(ob, string.format(
-        '{"id":%d,"type":"%s","subtype":%d,"subtype_name":"%s","x":%.3f,"y":%.3f,"angle":%.3f}',
-        o.id, o.type, o.subtype, World.subtype_name(o), o.x, o.y, o.angle))
+        '{"id":%d,"type":"%s","subtype":%d,"subtype_name":"%s","x":%.3f,"y":%.3f,"angle":%.3f,"params":{%s}}',
+        o.id, o.type, o.subtype, World.subtype_name(o), o.x, o.y, o.angle,
+        table.concat(pb, ",")))
     end
     for _, c in ipairs(World.connections) do
       local b = c.b == "output" and '"output"' or tostring(c.b.id)

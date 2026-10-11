@@ -272,3 +272,22 @@ double-tap-hold + drag = rotate, two-finger rotate.
     trigger fires engine-side in `loadbuf` (after the buffer swap; covers
     sampler + oneshot loop). Oscillator keeps decision 14.
     (implemented 2026-10-10, phase 12; device-verified)
+16. **Loop semantics ratified as deviations** (gap analysis §3, owner call
+    2026-10-11): rotation stays playback-rate in both subtypes — the
+    original's 8-loop-slots-per-object selection has no analogue in our
+    one-sample-per-object browser model and would need a multi-slot UI of
+    its own. Loop mode stays free-running (tempo only quantizes entry via
+    `sync`); bar-entry stays opt-in (default immediate). Per-loop dB trim
+    is covered by the shared amp slider.
+17. **Parameter lock: N/A** (owner call 2026-10-11). The original's lock
+    gesture exists because a finger can't stay on a dot; encoder edits are
+    inherently persistent, so there is nothing to lock. Deviation ratified.
+18. **Song-switch semantics** (owner call 2026-10-11): slot recall is an
+    instant wipe-rebuild by design (Song Settings flattening, decision 4);
+    the original's seamless per-object handoff is not pursued.
+19. **Delay rotation is a hybrid** (delay.md:8-10, adopted 2026-10-11):
+    continuous near zero, snapped to 32nd notes of the tempo past an 8th
+    note (lua-side in `primary()`). The `sync` toggle remains as the
+    always-quantized mode. **LFO defaults to beat-synced** (`sync=1`,
+    mult=8 = quarter note) — the original LFO is always beat-locked;
+    free-running stays one toggle away.

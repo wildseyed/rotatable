@@ -627,3 +627,20 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   `clock.lua:62 bad argument #1 to 'resume'` error appears at script load
   — it's the PREVIOUS instance's leftover clock, harmless, new instance
   healthy (tick advancing).
+- 2026-10-11 (v3.4.0 released): **rebase + release.** Remote had shipped
+  v3.2.0–v3.3.0 from the other PC (slot-box scaling, MOVE camera follow,
+  SC precedence fix = gotcha 14, poly dropped, drift subtype, file-layout
+  move). Rebased phase-12 onto it (6 conflicts; key catch: sequencer
+  subtype renumbering random 3→2 — my new code line needed the same).
+  Phase-12 shipped as **v3.4.0** (main 6bdbfdc, release 9e776c2, tag).
+  Merged build device-smoke-tested.
+- 2026-10-11 (v3.4.1): **gap analysis fully closed.** Owner-call items
+  decided: loop semantics ratified (§9 dec 16: speed-rotation, free rate,
+  opt-in entry); parameter lock N/A (dec 17: encoders are persistent);
+  song-switch wipe-rebuild ratified (dec 18); delay rotation ADOPTED the
+  manual's hybrid (dec 19: continuous near zero, 32nd-snap past an 8th
+  note, lua-side in primary()) and LFO defaults to sync=1 (dec 19).
+  T.state now exposes every object's live params (REST bridge value).
+  Device-verified: delay 0.4081→0.4375 snap at 120 BPM, lfo sync=1 in
+  /state. README freshened (v3.4.1 note, delay/lfo bullets; preset table
+  + drift docs were already refreshed by the other session).

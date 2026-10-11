@@ -53,7 +53,12 @@ add new files as work evolves, and keep this index stable.*
   seq note → effect params + velocity, seq→loop oneshots, LFO→shaper main,
   chorus depth + modulator settings, drum octave pinning, pitch readout,
   slider perimeter-arc gauge. Plus latent engine fix (envelope retrig,
-  gotcha 15). All device-verified. Owner calls parked in the plan file.
+  gotcha 15). All device-verified. **v3.4.0 tagged and published**
+- [x] **v3.4.1 — gap-analysis owner calls closed** (2026-10-11): delay
+  rotation hybrid (continuous→32nd-snap past an 8th note), LFO defaults to
+  beat-sync, `/state` exposes live params; spec §9 decisions 16–19 ratify
+  loop semantics, parameter-lock N/A, song-switch wipe-rebuild. **Every
+  gap-analysis item is now FIXED, DECIDED, or RESOLVED.**
 
 ## Parking lot (undecided / later)
 

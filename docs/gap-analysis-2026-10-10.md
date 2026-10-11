@@ -34,7 +34,7 @@ Classified as:
 | Modulator (flanger/chorus/ringmod) | ring/chorus/flanger | MISALIGN (settings §7, chorus rotation §3) |
 | Wave Shaper (resampler/compressor/distortion) | same 3 | ok |
 | LFO (sine/saw/square/random) | sine/saw/square/random | ok |
-| Sequencer (mono/poly/random) | mono/poly/random labels | MISALIGN (§5; poly deferral is §9 decision 9) |
+| Sequencer (mono/poly/random) | mono/random/drift | RESOLVED (poly dropped v3.2.2; drift added v3.3.0) |
 | MIDI Input | implemented, transpose ✓ | ok |
 | Tonality | 4 presets + 12-mask + root | partial (§6) |
 | Output | volume + global reverb/comp | ok |
@@ -43,11 +43,10 @@ Classified as:
 ## 2. Gestures (manual: gestures.md)
 
 - Subtype menu, panel pages, hardlinks, mute — all implemented. ok
-- **GAP: parameter lock.** Original (gestures.md:22-24): drag the
-  finger-controlled dot (amp/resonance/drywet) away from the object to lock
-  it (it turns red, sampler.md:14); drag again to unlock. Nothing in
-  ui/render/audio implements or represents lock state (verified: no lock
-  field in `world.lua:106-120`; dot is display-only, `render.lua:253-268`).
+- ~~GAP: parameter lock~~ **DECIDED N/A (spec §9 decision 17,
+  2026-10-11):** the lock exists because a finger can't stay on a dot;
+  encoder edits are inherently persistent, so there is nothing to lock.
+  Deviation ratified.
 - Minor: original has **two** temporary-mute gestures on a connection —
   holding a finger over it *and* drawing a line across it
   (gestures.md:36-38). We only have the explicit toggle
@@ -58,34 +57,24 @@ Classified as:
 
 - Oscillator/sampler/input/filter/modulator-ring+flanger/waveshaper/LFO/
   output/sequencer-preset/midi-transpose/tempo/tonality-root — match. ok
-- **MISALIGN: Loop rotation.** Original: in *Loop* mode rotation **selects
-  among 8 loops** (4 per side, loop.md:8-10); speed is only direct in
-  *Oneshot* mode (loop.md:12-14). Ours: one sample per object, rotation =
-  playback rate (0.25..4) in both modes (`audio.lua:60`, no subtype branch).
-  The "8 loop slots per object" concept is absent.
-- **MISALIGN: Loop mode is not tempo-synced.** Original: loop subtype "plays
-  back loops synchronized to the main tempo" and "when put on the table the
-  loop enters in the first bar" (loop.md:29). Ours: free-running phasor at
-  rate 0.25..4 (`Engine_Rotatable.sc:78-85`); the tempo bus only quantizes
-  the *start point* (`sync` arg, `Engine_Rotatable.sc:63-77`), never fits
-  loop duration to the beat — and `sync` defaults to 0 (`world.lua:29`).
+- ~~MISALIGN: Loop rotation~~ **DECIDED (spec §9 decision 16, 2026-10-11):**
+  rotation stays playback-rate in both subtypes; the 8-loop-slots model has
+  no analogue in our one-sample browser model. Deviation ratified.
+- ~~MISALIGN: Loop mode is not tempo-synced~~ **DECIDED (§9 decision 16):**
+  loop mode stays free-running; tempo only quantizes entry (`sync`,
+  opt-in, default immediate). Per-loop dB trim covered by the amp slider.
 - ~~MISALIGN: Chorus rotation drives rate, not depth~~ **FIXED 2026-10-11
   (phase 12):** rotation now drives chorus depth (0–4 ms around 5 ms) and
   rate lives on the new settings page, per modulator.md:29. Flanger also
   gained its settings (depth/min-delay/feedback via CombL).
-- **MISALIGN: Delay time quantization.** Original: continuous near zero,
-  *automatically* quantized to tempo durations for long values
-  (delay.md:8-10). Ours: explicit `sync` toggle in the set page
-  (`ui.lua:116-119`); off = never quantized (default off, `world.lua:41`).
-  When on, ours snaps to 32nd-note multiples — in the spirit of the
-  original, but all-or-nothing and opt-in.
-- **MISALIGN: LFO frequency.** Original: always beat-synced, period is a
-  multiple of a 32nd note (lfo.md:8-10). Ours: free-running 0.05–20 Hz by
-  default, sync optional (`audio.lua:70`, `world.lua:50`). Our synced mode's
-  unit (mult of 32nd notes, `Engine_Rotatable.sc:164`) matches the original
-  concept — only the default differs. Superset, low priority.
-- Minor: loop settings panel lacks the original's per-loop **Gain in dB**
-  trim (loop.md:53); ours has only `sync` + the shared amp slider.
+- ~~MISALIGN: Delay time quantization~~ **FIXED 2026-10-11 (§9 decision
+  19):** rotation is now the manual's hybrid — continuous near zero,
+  snapped to 32nd notes of the tempo past an 8th note (lua-side in
+  `primary()`); the `sync` toggle stays as the always-quantized mode.
+  Device-verified (0.4081 → 0.4375 at 120 BPM).
+- ~~MISALIGN: LFO frequency~~ **FIXED 2026-10-11 (§9 decision 19):** new
+  LFOs default to `sync=1` (mult 8 = quarter note), matching the
+  original's always-beat-locked behavior; free-running stays a toggle away.
 
 ## 4. Control-signal targets (manual vs engine `mod`/note handling)
 
@@ -124,12 +113,10 @@ Classified as:
 - 16 steps, 6 rotation-switched presets, velocity, per-step duration,
   random subtype + tonality interplay — all implemented (verified:
   `world.lua:121-136`, `audio.lua:71,307-347`). ok
-- **GAP: polyphonic sequencer is a label.** Subtype 2 ("poly") exists but
-  `seq_steps`/`seq_tick` play exactly one note per step, identical to mono
-  (subtype 2 is never read in audio.lua; only a cosmetic icon in
-  `render.lua:122-124`). Original: 2D grid panel, several notes
-  simultaneously (sequencer.md:27-29). Note: spec §9 decision 9 records
-  "poly tenori grid deferred" — DECIDED-deferred rather than open.
+- ~~GAP: polyphonic sequencer is a label~~ **RESOLVED 2026-10-11 by
+  removal (v3.2.2):** the unimplemented "poly" subtype was dropped;
+  subtypes are now mono / random / drift (drift added v3.3.0). A real 2D
+  grid sequencer remains possible future work (§9 decision 9).
 - ~~GAP: sequencer → loop does nothing~~ **FIXED 2026-10-11 (phase 12):**
   loop added to `SEQ_TARGETS`; oneshot loops retrig per step (the engine
   `\loop` trigger branch already existed). Partial: the manual's loop
@@ -212,13 +199,10 @@ for the record:
 
 ## 10. Session & slots (manual: songsettings.md)
 
-- **GAP (semantic): seamless song switching.** Original: switching songs
-  never stops sound; objects on the table "retain their settings, and these
-  will only switch to the new setting when they are removed and put back
-  again" (songsettings.md:58). Ours: `Slots.recall` wipes and rebuilds the
-  whole table instantly (`slots.lua:105-133`). The flattening of Song
-  Settings is DECIDED (§1), but this specific behavior is nowhere
-  acknowledged.
+- ~~GAP (semantic): seamless song switching~~ **DECIDED (spec §9
+  decision 18, 2026-10-11):** slot recall is an instant wipe-rebuild by
+  design (Song Settings flattening, decision 4); the seamless per-object
+  handoff is not pursued.
 
 ## 11. Online cross-check (Wikipedia / reacTable era)
 
@@ -248,13 +232,18 @@ scope; noted only for completeness.
 5. ~~**Chorus rotation → depth** (§3/§7)~~ — **DONE 2026-10-11**: chorus
    depth on rotation, rate on a new per-subtype modulator settings page
    (flanger: depth/mindelay/feedback via CombL rebuild).
-6. **Poly sequencer** (§5) — moved to owner calls (deferral already in
-   §9 decision 9).
-7. **Loop semantics bundle** (§3) — moved to owner calls (8-slot rotation
-   vs ratify speed-rotation; tempo-sync; bar entry; gain trim).
+6. ~~**Poly sequencer** (§5)~~ — **RESOLVED by removal (v3.2.2)**; a real
+   grid sequencer stays on the parking lot (§9 decision 9).
+7. ~~**Loop semantics bundle** (§3)~~ — **DECIDED (§9 decision 16)**:
+   speed-rotation, free-running rate, opt-in entry, amp-slider trim all
+   ratified.
 8. ~~**Drum-mode octave pinning** (§5)~~ — **DONE 2026-10-11**.
-9. **Parameter lock gesture** (§2): fits our "dot" UI; parked-design
-   candidate.
+9. ~~**Parameter lock gesture** (§2)~~ — **DECIDED N/A (§9 decision 17)**:
+   encoder edits are inherently persistent.
 10. ~~**Pitch/octave visual** (§9)~~ — **DONE 2026-10-11**;
-    **delay/LFO auto-sync defaults** (§3); **song-switch semantics**
-    (§10): ratify or implement.
+    ~~**delay/LFO auto-sync defaults** (§3)~~ — **DONE 2026-10-11** (§9
+    decision 19); ~~**song-switch semantics** (§10)~~ — **DECIDED** (§9
+    decision 18).
+
+**All items closed as of 2026-10-11** (v3.4.x): every gap is either FIXED,
+DECIDED, or RESOLVED. Remaining open ideas live in plan.md's parking lot.
