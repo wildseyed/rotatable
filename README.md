@@ -4,7 +4,19 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.3.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.4.0** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.0**: Reactable-fidelity pass (full gap analysis against the
+original manual) — samplers + oneshot loops sound the moment their sample
+lands; sampler rotation retriggers · sequencer notes drive effects: pitch
+sweeps the waveshaper amount and delay time, velocity scales effect
+envelope depth · sequencers retrigger oneshot loops · LFO modulates the
+waveshaper's main parameter · chorus rotation = depth; new modulator
+settings page (chorus rate; flanger depth/min-delay/feedback) · drum
+sampler pins sequencer notes to one octave · pitch readout on
+oscillator/sampler (semitone arc + octave ring) · the slider is now a
+perimeter arc gauge around each block · REST bridge for AI agents
+(permanent, see dev)
 
 **new in v3.3.0**: **drift sequencer subtype** — no pattern, fires at random
 intervals (gap range in seconds on its set page, rotation = sparseness) with
@@ -125,7 +137,7 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | input | generator | gain | — | line |
 | filter | effect | cutoff | resonance | lp / bp / hp |
 | delay | effect | time | feedback | feedback / pingpong / reverb |
-| modulator | effect | main (pitch/depth/rate) | dry-wet | ring / chorus / flanger |
+| modulator | effect | main (pitch/depth/flanger freq) | dry-wet | ring / chorus / flanger |
 | waveshaper | effect | main | dry-wet | resampler / compressor / distortion |
 | lfo | controller | rate | depth | sine / saw / square / random |
 | sequencer | controller | pattern preset (1–6); drift: sparseness | — | mono / random / drift |
@@ -175,9 +187,12 @@ puts it on the table (rotation = BPM) and the output point pulses it:
 16 steps × 6 stored patterns per object (rotation switches, header shows
 `p1`–`p6`); per-step pitch (±24 st), velocity, and duration. targets:
 
-- **oscillator / sampler**: plays the note (velocity → amp, ADSR gate)
+- **oscillator / sampler**: plays the note (velocity → amp, ADSR gate);
+  drum samplers ignore the note's pitch (always one octave)
+- **loop**: oneshot loops retrigger per step
 - **any effect**: retriggers its param envelope (cutoff / feedback /
-  dry-wet sweep)
+  dry-wet sweep) with velocity as envelope depth; the note's pitch also
+  sweeps the waveshaper's main parameter and the delay time
 - **random subtype**: improvises, snapped to the table tonality —
   with a restricted scale this is the original's "automatic solos";
   the steps page shows the improvised-note history live
@@ -209,8 +224,9 @@ pentatonic/chromatic) you can then customize.
   trigger), rotation = transpose ±24 st
 
 **visuals**: blocks carry a subtype pictogram on their rim (orbits with
-rotation) and a slider dot on their right side (distance from center =
-slider value, like the reactable's draggable dot); audio connections show
+rotation) and a perimeter arc gauge (sweep = slider value, like the
+reactable's orbital track); oscillator/sampler add a semitone marker on
+the left half and an inner octave arc; audio connections show
 signal-flow dashes, control connections marching dots; the output point
 pulses at the tempo; sounding objects get a VU bar under the glyph.
 
@@ -242,7 +258,8 @@ per block (rotation / slider / subtypes, then its panels):
   **set** (`base`: the loaded sample's natural pitch — set this to the
   WAV's note so sequenced pitches play in tune; the bundled instruments
   carry it in the filename, e.g. `cello_G3`), **env**. instrument is a
-  gated melodic voice; drum is a one-shot that ignores pitch-off.
+  gated melodic voice; drum is a one-shot that always plays at the
+  rotation-set pitch, whatever note the sequencer sends.
 - **input** — gain / — / line only. no panels. route: INPUT block →
   compressor → reverb (see WASH).
 - **filter** — cutoff (40 Hz–12 kHz) / resonance / lp·bp·hp. panels:
@@ -256,8 +273,9 @@ per block (rotation / slider / subtypes, then its panels):
   (param envelope → feedback; a sequencer targeting the delay makes the
   echoes swell, see PING).
 - **modulator** — effect character / dry-wet / ring·chorus·flanger
-  (ring: rotation = mod frequency; chorus/flanger: rotation = rate).
-  panels: **2d**, **env** (→ dry-wet).
+  (ring: rotation = mod frequency; chorus: rotation = depth; flanger:
+  rotation = flanging frequency). panels: **set** (chorus: `rate`;
+  flanger: `fdepth`, `mindelay`, `ffb`), **2d**, **env** (→ dry-wet).
 - **waveshaper** — effect amount / dry-wet / resampler·compressor·
   distortion (resampler = bitcrush). panels: **2d**, **env** (→ dry-wet).
 - **lfo** — rate / depth / sine·saw·square·random. panel: **set**
@@ -391,3 +409,11 @@ from the block settings guide above:
 
 development branch: `main` (docs, plans, tooling). the default `release`
 branch is what `;install` clones — script files only.
+
+**REST bridge for agents** (`tools/api.py`, default localhost:8787) — a
+permanent feature, built for AI-performance experimentation: it drives
+the running script over matron's websocket so an agent (or any HTTP
+client) can perform on the table. direct manipulation: `POST /place
+/move /rotate /set /load /step /mute /remove /clear`; UI simulation
+through the real interaction state machine: `POST /key /enc`; state +
+levels: `GET /state /amps`; escape hatch `POST /lua`.

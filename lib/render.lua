@@ -249,28 +249,54 @@ function Render.object(cam, w2s, o, types, selected, lvl, slider)
     screen.level(selected and 15 or 9)
     sub_mark(o, sx + 0.68 * r * math.cos(o.angle), sy + 0.68 * r * math.sin(o.angle), s)
   end
-  -- the slider (spec §3): dot on the right side of the glyph (rotation
-  -- angle + 90°), radial distance from center = value; short track when big
+  -- the slider (spec §3; Reactable-style perimeter gauge, owner 2026-10-10):
+  -- value = arc sweep around the glyph, anchored at rotation+90°, dot at tip
   if slider and r >= 3.5 then
     local sa = o.angle + math.pi / 2
-    local ca, sn = math.cos(sa), math.sin(sa)
+    local rr = r + 2
+    local sweep = util.clamp(slider, 0, 1) * math.pi * 1.5
     if r >= 6 then
-      screen.level(selected and 6 or 3)
-      screen.move(sx + 0.3 * r * ca, sy + 0.3 * r * sn)
-      screen.line(sx + 0.8 * r * ca, sy + 0.8 * r * sn)
+      screen.level(selected and 5 or 2)
+      screen.arc(sx, sy, rr, sa, sa + math.pi * 1.5)
       screen.stroke()
     end
-    local sr = (0.3 + 0.5 * util.clamp(slider, 0, 1)) * r
+    if sweep > 0.05 then
+      screen.level(selected and 15 or 8)
+      screen.arc(sx, sy, rr, sa, sa + sweep)
+      screen.stroke()
+    end
+    local tip = sa + sweep
     screen.level(selected and 15 or 8)
-    screen.circle(sx + sr * ca, sy + sr * sn, math.max(1, r * 0.12))
+    screen.circle(sx + rr * math.cos(tip), sy + rr * math.sin(tip), math.max(1, r * 0.12))
     screen.fill()
   end
-  -- VU bar under the glyph (engine lvl poll, sqrt-scaled)
+  -- pitch readout (oscillator.md:10, sampler.md:10): outer arc on the left
+  -- half = half-note, inner arc = octave. osc/sampler only, when there's
+  -- room; sits inside the slider gauge ring (r+2)
+  if (o.type == "oscillator" or o.type == "sampler") and r >= 6 then
+    local f = o.params.freq or 220
+    local nn = 69 + 12 * math.log(f / 440, 2)
+    local semi = nn % 12
+    local oct = util.clamp(math.floor(nn / 12) - 1, 0, 8)
+    -- half-note: short marker on the left half-circle (bottom->top via left)
+    local pa = math.pi / 2 + (semi / 12) * math.pi
+    screen.level(selected and 12 or 5)
+    screen.arc(sx, sy, r * 0.62, pa - 0.13, pa + 0.13)
+    screen.stroke()
+    -- octave: inner arc swept clockwise from 12 o'clock (0..8 -> 0..full)
+    if oct > 0 then
+      screen.level(selected and 10 or 4)
+      screen.arc(sx, sy, r * 0.34, -math.pi / 2,
+        -math.pi / 2 + (oct / 8) * 2 * math.pi)
+      screen.stroke()
+    end
+  end
+  -- VU bar under the glyph (engine lvl poll, sqrt-scaled; below gauge ring)
   if lvl and lvl > 0.01 then
     local w = math.sqrt(util.clamp(lvl, 0, 1)) * r * 2
     screen.level(selected and 12 or 5)
-    screen.move(sx - r, sy + r + 2)
-    screen.line(sx - r + w, sy + r + 2)
+    screen.move(sx - r, sy + r + 5)
+    screen.line(sx - r + w, sy + r + 5)
     screen.stroke()
   end
   -- label queues up (collision-resolved at flush) when zoomed in enough to read
