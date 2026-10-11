@@ -100,53 +100,71 @@ def output_obj(vol=0.8, rev=0.0, room=0.5, comp=0.0, x=-0.62, y=0.62):
 
 # ---------- the 16 tables (plan/phase-11/presets.md) ----------
 
-def b01():  # HELLO — proximity patching, rotation, slider, tempo object
-    osc = place("oscillator", 0.38, -0.05, a_freq(220))
+def b01():  # HELLO — proximity patching, rotation, slider, synced-delay space
+    osc = place("oscillator", 0.42, -0.05, a_freq(220))
     st(osc, "subtype", 2)  # saw
-    st(osc, "amp", 0.7)
-    seq = place("sequencer", 0.15, 0.15, a_preset(1))
+    st(osc, "amp", 0.65)
+    dly = place("delay", 0.20, 0.05, a_time(0.3))
+    st(dly, "subtype", 1)  # feedback, tempo-quantized
+    st(dly, "sync", 1)
+    st(dly, "feedback", 0.3)
+    seq = place("sequencer", 0.62, 0.25, a_preset(1))
     st(seq, "subtype", 1)  # mono
     pattern(seq, 1, [
         (1, 0, .9), (0, 0), (1, 4, .7), (0, 0),
         (1, 7, .9), (0, 0), (1, 12, .8), (1, 7, .6),
         (1, 4, .9), (0, 0), (1, 7, .7), (0, 0),
-        (1, 2, .8), (0, 0), (1, 0, .9, 4), (0, 0)])
-    tempo_obj(110)
-    output_obj(vol=0.8, rev=0.15, room=0.4)
+        (1, 14, .8), (0, 0), (1, 12, .9, 4), (0, 0)])
+    link(seq, osc)
+    tempo_obj(112)
+    output_obj(vol=0.8, rev=0.2, room=0.45)
 
-def b02():  # BEAT — sampler, hardlink, step editor, velocity
-    kick = place("sampler", 0.30, -0.15, a_freq(261.6))
-    st(kick, "subtype", 2)  # drum
+def b02():  # BEAT — hardlinked kit, velocity ghosts, drum pinning demo
+    # kick steps carry pitch offsets on purpose: the drum subtype ignores
+    # them (one octave always) — variation comes from VELOCITY, not pitch
+    kick = place("sampler", 0.35, -0.30, a_freq(261.6))
+    st(kick, "subtype", 2)
     load(kick, f"{D}/drums/kick.wav")
-    clap = place("sampler", 0.30, 0.25, a_freq(261.6))
-    st(clap, "subtype", 2)
-    load(clap, f"{D}/drums/clap.wav")
-    st(clap, "amp", 0.7)
-    sq1 = place("sequencer", 0.62, -0.30, a_preset(1))
+    snr = place("sampler", 0.42, 0.05, a_freq(261.6))
+    st(snr, "subtype", 2)
+    load(snr, f"{D}/drums/snare.wav")
+    st(snr, "amp", 0.75)
+    hat = place("sampler", 0.35, 0.38, a_freq(261.6))
+    st(hat, "subtype", 2)
+    load(hat, f"{D}/drums/chh.wav")
+    st(hat, "amp", 0.5)
+    sq1 = place("sequencer", 0.65, -0.42, a_preset(1))
     pattern(sq1, 1, [
-        (1, 0, .95), (0, 0), (0, 0), (1, 0, .35),
-        (1, 0, .9), (0, 0), (1, 0, .3), (0, 0),
-        (1, 0, .95), (0, 0), (0, 0), (1, 0, .4),
+        (1, 0, .95), (0, 0), (0, 0), (1, 7, .35),
+        (1, 0, .9), (0, 0), (1, 12, .3), (0, 0),
+        (1, 0, .95), (0, 0), (0, 0), (1, 5, .4),
         (1, 0, .9), (0, 0), (1, 0, .35), (1, 0, .5)])
     link(sq1, kick)
-    sq2 = place("sequencer", 0.62, 0.42, a_preset(1))
+    sq2 = place("sequencer", 0.70, 0.10, a_preset(1))
     pattern(sq2, 1, [
         (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, 0, .9), (0, 0), (0, 0), (1, 0, .35),
-        (0, 0), (0, 0), (0, 0), (0, 0),
+        (1, 0, .9), (0, 0), (0, 0), (1, 0, .3),
+        (0, 0), (0, 0), (1, 0, .25), (0, 0),
         (1, 0, .95), (0, 0), (0, 0), (1, 0, .45)])
-    link(sq2, clap)
-    tempo_obj(120)
-    output_obj(vol=0.85, comp=0.15)
+    link(sq2, snr)
+    sq3 = place("sequencer", 0.65, 0.55, a_preset(1))
+    pattern(sq3, 1, [
+        (1, 0, .6), (0, 0), (1, 0, .4), (1, 0, .5),
+        (1, 0, .6), (0, 0), (1, 0, .4), (0, 0),
+        (1, 0, .6), (0, 0), (1, 0, .45), (1, 0, .5),
+        (1, 0, .6), (1, 0, .4), (1, 0, .5), (1, 0, .35)])
+    link(sq3, hat)
+    tempo_obj(122)
+    output_obj(vol=0.85, comp=0.2)
 
-def b03():  # KIT-808 — multi-hardlink, mute demo, output comp
+def b03():  # KIT-808 — 909 kit, flanged hat (settings page), muted alt snare
     kit = [
         ("TR909-Dark_Bd.wav", "kick", -0.05, -0.42),
         ("TR909-909_Sd.wav",  "snr",   0.32, -0.28),
-        ("TR808-Clhh.wav",    "hat",   0.32,  0.12),
+        ("TR808-Clhh.wav",    "hat",   0.35,  0.18),
         ("drums/clap.wav",    "clap", -0.05,  0.32),
     ]
-    pats = {  # 16-step patterns per voice
+    pats = {
         "kick": [(1,0,.95),(0,0),(0,0),(0,0),(1,0,.9),(0,0),(0,0),(1,0,.3),
                  (1,0,.95),(0,0),(0,0),(0,0),(1,0,.9),(0,0),(1,0,.35),(0,0)],
         "snr":  [(0,0),(0,0),(0,0),(0,0),(1,0,.9),(0,0),(0,0),(0,0),
@@ -156,16 +174,22 @@ def b03():  # KIT-808 — multi-hardlink, mute demo, output comp
         "clap": [(0,0),(0,0),(0,0),(0,0),(1,0,.85),(0,0),(0,0),(0,0),
                  (0,0),(0,0),(0,0),(0,0),(1,0,.9),(0,0),(0,0),(0,0)],
     }
+    fln = None
     for i, (wav, name, x, y) in enumerate(kit):
         smp = place("sampler", x, y, a_freq(261.6))
         st(smp, "subtype", 2)
         load(smp, f"{D}/{wav}")
-        sx, sy = (x + 0.55, y - 0.12)
-        sq = place("sequencer", sx, sy, a_preset(1))
+        sq = place("sequencer", x + 0.5, y - 0.12, a_preset(1))
         pattern(sq, 1, pats[name])
         link(sq, smp)
-    # alt snare: hardlinked, pattern ready, but its control link is muted —
-    # unmute in LINK mode (K1+K3) to bring it in
+        if name == "hat":
+            # hat -> flanger -> output: metallic sweep from the settings page
+            fln = place("modulator", x - 0.18, y + 0.02, a_01(0.55))
+            st(fln, "subtype", 3)  # flanger
+            st(fln, "drywet", 0.55)
+            st(fln, "fdepth", 0.8)
+            st(fln, "mindelay", 0.002)
+            st(fln, "ffb", 0.6)
     alt = place("sampler", -0.42, -0.05, a_freq(261.6))
     st(alt, "subtype", 2)
     load(alt, f"{D}/TR909-Rough_Sd.wav")
@@ -176,66 +200,101 @@ def b03():  # KIT-808 — multi-hardlink, mute demo, output comp
     tempo_obj(124, x=0.68, y=-0.55)
     output_obj(vol=0.85, comp=0.3, x=-0.68, y=0.45)
 
-def b04():  # KEY — tonality snapping, root, custom harmonic-minor mask
-    osc = place("oscillator", 0.35, -0.10, a_freq(220))
-    st(osc, "subtype", 2)
-    st(osc, "amp", 0.65)
-    seq = place("sequencer", 0.05, 0.35, a_preset(1))
+def b04():  # KEY — harmonic-minor mask editing, subfollow bass, root rotation
+    lead = place("oscillator", 0.42, -0.12, a_freq(220))
+    st(lead, "subtype", 2)  # saw
+    st(lead, "amp", 0.6)
+    bass = place("oscillator", 0.30, 0.28, a_freq(110))
+    st(bass, "subtype", 1)  # sine
+    st(bass, "amp", 0.55)
+    sub(bass, 1, wave=1, amp=0.5, off=-12)  # sub-octave, follows the scale
+    subfollow(bass, 1)
+    dly = place("delay", 0.18, -0.02, a_time(0.3))
+    st(dly, "subtype", 1)
+    st(dly, "sync", 1)
+    st(dly, "feedback", 0.25)
+    sq1 = place("sequencer", 0.68, -0.28, a_preset(1))
     # line leans on b6 (8) and nat7 (11) — only harmonic minor has both
-    pattern(seq, 1, [
+    pattern(sq1, 1, [
         (1, 0, .9), (0, 0), (1, 3, .7), (1, 7, .8),
         (1, 8, .9), (0, 0), (1, 7, .6), (0, 0),
         (1, 11, .9), (0, 0), (1, 8, .7), (1, 7, .8),
         (1, 3, .8), (0, 0), (1, 0, .9, 4), (0, 0)])
-    link(seq, osc)
+    link(sq1, lead)
+    sq2 = place("sequencer", 0.55, 0.48, a_preset(1))
+    pattern(sq2, 1, [  # sparse roots and fifths under the lead
+        (1, 0, .85, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+        (1, 7, .8, 4), (0, 0), (1, 3, .7, 4), (0, 0),
+        (1, 0, .85, 6), (0, 0), (0, 0), (0, 0)])
+    link(sq2, bass)
     ton = place("tonality", -0.45, -0.25, a_root(0))
     st(ton, "subtype", 2)  # minor — then customize into harmonic minor
     notes(ton, [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1])
     tempo_obj(100)
     output_obj(vol=0.8, rev=0.2, room=0.45)
 
-def b05():  # SUB — suboscillators, LP filter, res slider
-    osc = place("oscillator", 0.55, -0.10, a_freq(110))
+def b05():  # GRIT — sub-bass stack, distortion, LFO -> shaper main (new!)
+    osc = place("oscillator", 0.55, -0.10, a_freq(82.4))  # E2
     st(osc, "subtype", 2)  # saw
-    st(osc, "amp", 0.7)
-    sub(osc, 1, wave=1, amp=0.6, off=-12)      # octave down
-    sub(osc, 2, wave=1, amp=0.3, off=7, det=6) # detuned fifth
-    subfollow(osc, 1)                           # subs snap to the tonality
-    flt = place("filter", 0.25, -0.02, a_cut(280))
-    st(flt, "subtype", 1)  # lp
-    st(flt, "res", 0.55)
-    seq = place("sequencer", 0.50, 0.25, a_preset(1))
+    st(osc, "amp", 0.6)
+    sub(osc, 1, wave=1, amp=0.55, off=-12)
+    sub(osc, 2, wave=1, amp=0.25, off=-5, det=5)
+    shp = place("waveshaper", 0.32, -0.02, a_01(0.35))
+    st(shp, "subtype", 3)  # distortion
+    st(shp, "drywet", 0.65)
+    st(shp, "amp", 0.75)
+    flt = place("filter", 0.12, -0.06, a_cut(520))
+    st(flt, "subtype", 1)  # lp tames the fizz
+    st(flt, "res", 0.35)
+    lfo = place("lfo", 0.42, 0.28, a_lfo(0.8))
+    st(lfo, "subtype", 1)  # sine
+    st(lfo, "sync", 1)
+    st(lfo, "mult", 16)    # half-note growl cycle
+    st(lfo, "depth", 0.5)
+    link(lfo, shp)         # wobbles the distortion AMOUNT (note: main, not dry-wet)
+    seq = place("sequencer", 0.62, 0.30, a_preset(1))
     pattern(seq, 1, [
-        (1, 0, .95), (0, 0), (1, 0, .5), (1, 0, .7),
-        (0, 0), (1, 0, .9), (0, 0), (1, 3, .6),
-        (1, 0, .95), (0, 0), (1, 0, .5), (1, 0, .7),
-        (0, 0), (1, 5, .8), (1, 3, .6), (1, 0, .7)])
+        (1, 0, .95, 4), (0, 0), (0, 0), (1, 3, .6),
+        (0, 0), (1, 0, .85), (0, 0), (1, 5, .6),
+        (1, 0, .95, 4), (0, 0), (0, 0), (1, 3, .65),
+        (0, 0), (1, 7, .8), (1, 5, .6), (1, 0, .75)])
     link(seq, osc)
-    ton = place("tonality", -0.45, -0.35, a_root(9))  # A minor
+    ton = place("tonality", -0.45, -0.35, a_root(4))  # E minor
     st(ton, "subtype", 2)
-    tempo_obj(95)
-    output_obj(vol=0.85, comp=0.2)
+    tempo_obj(90)
+    output_obj(vol=0.85, comp=0.25)
 
-def b06():  # ACID — LFO controller, tempo sync, filter bite
+def b06():  # ACID — LFO cutoff ride + seq->filter env bites (velocity = depth)
     osc = place("oscillator", 0.62, -0.08, a_freq(110))
     st(osc, "subtype", 2)  # saw
     st(osc, "amp", 0.6)
     flt = place("filter", 0.32, -0.02, a_cut(480))
     st(flt, "subtype", 1)
     st(flt, "res", 0.75)
+    for k, v in (("a", 0.01), ("d", 0.35), ("s", 0.0), ("r", 0.2)):
+        st(flt, k, v)
     lfo = place("lfo", 0.35, 0.28, a_lfo(2))
     st(lfo, "subtype", 2)  # saw
-    st(lfo, "sync", 1)     # lock to tempo grid
-    st(lfo, "mult", 8)     # quarter-note period
-    st(lfo, "depth", 0.7)
-    link(lfo, flt)         # LFO rides the cutoff
-    seq = place("sequencer", 0.60, 0.30, a_preset(1))
-    pattern(seq, 1, [
+    st(lfo, "sync", 1)
+    st(lfo, "mult", 8)
+    st(lfo, "depth", 0.55)
+    link(lfo, flt)
+    sq1 = place("sequencer", 0.66, 0.28, a_preset(1))
+    pattern(sq1, 1, [
         (1, 0, .9), (1, 0, .5), (0, 0), (1, 12, .8),
         (1, 0, .6), (0, 0), (1, 3, .9), (1, 0, .5),
         (1, 0, .9), (1, 0, .5), (0, 0), (1, 10, .8),
         (1, 12, .7), (0, 0), (1, 7, .9), (1, 3, .6)])
-    link(seq, osc)
+    link(sq1, osc)
+    # second sequencer pokes the filter ENVELOPE; its velocity sets how deep
+    # the cutoff opens — the new velocity->env-depth path
+    sq2 = place("sequencer", 0.05, 0.32, a_preset(1))
+    pattern(sq2, 1, [
+        (1, 0, .9), (0, 0), (0, 0), (0, 0),
+        (0, 0), (0, 0), (1, 0, .35), (0, 0),
+        (0, 0), (1, 0, .6), (0, 0), (0, 0),
+        (0, 0), (0, 0), (0, 0), (1, 0, .8)])
+    link(sq2, flt)
     ton = place("tonality", -0.50, -0.30, a_root(9))  # A minor
     st(ton, "subtype", 2)
     tempo_obj(128)
@@ -279,16 +338,33 @@ def b07():  # PING — delay subtypes, pingpong, effect-envelope feedback swells
     tempo_obj(100)
     output_obj(vol=0.8, rev=0.15, room=0.45)
 
-def b08():  # WASH — line in, compressor, reverb delay (silent without input)
-    inp = place("input", 0.65, 0.0, a_gain(0.7))
-    shp = place("waveshaper", 0.42, 0.0, a_01(0.5))
-    st(shp, "subtype", 2)  # compressor
-    st(shp, "drywet", 0.75)
-    dly = place("delay", 0.20, 0.0, a_01(0.75))
-    st(dly, "subtype", 3)  # reverb: rotation = room, feedback = mix
-    st(dly, "feedback", 0.5)
-    tempo_obj(90)
-    output_obj(vol=0.85, rev=0.25, room=0.6)
+def b08():  # SIREN — dub echo: a second sequencer plays the DELAY TIME
+    # (note -> delay time, new in v3.4) — echo pitch is a played instrument
+    osc = place("oscillator", 0.55, -0.10, a_freq(220))
+    st(osc, "subtype", 1)  # sine pluck
+    st(osc, "amp", 0.6)
+    for k, v in (("a", 0.005), ("d", 0.3), ("s", 0.3), ("r", 0.2)):
+        st(osc, k, v)
+    dly = place("delay", 0.28, 0.0, a_time(0.25))
+    st(dly, "subtype", 1)  # feedback
+    st(dly, "feedback", 0.8)   # ringing, near self-oscillation
+    st(dly, "sweep", 0.15)     # tape-glide between note-set times
+    sq1 = place("sequencer", 0.72, -0.30, a_preset(1))
+    pattern(sq1, 1, [  # sparse plucks feed the echo
+        (1, 0, .9, 4), (0, 0), (0, 0), (0, 0),
+        (0, 0), (0, 0), (1, 3, .7), (0, 0),
+        (0, 0), (1, 7, .8, 4), (0, 0), (0, 0),
+        (0, 0), (0, 0), (1, 5, .7), (0, 0)])
+    link(sq1, osc)
+    sq2 = place("sequencer", 0.05, 0.35, a_preset(1))
+    pattern(sq2, 1, [  # the echo melody: pitch sweeps the delay time
+        (1, -12, .8, 8), (0, 0), (0, 0), (0, 0), (1, -5, .8, 8), (0, 0), (0, 0), (0, 0),
+        (1, 0, .8, 8), (0, 0), (0, 0), (0, 0), (1, 7, .8, 8), (0, 0), (0, 0), (0, 0)])
+    link(sq2, dly)
+    ton = place("tonality", -0.48, -0.25, a_root(9))  # A minor
+    st(ton, "subtype", 2)
+    tempo_obj(96)
+    output_obj(vol=0.8, rev=0.3, room=0.55)
 
 def b09():  # CHOIR — parallel generators, chorus, vibrato LFO, big reverb
     cel = place("sampler", 0.55, -0.15, a_freq(196.0))
@@ -325,39 +401,39 @@ def b09():  # CHOIR — parallel generators, chorus, vibrato LFO, big reverb
     tempo_obj(60)
     output_obj(vol=0.8, rev=0.5, room=0.7)
 
-def b10():  # POLY — poly sequencer, pattern presets 1-6
-    trp = place("sampler", 0.50, -0.12, a_freq(466.16))
-    st(trp, "subtype", 1)
-    load(trp, f"{D}/instruments/trumpet_As4.wav")
-    st(trp, "base", 466.16)
-    noiz = place("oscillator", 0.50, 0.28, a_freq(600))
-    st(noiz, "subtype", 4)  # noise "snare"
-    st(noiz, "amp", 0.35)
-    sq1 = place("sequencer", 0.75, -0.30, a_preset(1))
-    st(sq1, "subtype", 2)   # poly: overlapping durs make chords
-    pattern(sq1, 1, [
-        (1, 0, .9, 3), (0, 0), (1, 7, .7, 2), (0, 0),
-        (1, 3, .8, 3), (0, 0), (1, 10, .7, 2), (0, 0),
-        (1, 5, .9, 3), (0, 0), (1, 12, .8, 2), (0, 0),
-        (1, 7, .7, 2), (1, 3, .7, 2), (1, 10, .8, 3), (0, 0)])
-    pattern(sq1, 2, [  # contrasting second preset: rotate to compare
-        (1, 12, .9, 2), (1, 10, .6, 2), (0, 0), (1, 7, .8, 2),
-        (0, 0), (1, 5, .7, 2), (1, 3, .6, 2), (0, 0),
-        (1, 0, .9, 3), (0, 0), (1, 3, .7, 2), (1, 5, .6, 2),
-        (1, 7, .8, 2), (0, 0), (1, 10, .7, 2), (1, 12, .8, 3)])
-    rot(sq1, a_preset(1))
-    link(sq1, trp)
-    sq2 = place("sequencer", 0.75, 0.45, a_preset(1))
-    pattern(sq2, 1, [
-        (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, 0, .9), (0, 0), (0, 0), (1, 0, .3),
-        (0, 0), (0, 0), (0, 0), (1, 0, .4),
-        (1, 0, .9), (0, 0), (0, 0), (0, 0)])
-    link(sq2, noiz)
-    ton = place("tonality", -0.45, -0.30, a_root(0))
+def b10():  # MORPH — groove drives the notes, a second sequencer drives the
+    # TIMBRE: its pitch sweeps the waveshaper main param (new in v3.4)
+    osc = place("oscillator", 0.60, -0.10, a_freq(146.83))  # D3
+    st(osc, "subtype", 2)  # saw
+    st(osc, "amp", 0.65)
+    shp = place("waveshaper", 0.35, -0.02, a_01(0.3))
+    st(shp, "subtype", 3)  # distortion
+    st(shp, "drywet", 0.85)
+    flt = place("filter", 0.14, -0.05, a_cut(2200))
+    st(flt, "subtype", 1)
+    st(flt, "res", 0.25)
+    sq1 = place("sequencer", 0.78, -0.28, a_preset(1))
+    pattern(sq1, 1, [  # driving 16th groove
+        (1, 0, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
+        (1, 3, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
+        (1, 0, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
+        (1, 7, .9), (1, 5, .6), (1, 3, .7), (1, 0, .8)])
+    link(sq1, osc)
+    sq2 = place("sequencer", 0.30, 0.38, a_preset(1))
+    pattern(sq2, 1, [  # slow climb: note = distortion amount
+        (1, -12, .8, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+        (1, -5, .8, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)])
+    pattern(sq2, 2, [  # rotate to p2: full sweep up and back
+        (1, -12, .8, 8), (0, 0), (1, 0, .8, 8), (0, 0),
+        (1, 12, .8, 8), (0, 0), (0, 0), (0, 0),
+        (1, 0, .8, 8), (0, 0), (1, -5, .8, 8), (0, 0),
+        (0, 0), (0, 0), (0, 0), (0, 0)])
+    rot(sq2, a_preset(1))
+    link(sq2, shp)
+    ton = place("tonality", -0.48, -0.28, a_root(2))  # D minor
     st(ton, "subtype", 2)
-    tempo_obj(108)
-    output_obj(vol=0.8, comp=0.2)
+    tempo_obj(116)
+    output_obj(vol=0.85, comp=0.25)
 
 def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     ther = place("sampler", 0.55, -0.05, a_freq(277.18))
@@ -448,47 +524,57 @@ def b13():  # CRUSH — resampler, HP filter, random LFO on dry-wet
     tempo_obj(96)
     output_obj(vol=0.85, comp=0.35)
 
-def b14():  # PLUCK — instrument samplers + tonality, oneshot backbeat
-    mand = place("sampler", 0.50, -0.20, a_freq(246.94))
-    st(mand, "subtype", 1)
-    load(mand, f"{D}/instruments/mandolin_B3.wav")
-    st(mand, "base", 246.94)
-    sax = place("sampler", 0.50, 0.15, a_freq(261.63))
-    st(sax, "subtype", 1)
-    load(sax, f"{D}/instruments/saxophone_C4.wav")
-    st(sax, "base", 261.63)
-    snr = place("loop", 0.28, -0.48, a_rate(1))
-    st(snr, "subtype", 2)  # oneshot: fires once per trig, no loop tail
-    load(snr, f"{D}/TR909-909_Sd.wav")
-    dly = place("delay", 0.26, 0.02, a_time(0.4))
-    st(dly, "subtype", 1)
-    st(dly, "sync", 1)
-    st(dly, "feedback", 0.35)
-    sq1 = place("sequencer", 0.75, -0.35, a_preset(1))
-    pattern(sq1, 1, [  # mandolin calls (bars 1)
-        (1, 0, .9), (0, 0), (1, 3, .7), (1, 5, .8),
-        (1, 7, .9), (0, 0), (1, 5, .6), (1, 3, .7),
-        (0, 0), (0, 0), (0, 0), (0, 0),
-        (0, 0), (0, 0), (0, 0), (0, 0)])
-    link(sq1, mand)
-    sq2 = place("sequencer", 0.75, 0.30, a_preset(1))
-    pattern(sq2, 1, [  # sax answers (bar 2), an octave-and-a-third up
-        (0, 0), (0, 0), (0, 0), (0, 0),
-        (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, 15, .85, 3), (0, 0), (1, 12, .6), (1, 10, .7),
-        (1, 7, .8), (0, 0), (1, 10, .6), (1, 12, .7)])
-    link(sq2, sax)
-    sq3 = place("sequencer", 0.05, -0.62, a_preset(1))
-    pattern(sq3, 1, [
-        (0, 0), (0, 0), (0, 0), (0, 0),
+def b14():  # SIX — one sequencer, six authored patterns: rotation = section
+    # (intro/verse/build/peak/break/outro). the arrangement performance move
+    lead = place("oscillator", 0.52, -0.10, a_freq(196))
+    st(lead, "subtype", 2)  # saw
+    st(lead, "amp", 0.6)
+    flt = place("filter", 0.28, -0.02, a_cut(1100))
+    st(flt, "subtype", 1)
+    st(flt, "res", 0.35)
+    kick = place("sampler", 0.35, 0.35, a_freq(261.6))
+    st(kick, "subtype", 2)
+    load(kick, f"{D}/drums/kick.wav")
+    sqk = place("sequencer", 0.62, 0.50, a_preset(1))
+    pattern(sqk, 1, [  # steady pulse, all six sections long
         (1, 0, .9), (0, 0), (0, 0), (0, 0),
-        (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, 0, .95), (0, 0), (0, 0), (1, 0, .4)])
-    link(sq3, snr)
-    ton = place("tonality", -0.48, -0.20, a_root(2))  # D minor
+        (1, 0, .85), (0, 0), (0, 0), (0, 0),
+        (1, 0, .9), (0, 0), (0, 0), (0, 0),
+        (1, 0, .85), (0, 0), (0, 0), (1, 0, .4)])
+    link(sqk, kick)
+    sq = place("sequencer", 0.72, -0.32, a_preset(1))
+    pattern(sq, 1, [  # p1 intro: three notes, lots of air
+        (1, 0, .8, 4), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+        (1, 7, .8, 4), (0, 0), (0, 0), (0, 0), (1, 5, .7), (0, 0), (0, 0), (0, 0)])
+    pattern(sq, 2, [  # p2 verse: the theme
+        (1, 0, .9), (0, 0), (1, 3, .7), (0, 0),
+        (1, 7, .9), (0, 0), (1, 5, .7), (0, 0),
+        (1, 0, .9), (0, 0), (1, 10, .8), (0, 0),
+        (1, 7, .8), (0, 0), (1, 5, .7, 4), (0, 0)])
+    pattern(sq, 3, [  # p3 build: 8ths, climbing
+        (1, 0, .85), (1, 3, .6), (1, 5, .7), (1, 7, .8),
+        (1, 0, .85), (1, 3, .6), (1, 5, .7), (1, 10, .8),
+        (1, 0, .85), (1, 3, .6), (1, 5, .7), (1, 7, .8),
+        (1, 12, .9), (1, 10, .7), (1, 7, .8), (1, 5, .7)])
+    pattern(sq, 4, [  # p4 peak: 16ths, octave jumps
+        (1, 0, .9), (1, 12, .6), (1, 0, .6), (1, 12, .7),
+        (1, 3, .8), (1, 15, .6), (1, 3, .6), (1, 15, .7),
+        (1, 5, .9), (1, 17, .6), (1, 5, .6), (1, 17, .7),
+        (1, 7, .9), (1, 19, .7), (1, 12, .8), (1, 7, .8)])
+    pattern(sq, 5, [  # p5 breakdown: long notes, low register
+        (1, -12, .85, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+        (1, -5, .8, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)])
+    pattern(sq, 6, [  # p6 outro: the theme, half as busy, final bar holds
+        (1, 0, .85), (0, 0), (1, 3, .6), (0, 0),
+        (1, 7, .8), (0, 0), (0, 0), (0, 0),
+        (1, 0, .85), (0, 0), (1, 5, .6), (0, 0),
+        (1, 0, .9, 8), (0, 0), (0, 0), (0, 0)])
+    rot(sq, a_preset(1))
+    link(sq, lead)
+    ton = place("tonality", -0.48, -0.28, a_root(9))  # A minor
     st(ton, "subtype", 2)
     tempo_obj(118)
-    output_obj(vol=0.8, rev=0.2, room=0.45)
+    output_obj(vol=0.8, comp=0.2)
 
 def b15():  # ZOO — sound design with animal generators
     ele = place("sampler", 0.55, -0.25, a_freq(200))

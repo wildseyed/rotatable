@@ -31,7 +31,7 @@ return {
    ["x"]=0.55,
    ["y"]=-0.05,
    ["type"]="sampler",
-   ["sample"]="/home/we/dust/audio/rotatable-drums/instruments/theremin_Cs4.wav",
+   ["sample"]="/home/we/dust/audio/rotatable/instruments/theremin_Cs4.wav",
    ["env"]={14},
    ["subtype"]=1,
 },

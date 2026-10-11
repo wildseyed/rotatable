@@ -30,7 +30,7 @@ return {
    ["x"]=0.6,
    ["y"]=-0.1,
    ["type"]="loop",
-   ["sample"]="/home/we/dust/code/rotatable/presets/audio/TR909-Rough_Sd.wav",
+   ["sample"]="/home/we/dust/audio/rotatable/TR909-Rough_Sd.wav",
    ["env"]={13},
    ["subtype"]=1,
 },

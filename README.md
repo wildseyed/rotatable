@@ -4,7 +4,15 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.4.1** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.4.2** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.2**: the early factory presets were rebuilt around the v3.4
+features — HELLO/BEAT/KIT-808/KEY are richer and distinct, SUB→**GRIT**
+(LFO wobbles distortion amount), ACID gains velocity-driven filter bites,
+and three tables replaced: WASH→**SIREN** (a sequencer plays the delay
+*time* — the echo is the melody), RIFF→**MORPH** (a sequencer sweeps the
+distortion amount), PLUCK→**SIX** (six authored patterns, rotation =
+song section)
 
 **new in v3.4.1**: delay rotation is now the original's hybrid — continuous
 near zero, snapping to tempo-grid values past an 8th note · new LFOs start
@@ -267,8 +275,8 @@ per block (rotation / slider / subtypes, then its panels):
   carry it in the filename, e.g. `cello_G3`), **env**. instrument is a
   gated melodic voice; drum is a one-shot that always plays at the
   rotation-set pitch, whatever note the sequencer sends.
-- **input** — gain / — / line only. no panels. route: INPUT block →
-  compressor → reverb (see WASH).
+- **input** — gain / — / line only. no panels. route it through a
+  compressor → reverb-delay and the table becomes an effects box.
 - **filter** — cutoff (40 Hz–12 kHz) / resonance / lp·bp·hp. panels:
   **2d** (X = cutoff, Y = resonance), **env** (param envelope → cutoff;
   triggered by a connected sequencer, it gives the ACID-style bite —
@@ -342,55 +350,64 @@ musical sketch that also teaches one or two concepts.
 
 | slot | name | BPM | teaches | what's in it |
 |---|---|---|---|---|
-| 1 | HELLO | 110 | proximity patching, rotation = pitch, slider dot = amp | saw osc + mono sequencer melody + tempo object |
-| 2 | BEAT | 120 | sampler, hardlink (`LINK K3`), step editor, velocity | synth kick + clap, each with a hardlinked 16-step sequencer |
-| 3 | KIT-808 | 124 | multiple hardlinks, mute (`LINK K1+K3`), output compression | TR-909 kick/snare/hat + clap, each own sequencer; muted alt-snare ready to unmute; comp 0.3 |
-| 4 | KEY | 100 | tonality snapping, root key, editable scale mask | saw + sequencer + a *custom* harmonic-minor tonality — check its notes panel |
-| 5 | SUB | 95 | suboscillators, LP filter, resonance slider | saw + 2 subs (octave-down follows tonality, detuned fifth) → LP, A-minor bassline |
-| 6 | ACID | 128 | LFO controllers, tempo sync (mult), filter bite | saw → LP, saw LFO locked to quarter notes on the cutoff, minor tonality |
+| 1 | HELLO | 112 | proximity patching, rotation = pitch, slider gauge = amp, synced delay | saw + mono melody → tempo-locked feedback delay + tempo object |
+| 2 | BEAT | 122 | sampler, hardlink (`LINK K3`), step editor, velocity ghosts, drum pinning | kick/snare/hat, each with a hardlinked 16-step sequencer; the kick's pitch steps are ignored on purpose (drum = one octave) — velocity is the dynamics |
+| 3 | KIT-808 | 124 | multiple hardlinks, mute (`LINK K1+K3`), flanger settings page | TR-909 kit + clap, each own sequencer; hat runs through a tuned flanger (`fdepth`/`mindelay`/`ffb`); muted alt-snare ready to unmute; comp 0.3 |
+| 4 | KEY | 100 | tonality snapping, root key, editable mask, follow-tonality subs | saw lead + sine bass whose sub-octave follows the scale + a *custom* harmonic-minor tonality — check its notes panel |
+| 5 | GRIT | 90 | suboscillators, distortion, LFO → shaper main | saw + 2 subs → distortion → LP; a half-note LFO wobbles the distortion *amount* — E-minor bass growl |
+| 6 | ACID | 128 | LFO controllers, filter envelope, velocity → env depth | saw → LP with a quarter-note LFO on cutoff; a second sequencer pokes the filter envelope — its velocity sets the bite's depth |
 | 7 | PING | 100 | delay subtypes, pingpong, effect envelopes | clave + cowbell → tempo-quantized pingpong; a third sequencer's notes retrigger the delay's envelope so feedback swells |
-| 8 | WASH | — | audio input, compressor, reverb delay, output FX | line in → compressor → reverb — run a radio/synth through the table (silent until you plug something in) |
+| 8 | SIREN | 96 | note → delay time (dub siren), effect-as-instrument | sine plucks → feedback delay at 0.8; a second sequencer plays the *delay time* — the echo is the melody |
 | 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
-| 10 | RIFF | 108 | pattern presets 1–6 (rotate to compare) | mono sequencer → trumpet, mono sequencer → noise "snare"; two contrasting patterns written into presets 1–2 |
+| 10 | MORPH | 116 | note → waveshaper main, timbre as a sequenced parameter | driving saw groove → distortion → LP; a slow second sequencer sweeps the distortion amount by pitch (rotate it to p2 for the full sweep) |
 | 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
 | 12 | DRIFT | 60 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | saw + detuned square + sine sub-bass, each with subs, into one LP filter; each osc has its own slow pitch-drift LFO; a random sequencer retriggers the filter's cutoff envelope; reverb-delay insert for space |
 | 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
-| 14 | PLUCK | 118 | instrument sampler + tonality, oneshot loops, call-and-response | mandolin and saxophone trade a D-minor melody (two sequencers), oneshot snare backbeat |
+| 14 | SIX | 118 | pattern presets 1–6 as song sections | one saw lead → LP + a kick pulse; a single sequencer holds six authored patterns — rotate through intro/verse/build/peak/break/outro |
 | 15 | ZOO | 80 | sound design: generators don't have to be musical; drift sequencers | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots; three coquí frogs calling at random intervals, each its own pitch and density |
 | 16 | FINALE | 122 | everything at once | 15 objects: drum kit, tuba bass, horn stabs, theremin pad, A-minor tonality, full master FX — the demo you play people |
 
 **playing the presets** — a tour, in order; each "try" uses the gestures
 from the block settings guide above:
 
-1. **HELLO** — the minimum viable table. try: rotate the osc while the
-   melody plays (E2 in ROTATE), then rotate the tempo object. move the
+1. **HELLO** — the minimum viable table, now with space. try: rotate the
+   osc while the melody plays (E2 in ROTATE), then rotate the delay —
+   past an 8th note the time snaps to the tempo grid on its own. move the
    sequencer far from the osc and the melody stops — proximity *is* the
    patch cable.
 2. **BEAT** — your first drum machine. try: `^K3` into the kick
-   sequencer's steps page; `K3` toggles steps, `K1+E3` sets velocity —
-   the ghost kicks are at vel ~0.3.
-3. **KIT-808** — the full kit. try: find the dimmed connection to the
-   second snare — in LINK mode on the alt snare's sequencer, `K1+K3`
-   unmutes it. then check the output's set page for the glue compression.
-4. **KEY** — pitch discipline. try: open the tonality's notes page and
-   toggle degree `6` (the raised 7th that makes it *harmonic* minor);
-   rotate the tonality to transpose the whole table.
-5. **SUB** — low end. try: the osc's subs page — raise sub 1's amp and
-   the bass gets a floor; the filter's slider (E3) is resonance.
-6. **ACID** — the LFO as an invisible hand. try: the LFO's set page —
-   `mult` 8 → 32 slows the sweep to a whole note; its slider is depth.
-   break the hardlink (LINK, `K3`) and the LFO wanders to nearer blocks.
+   sequencer's steps page — the pitch steps do nothing (drums stay in one
+   octave), but the ghost velocities do everything. rotate the kick
+   itself to retrigger it by hand.
+3. **KIT-808** — the full kit plus one trick. try: `^K3` the flanger
+   under the hi-hat — its set page has `fdepth`, `mindelay`, `ffb`. then
+   find the dimmed connection to the alt snare and unmute it in LINK
+   mode (`K1+K3`).
+4. **KEY** — pitch discipline, now with a bass that obeys it too. try:
+   open the tonality's notes page and toggle degree `6` (the raised 7th
+   that makes it *harmonic* minor); the bass sub-octave follows the same
+   scale (follow-tonality on its subs page). rotate the tonality to
+   transpose the whole table.
+5. **GRIT** — the LFO as a second hand on the *amount* knob. try: the
+   LFO's slider (E3) is depth — it wobbles distortion drive, not
+   dry-wet. break its hardlink (LINK, `K3`) and it wanders to the filter
+   instead.
+6. **ACID** — velocity as a performance dimension. try: `^K3` the
+   second sequencer's steps page and edit velocities (`K1+E3`) — each
+   poke opens the filter by exactly that much. the quarter-note LFO
+   still rides the cutoff underneath.
 7. **PING** — rhythmic echo. try: the delay's set page — `sync` off frees
    the time knob from the grid; `sweep` up for tape-style pitch glides.
    the third sequencer only exists to poke the delay's envelope.
-8. **WASH** — the table as an effects box. try: plug a phone/synth into
-   line in; input rotation is gain, the compressor's slider is dry-wet,
-   output `rev` on its set page. (silent until then — that's correct.)
+8. **SIREN** — the echo is the instrument. try: `^K3` the second
+   sequencer and change its pitches — you're writing the echo's melody,
+   not the pluck's. delay feedback toward 0.9 for near-self-oscillation;
+   `sweep` glides the time changes like tape.
 9. **CHOIR** — patience. try: nothing, for a minute — the vibrato LFO has
    a whole-note period. then open the chorus 2d page and push depth up.
-10. **RIFF** — one sequencer, six pattern slots. try: rotate the trumpet's
-    sequencer (E2) from p1 to p2 — two contrasting rhythms were written in
-    for you.
+10. **MORPH** — timbre on a timeline. try: rotate the second sequencer
+    from p1 to p2 for the full sweep, then open the shaper's 2d page and
+    watch X (amount) move on its own — a sequencer is driving it.
 11. **SOLO** — hands off. try: nothing — the random sequencer improvises
     and the pentatonic tonality keeps every roll musical. open its steps
     page to watch the note history appear. raise the delay's feedback
@@ -403,9 +420,9 @@ from the block settings guide above:
 13. **CRUSH** — deliberate ugliness. try: the random LFO is modulating the
     bitcrusher's dry-wet — watch the connection dots. filter rotation
     (HP) decides how much of the dirt survives.
-14. **PLUCK** — a duet. try: edit a pitch in the mandolin's steps page and
-    hear the tonality snap it into D minor; the sax answers every second
-    bar. the snare is a oneshot loop — one trigger, one hit.
+14. **SIX** — arrangement by rotation. try: perform it — rotate the lead
+    sequencer (E2 in ROTATE) through p1→p6: intro, verse, build, peak,
+    breakdown, outro. then write your own six on its steps pages.
 15. **ZOO** — the weird one. try: rotate the crickets loop — rate 2 is a
     shaker, rate 0.5 is a swamp. the elephant goes through a bandpass and
     a pingpong; the bear drone is a loop at quarter speed into the

@@ -644,3 +644,19 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   Device-verified: delay 0.4081→0.4375 snap at 120 BPM, lfo sync=1 in
   /state. README freshened (v3.4.1 note, delay/lfo bullets; preset table
   + drift docs were already refreshed by the other session).
+- 2026-10-11 (v3.4.2): **factory preset rework** (owner direction: 1–6 too
+  limited/repetitive, 8 confused with silence, 10+14 crowded/chaotic;
+  keep 7/9/11/12/13/15/16). Rebuilt around the v3.4 features: HELLO gains
+  a synced feedback delay; BEAT = 3-voice kit with ghost velocities +
+  drum-pinning demo (kick has pitch steps that do nothing — velocity is
+  the dynamics); KIT-808 hat → tuned flanger (settings-page showcase);
+  KEY gains a subfollow bass; SUB → **GRIT** (subs → distortion, LFO →
+  shaper MAIN — the new mapping); ACID gains a second sequencer poking
+  the filter env (velocity → env depth). Replaced: WASH → **SIREN**
+  (seq plays the DELAY TIME — dub siren, the flagship note→effect trick);
+  RIFF → **MORPH** (seq sweeps distortion amount by pitch); PLUCK →
+  **SIX** (one sequencer, 6 authored patterns = song sections). All built
+  via tools/presets.py, amp-verified (0.27–0.65 after GRIT trim), slots
+  pulled to data/slots/, README table + tour updated. Owner listening
+  pass still pending — levels are meter-sane, musicality is by design
+  not by ear.
