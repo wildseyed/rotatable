@@ -660,3 +660,16 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   pulled to data/slots/, README table + tour updated. Owner listening
   pass still pending — levels are meter-sane, musicality is by design
   not by ear.
+- 2026-10-11 (press): **README graphics refresh** (owner: old four-image
+  screenshots section was stale + uninformative). Replaced with nine fresh
+  on-device captures, staged via the REST bridge (deploy --load, api.py,
+  screen.export_screenshot, SFTP pull; 320×192 nearest-neighbor thumbs,
+  hero at 640×384): table-wide (staged 10-object table: seq→osc→flt→dly→
+  out + smp/shp/lfo/ton/tempo/star), chain-detail, first-patch, place-menu,
+  panel-steps, panel-subs, panel-notes, panel-gfx, slot-ring (FINALE +
+  full ring). Screenshots section deleted; images now live inline next to
+  the sections they illustrate (hero under the intro, rest distributed).
+  Learned: block glyph r = 0.08wu with a 3px screen floor → wide shots
+  crowd; CONNECT_DIST 0.35 vs label width ~0.3wu → route staged chains
+  diagonally, keep labeled objects y ≤ 0.25 (status bar), matron T.sub
+  works but the panel redraw lags one export behind — shoot twice.
