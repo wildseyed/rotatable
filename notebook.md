@@ -682,3 +682,12 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   (md5-matched, audible). Committed f0fcdf9. Lesson: after a preset
   rework the full path is build-via-REST → pull to repo → deploy (data/)
   → restore_factory on device.
+- 2026-10-11 (v3.4.3): **frozen-clock variant found + watchdog hardened.**
+  Owner reported SIX (slot 14) "plays a single tone" — the table was fine;
+  the seq metro had frozen mid-session in a NEW way: is_running=true, tick
+  counter dead, callback never firing — dodges the old watchdog. Fourth
+  sighting of the frozen-clock class. Root cause unknown (suspect the
+  clock.lua resume error at load, or a metro wedging during heavy recall
+  OSC bursts). Watchdog now also compares the tick count between its 1s
+  beats: unchanged while is_running → print + stop/start the metro.
+  Deployed, ticking, no false positives.
