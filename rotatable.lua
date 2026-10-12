@@ -1,5 +1,5 @@
 -- rotatable
--- v3.4.4 @wildseyed
+-- v3.5.0 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -166,6 +166,7 @@ T = {
     if not o or not o.notes then return "no notes" end
     local t = { ... }
     for d = 0, 11 do o.notes[d] = t[d + 1] == 1 or t[d + 1] == true end
+    Audio.sync_object(o) -- tonality sync re-snaps follow subs
     dirty = true
   end,
   recall_slot = function(i) local r = Slots.recall(i); dirty = true; return r end,
@@ -179,9 +180,9 @@ T = {
         table.insert(pb, string.format('"%s":%s', k, tostring(v)))
       end
       table.insert(ob, string.format(
-        '{"id":%d,"type":"%s","subtype":%d,"subtype_name":"%s","x":%.3f,"y":%.3f,"angle":%.3f,"params":{%s}}',
+        '{"id":%d,"type":"%s","subtype":%d,"subtype_name":"%s","x":%.3f,"y":%.3f,"angle":%.3f,"params":{%s},"env":{"a":%.3f,"d":%.3f,"s":%.3f,"r":%.3f}}',
         o.id, o.type, o.subtype, World.subtype_name(o), o.x, o.y, o.angle,
-        table.concat(pb, ",")))
+        table.concat(pb, ","), o.env.a, o.env.d, o.env.s, o.env.r))
     end
     for _, c in ipairs(World.connections) do
       local b = c.b == "output" and '"output"' or tostring(c.b.id)
@@ -282,8 +283,8 @@ function enc(n, d)
   local o = UI.selected()
   if o then
     -- same object, angle moved = rotation: sampler retrigs (Audio.rotate)
+    -- (sync_object itself re-snaps follow subs when o is a tonality)
     if o == pre and o.angle ~= a0 then Audio.rotate(o) else Audio.sync_object(o) end
-    if o.type == "tonality" then Audio.resync_follow() end
   end
 end
 
@@ -298,7 +299,6 @@ function key(n, z)
   local o = UI.selected()
   if o then
     Audio.sync_object(o)
-    if o.type == "tonality" then Audio.resync_follow() end
   end
 end
 

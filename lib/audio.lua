@@ -118,6 +118,9 @@ function Audio.sync_object(o)
     -- no engine node: params still need the rotation write-through
     -- (tonality root, sequencer preset, midi transpose)
     if k and o.params[k] ~= nil then o.params[k] = v end
+    -- every tonality write (any path: physical, API, on_add, slot recall)
+    -- re-snaps follow subs — the snap is baked into engine args at sync time
+    if o.type == "tonality" then Audio.resync_follow() end
     return
   end
   engine.set(o.id, "select", o.subtype - 1)
@@ -310,8 +313,13 @@ function Audio.init(world)
     return o
   end
   World.remove = function(id)
+    local o = World.get(id)
+    local was_tonality = o and o.type == "tonality"
     Audio.on_remove(id)
     remove0(id)
+    -- must run AFTER removal (Tonality.current still saw it in on_remove):
+    -- follow subs fall back to their raw offsets
+    if was_tonality then Audio.resync_follow() end
   end
   World.recompute = function(...)
     recompute0(...)
@@ -354,6 +362,9 @@ function Audio.seq_tick(tick)
                 engine.trigger(n.out,
                   t.freq * (2 ^ ((math.random() - 0.5) / 12)))
               else
+                -- effect/loop: bare retrig + randomized env depth (mirrors
+                -- the amp randomization the pitched branch does)
+                engine.set(n.out, "vel", 0.45 + math.random() * 0.4)
                 engine.trigger(n.out, 0)
               end
             end

@@ -245,6 +245,8 @@ pentatonic/chromatic) you can then customize.
 
 - **sub-oscillators** (oscillator): 4 subs × waveform/amp/detune/offset,
   with a follow-tonality toggle that snaps sub pitches to the scale
+  (the snap applies at edit/trigger time — an LFO wobbling the osc's
+  pitch drifts subs off-scale afterwards, by design)
 - **effect envelopes**: every effect has a sequencer-triggered ADSR on
   its signature parameter — idle-neutral by default
 - **sampler**: single WAV pitched melodically; `base` tunes the sample's
@@ -285,7 +287,9 @@ per block (rotation / slider / subtypes, then its panels):
   one: low sustain + short decay = plucks).
 - **loop** — playback rate (0.25–4×) / amp / loop·oneshot. panels:
   **browser** (scroll `dust/audio`, `K3` loads), **set** (`sync`: restart
-  on the next quarter/bar boundary — keeps loops in phase), **env**.
+  on the next quarter/bar boundary — keeps loops in phase), **env**
+  (amplitude ADSR, articulated by sequencer/MIDI triggers; sustain 1 =
+  free-running loops stay full volume).
   tips: rate < 0.5 turns drum hits into bass drones (ZOO); oneshot
   fires the whole sample once per trigger instead of free-running.
 - **sampler** — played pitch / amp / instrument·drum. panels: **browser**,

@@ -155,6 +155,12 @@ function Slots.recall(i)
     if World.TYPES[o.type].category == "effect" and o.env.s == 0.7 then
       o.env.s = 0
     end
+    -- v3.5 migrations: the env page let sustain (a LEVEL) roam to 4; and
+    -- loop gained a real amplitude ADSR (inert before, so s=0.7 is the old
+    -- generator default, never deliberate) — s=1 keeps recalled loops at
+    -- full rest volume (the env only articulates on seq/MIDI retrig)
+    if o.env.s > 1 then o.env.s = 1 end
+    if o.type == "loop" and o.env.s == 0.7 then o.env.s = 1 end
     if e.patterns then
       o.patterns = e.patterns
     elseif e.steps then

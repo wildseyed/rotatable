@@ -63,8 +63,13 @@ Engine_Rotatable : CroneEngine {
 		// bar-entry sync: sync arg (0 immediate, 1 quarter, 2 bar) waits for the
 		// next tempo-grid boundary before (re)starting the phasor.
 		// tbus = index of the engine tempo control bus (bpm).
+		// amplitude ADSR (spec §3.2): retrigged by seq/MIDI notes via t_retrig
+		// (same TrigControl trick as osc/effects), vel scales env depth.
+		// s=1 default: a free-running loop sits at full volume — the env only
+		// articulates on retrig.
 		SynthDef(\rot_loop, { arg in=0, out=0, buf=0, rate=1, amp=0.8, select=0,
-			gate=1, sync=0, tbus=0, mod=0, lvl=0, t_trig=0;
+			gate=1, sync=0, tbus=0, mod=0, lvl=0, t_trig=0,
+			a=0.01, d=0.1, s=1, r=0.3, vel=1, t_retrig=0;
 			var frames = BufFrames.kr(buf).max(1);
 			var bpm = In.kr(tbus).max(1);
 			var beat = 60 / bpm;
@@ -82,8 +87,10 @@ Engine_Rotatable : CroneEngine {
 			// trigger pulse, outputs silence after the sample ends)
 			var sigLoop = BufRd.ar(1, buf, posLoop, 1);
 			var sigOnce = PlayBuf.ar(1, buf, rateM * BufRateScale.kr(buf), t_trig, 0, 0, 0);
+			var env = EnvGen.kr(Env.adsr(a, d, s, r),
+				gate.clip(0, 1) * (1 - t_retrig)) * Lag.kr(vel, 0.02);
 			var sig = Select.ar(oneshot, [sigLoop, sigOnce]);
-			sig = sig * Lag.kr(amp, 0.05);
+			sig = sig * env * Lag.kr(amp, 0.05);
 			Out.ar(out, sig);
 			Out.kr(lvl, Amplitude.kr(sig, 0.01, 0.15));
 		}).add;
@@ -224,14 +231,19 @@ Engine_Rotatable : CroneEngine {
 		// one WAV pitched via Phasor+BufRd; base = the sample's natural pitch.
 		// select: 0 instrument (gated ADSR), 1 drum (one-shot, full length).
 		// notes arrive via the trigger command (freq + gate edge).
+		// gate defaults 0: the instrument starts CLOSED so the first trigger
+		// gets a real attack (gate=1 sat at sustain before any note); the
+		// gated ADSR retrigs via t_retrig like osc/effects — a gate 1->1
+		// "edge" is invisible to EnvGen (gotcha 15)
 		SynthDef(\rot_sampler, { arg in=0, out=0, buf=0, freq=220, base=261.6256,
-			gate=1, amp=0.8, select=0, a=0.005, d=0.1, s=0.9, r=0.2, mod=0, lvl=0, t_trig=0;
+			gate=0, amp=0.8, select=0, a=0.005, d=0.1, s=0.9, r=0.2, mod=0, lvl=0,
+			t_trig=0, t_retrig=0;
 			var frames = BufFrames.kr(buf).max(1);
 			var rate = (Lag.kr(freq, 0.03) * (2 ** mod.clip(-1, 1))) / base.max(1);
 			var oneshot = select.round.clip(0, 1);
 			// PlayBuf + t_trig: norns-canonical one-shot, silent after sample end
 			var sig = PlayBuf.ar(1, buf, rate * BufRateScale.kr(buf), t_trig, 0, 0, 0);
-			var envGated = EnvGen.kr(Env.adsr(a, d, s, r), gate.clip(0, 1));
+			var envGated = EnvGen.kr(Env.adsr(a, d, s, r), gate.clip(0, 1) * (1 - t_retrig));
 			var envDrum = EnvGen.kr(Env.perc(0.005, (frames / BufSampleRate.kr(buf)).max(0.05), 1, -4), t_trig);
 			var env = Select.kr(oneshot, [envGated, envDrum]);
 			sig = sig * env * Lag.kr(amp, 0.05);
@@ -344,8 +356,10 @@ Engine_Rotatable : CroneEngine {
 				if (node[\type] == \sampler or: { node[\type] == \loop }) {
 					node[\synth].set(\freq, msg[2]);
 					// raise gate too: a MIDI note-off shuts the gated ADSR and
-					// only this path can reopen it (v3.0.1)
-					node[\synth].set(\gate, 1);
+					// only this path can reopen it (v3.0.1). t_retrig covers the
+					// legato case (gate already 1 = no edge; gotcha 15) and now
+					// also the loop's amplitude env (v3.5)
+					node[\synth].set(\gate, 1, \t_retrig, 1);
 					node[\synth].set(\t_trig, 1);
 				} {
 					if (#[\filter, \delay, \modulator, \waveshaper].includes(node[\type])) {
@@ -382,8 +396,11 @@ Engine_Rotatable : CroneEngine {
 					// buffer swap, not at add — a fresh node only has silentBuf.
 					// loop mode ignores t_trig (Changed.kr(buf) restarts its
 					// phasor); oneshot loop + sampler both live on PlayBuf's edge.
+					// t_retrig articulates the amplitude env even when the gate
+					// was already open (sample reload mid-note; loop gate never
+					// closes)
 					if (node[\type] == \sampler or: { node[\type] == \loop }) {
-						node[\synth].set(\gate, 1);
+						node[\synth].set(\gate, 1, \t_retrig, 1);
 						node[\synth].set(\t_trig, 1);
 					};
 				});
