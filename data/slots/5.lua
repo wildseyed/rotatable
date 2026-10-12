@@ -1,7 +1,7 @@
 return {
 -- Table: {1}
 {
-   ["tempo"]=90,
+   ["tempo"]=76,
    ["objects"]={2},
    ["v"]=3,
    ["mutes"]={3},
@@ -93,7 +93,7 @@ return {
 {
    ["subtype"]=1,
    ["type"]="tempo",
-   ["angle"]=1.5707963267949,
+   ["angle"]=1.1309733552923,
    ["y"]=0.62,
    ["params"]={30},
    ["x"]=0.62,
@@ -202,16 +202,16 @@ return {
 -- Table: {27}
 {
    false,
-   true,
-   false,
-   true,
-   true,
    false,
    true,
    false,
    true,
    false,
    true,
+   false,
+   false,
+   true,
+   false,
    [0]=true,
 },
 -- Table: {28}
@@ -394,8 +394,8 @@ return {
 -- Table: {44}
 {
    ["pitch"]=0,
-   ["dur"]=5,
-   ["vel"]=0.95,
+   ["dur"]=4,
+   ["vel"]=0.9,
    ["on"]=true,
 },
 -- Table: {45}
@@ -407,16 +407,16 @@ return {
 },
 -- Table: {46}
 {
-   ["pitch"]=0,
-   ["dur"]=1,
-   ["vel"]=0,
-   ["on"]=false,
-},
--- Table: {47}
-{
    ["pitch"]=3,
    ["dur"]=1,
    ["vel"]=0.6,
+   ["on"]=true,
+},
+-- Table: {47}
+{
+   ["pitch"]=0,
+   ["dur"]=2,
+   ["vel"]=0.7,
    ["on"]=true,
 },
 -- Table: {48}
@@ -428,30 +428,30 @@ return {
 },
 -- Table: {49}
 {
-   ["pitch"]=0,
+   ["pitch"]=5,
    ["dur"]=3,
-   ["vel"]=0.85,
+   ["vel"]=0.8,
    ["on"]=true,
 },
 -- Table: {50}
 {
-   ["pitch"]=0,
-   ["dur"]=1,
-   ["vel"]=0,
-   ["on"]=false,
-},
--- Table: {51}
-{
-   ["pitch"]=5,
+   ["pitch"]=3,
    ["dur"]=1,
    ["vel"]=0.6,
    ["on"]=true,
 },
--- Table: {52}
+-- Table: {51}
 {
    ["pitch"]=0,
+   ["dur"]=3,
+   ["vel"]=0.8,
+   ["on"]=true,
+},
+-- Table: {52}
+{
+   ["pitch"]=7,
    ["dur"]=4,
-   ["vel"]=0.95,
+   ["vel"]=0.9,
    ["on"]=true,
 },
 -- Table: {53}
@@ -463,16 +463,16 @@ return {
 },
 -- Table: {54}
 {
-   ["pitch"]=0,
+   ["pitch"]=5,
    ["dur"]=1,
-   ["vel"]=0,
-   ["on"]=false,
+   ["vel"]=0.6,
+   ["on"]=true,
 },
 -- Table: {55}
 {
    ["pitch"]=3,
    ["dur"]=2,
-   ["vel"]=0.65,
+   ["vel"]=0.7,
    ["on"]=true,
 },
 -- Table: {56}
@@ -484,23 +484,23 @@ return {
 },
 -- Table: {57}
 {
-   ["pitch"]=7,
-   ["dur"]=1,
+   ["pitch"]=3,
+   ["dur"]=2,
    ["vel"]=0.8,
    ["on"]=true,
 },
 -- Table: {58}
 {
-   ["pitch"]=5,
+   ["pitch"]=0,
    ["dur"]=2,
-   ["vel"]=0.6,
+   ["vel"]=0.7,
    ["on"]=true,
 },
 -- Table: {59}
 {
-   ["pitch"]=0,
-   ["dur"]=6,
-   ["vel"]=0.75,
+   ["pitch"]=-2,
+   ["dur"]=3,
+   ["vel"]=0.7,
    ["on"]=true,
 },
 -- Table: {60}

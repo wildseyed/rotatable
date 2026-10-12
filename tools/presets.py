@@ -100,24 +100,29 @@ def output_obj(vol=0.8, rev=0.0, room=0.5, comp=0.0, x=-0.62, y=0.62):
 
 # ---------- the 16 tables (plan/phase-11/presets.md) ----------
 
-def b01():  # HELLO — proximity patching, rotation, slider, synced-delay space
-    osc = place("oscillator", 0.42, -0.05, a_freq(220))
-    st(osc, "subtype", 2)  # saw
-    st(osc, "amp", 0.65)
-    dly = place("delay", 0.20, 0.05, a_time(0.3))
-    st(dly, "subtype", 1)  # feedback, tempo-quantized
+def b01():  # HELLO — new-age first contact: sine + pentatonic, long breaths
+    osc = place("oscillator", 0.42, -0.05, a_freq(261.6))
+    st(osc, "subtype", 1)  # sine
+    st(osc, "amp", 0.6)
+    sub(osc, 1, wave=0, amp=0.35, off=-12)  # soft sub-octave warmth
+    for k, v in (("a", 0.01), ("d", 0.3), ("s", 0.6), ("r", 0.6)):
+        st(osc, k, v)
+    dly = place("delay", 0.20, 0.05, a_time(0.45))
+    st(dly, "subtype", 2)  # pingpong, tempo-quantized
     st(dly, "sync", 1)
-    st(dly, "feedback", 0.3)
+    st(dly, "feedback", 0.35)
     seq = place("sequencer", 0.62, 0.25, a_preset(1))
     st(seq, "subtype", 1)  # mono
-    pattern(seq, 1, [
-        (1, 0, .9, 3), (0, 0, 0, 1), (1, 4, .7, 2), (0, 0, 0, 2),
-        (1, 7, .9, 4), (0, 0, 0, 1), (1, 12, .8, 2), (1, 7, .6, 1),
-        (1, 4, .9, 2), (0, 0, 0, 1), (1, 7, .7, 2), (0, 0, 0, 1),
-        (1, 14, .8, 2), (0, 0, 0, 2), (1, 12, .9, 4), (0, 0, 0, 2)])
+    pattern(seq, 1, [  # C major pentatonic motif, 2 bars, lots of air
+        (1, 0, .7, 8), (0, 0, 0, 2), (1, 4, .6, 4), (0, 0, 0, 2),
+        (1, 7, .75, 6), (1, 9, .6, 2), (0, 0, 0, 2), (1, 4, .6, 4),
+        (1, 2, .7, 8), (0, 0, 0, 2), (1, 4, .6, 4), (0, 0, 0, 2),
+        (1, 0, .75, 8), (0, 0, 0, 4), (0, 0, 0, 2), (0, 0, 0, 8)])
     link(seq, osc)
-    tempo_obj(112)
-    output_obj(vol=0.8, rev=0.2, room=0.45)
+    ton = place("tonality", -0.45, -0.25, a_root(0))
+    st(ton, "subtype", 3)  # pentatonic
+    tempo_obj(72)
+    output_obj(vol=0.8, rev=0.4, room=0.6)
 
 def b02():  # BEAT — hardlinked kit, velocity ghosts, drum pinning demo
     # kick steps carry pitch offsets on purpose: the drum subtype ignores
@@ -200,39 +205,42 @@ def b03():  # KIT-808 — 909 kit, flanged hat (settings page), muted alt snare
     tempo_obj(124, x=0.68, y=-0.55)
     output_obj(vol=0.85, comp=0.3, x=-0.68, y=0.45)
 
-def b04():  # KEY — harmonic-minor mask editing, subfollow bass, root rotation
-    lead = place("oscillator", 0.42, -0.12, a_freq(220))
-    st(lead, "subtype", 2)  # saw
-    st(lead, "amp", 0.6)
-    bass = place("oscillator", 0.30, 0.28, a_freq(110))
-    st(bass, "subtype", 1)  # sine
-    st(bass, "amp", 0.55)
-    sub(bass, 1, wave=1, amp=0.5, off=-12)  # sub-octave, follows the scale
-    subfollow(bass, 1)
-    dly = place("delay", 0.18, -0.02, a_time(0.3))
-    st(dly, "subtype", 1)
+def b04():  # KEY — dorian BASS RIFF (contrabass) + sparse answers;
+    # teaches custom scale masks (dorian is not a preset subtype)
+    bass = place("sampler", 0.42, -0.08, a_freq(98))
+    st(bass, "subtype", 1)  # instrument
+    load(bass, f"{D}/instruments/contrabass_G2.wav")
+    st(bass, "base", 98.0)
+    st(bass, "amp", 0.85)
+    lead = place("oscillator", 0.40, 0.32, a_freq(440))
+    st(lead, "subtype", 1)  # sine, answers way up high
+    st(lead, "amp", 0.4)
+    for k, v in (("a", 0.01), ("d", 0.3), ("s", 0.5), ("r", 0.5)):
+        st(lead, k, v)
+    dly = place("delay", 0.16, 0.18, a_time(0.4))
+    st(dly, "subtype", 2)  # pingpong
     st(dly, "sync", 1)
-    st(dly, "feedback", 0.25)
-    sq1 = place("sequencer", 0.68, -0.28, a_preset(1))
-    # line leans on b6 (8) and nat7 (11) — only harmonic minor has both
-    pattern(sq1, 1, [
-        (1, 0, .9, 3), (0, 0, 0, 1), (1, 3, .7, 2), (1, 7, .8, 2),
-        (1, 8, .9, 4), (0, 0, 0, 1), (1, 7, .6, 2), (0, 0, 0, 1),
-        (1, 11, .9, 3), (0, 0, 0, 1), (1, 8, .7, 1), (1, 7, .8, 2),
-        (1, 3, .8, 2), (0, 0, 0, 1), (1, 0, .9, 4), (0, 0, 0, 2)])
-    link(sq1, lead)
-    sq2 = place("sequencer", 0.55, 0.48, a_preset(1))
-    pattern(sq2, 1, [  # sparse roots and fifths under the lead
-        (1, 0, .85, 4), (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 2),
-        (1, 7, .8, 3), (0, 0, 0, 1), (1, 3, .75, 3), (0, 0, 0, 1),
-        (1, 0, .85, 3), (0, 0, 0, 1), (0, 0, 0, 2), (1, -2, .7, 2),
-        (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 1), (0, 0, 0, 1)])
-    link(sq2, bass)
-    ton = place("tonality", -0.45, -0.25, a_root(0))
-    st(ton, "subtype", 2)  # minor — then customize into harmonic minor
-    notes(ton, [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1])
-    tempo_obj(100)
-    output_obj(vol=0.8, rev=0.2, room=0.45)
+    st(dly, "feedback", 0.3)
+    sq1 = place("sequencer", 0.68, -0.25, a_preset(1))
+    pattern(sq1, 1, [  # tresillo-driven dorian riff
+        (1, 0, .9, 3), (1, 0, .7, 3), (1, 3, .8, 2),
+        (1, 5, .85, 3), (1, 3, .7, 3), (1, 2, .7, 2),
+        (1, 0, .9, 3), (1, 0, .7, 3), (1, 7, .8, 2),
+        (1, 10, .85, 2), (1, 7, .7, 1),
+        (0, 0, 0, 1), (0, 0, 0, 1), (0, 0, 0, 1), (0, 0, 0, 1), (0, 0, 0, 1)])
+    link(sq1, bass)
+    sq2 = place("sequencer", 0.65, 0.45, a_preset(1))
+    pattern(sq2, 1, [  # sine answers in the gaps, 2 bars
+        (0, 0, 0, 4), (0, 0, 0, 4), (1, 12, .5, 4), (0, 0, 0, 4),
+        (0, 0, 0, 8), (0, 0, 0, 4), (1, 10, .45, 2), (0, 0, 0, 2),
+        (0, 0, 0, 4), (0, 0, 0, 4), (1, 15, .5, 4), (0, 0, 0, 4),
+        (0, 0, 0, 6), (0, 0, 0, 2), (1, 12, .45, 4), (0, 0, 0, 4)])
+    link(sq2, lead)
+    ton = place("tonality", -0.45, -0.25, a_root(9))
+    st(ton, "subtype", 2)  # minor preset, then edit to dorian (add nat 6)
+    notes(ton, [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0])  # A dorian
+    tempo_obj(92)
+    output_obj(vol=0.85, rev=0.25, room=0.5)
 
 def b05():  # GRIT — sub-bass stack, distortion, LFO -> shaper main (new!)
     osc = place("oscillator", 0.55, -0.10, a_freq(82.4))  # E2
@@ -254,52 +262,54 @@ def b05():  # GRIT — sub-bass stack, distortion, LFO -> shaper main (new!)
     st(lfo, "depth", 0.5)
     link(lfo, shp)         # wobbles the distortion AMOUNT (note: main, not dry-wet)
     seq = place("sequencer", 0.62, 0.30, a_preset(1))
-    pattern(seq, 1, [
-        (1, 0, .95, 5), (0, 0, 0, 1), (0, 0, 0, 1), (1, 3, .6, 1),
-        (0, 0, 0, 1), (1, 0, .85, 3), (0, 0, 0, 1), (1, 5, .6, 1),
-        (1, 0, .95, 4), (0, 0, 0, 1), (0, 0, 0, 1), (1, 3, .65, 2),
-        (0, 0, 0, 1), (1, 7, .8, 1), (1, 5, .6, 2), (1, 0, .75, 6)])
+    pattern(seq, 1, [  # slow greasy minor-pentatonic riff
+        (1, 0, .9, 4), (0, 0, 0, 1), (1, 3, .6, 1), (1, 0, .7, 2),
+        (0, 0, 0, 1), (1, 5, .8, 3), (1, 3, .6, 1), (1, 0, .8, 3),
+        (1, 7, .9, 4), (0, 0, 0, 1), (1, 5, .6, 1), (1, 3, .7, 2),
+        (0, 0, 0, 1), (1, 3, .8, 2), (1, 0, .7, 2), (1, -2, .7, 3)])
     link(seq, osc)
-    ton = place("tonality", -0.45, -0.35, a_root(4))  # E minor
-    st(ton, "subtype", 2)
-    tempo_obj(90)
+    ton = place("tonality", -0.45, -0.35, a_root(4))
+    st(ton, "subtype", 2)  # minor preset, then edit to minor pentatonic
+    notes(ton, [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0])  # E minor pentatonic
+    tempo_obj(76)
     output_obj(vol=0.85, comp=0.25)
 
-def b06():  # ACID — LFO cutoff ride + seq->filter env bites (velocity = depth)
-    osc = place("oscillator", 0.62, -0.08, a_freq(110))
-    st(osc, "subtype", 2)  # saw
-    st(osc, "amp", 0.6)
-    flt = place("filter", 0.32, -0.02, a_cut(480))
+def b06():  # SHINE — Pink Floyd atmosphere: the 4-note motif, pad drone,
+    # slow filter tide, pingpong echoes. G dorian, 66 bpm
+    pad = place("oscillator", 0.55, -0.30, a_freq(196.8))  # detuned drone
+    st(pad, "subtype", 2)  # saw, drones forever at low amp
+    st(pad, "amp", 0.28)
+    lead = place("oscillator", 0.52, 0.05, a_freq(196.0))  # G3
+    st(lead, "subtype", 2)  # saw
+    st(lead, "amp", 0.55)
+    sub(lead, 1, wave=0, amp=0.4, off=-12)
+    for k, v in (("a", 0.02), ("d", 0.4), ("s", 0.55), ("r", 0.9)):
+        st(lead, k, v)  # long release — the motif hangs in the air
+    flt = place("filter", 0.28, -0.05, a_cut(900))
     st(flt, "subtype", 1)
-    st(flt, "res", 0.75)
-    for k, v in (("a", 0.01), ("d", 0.35), ("s", 0.0), ("r", 0.2)):
-        st(flt, k, v)
-    lfo = place("lfo", 0.35, 0.28, a_lfo(2))
-    st(lfo, "subtype", 2)  # saw
+    st(flt, "res", 0.3)
+    lfo = place("lfo", 0.42, 0.30, a_lfo(0.5))
+    st(lfo, "subtype", 1)  # sine
     st(lfo, "sync", 1)
-    st(lfo, "mult", 8)
-    st(lfo, "depth", 0.55)
+    st(lfo, "mult", 64)    # 2-bar filter tide
+    st(lfo, "depth", 0.3)
     link(lfo, flt)
-    sq1 = place("sequencer", 0.66, 0.28, a_preset(1))
-    pattern(sq1, 1, [
-        (1, 0, .9, 2), (1, 0, .5, 1), (0, 0, 0, 1), (1, 12, .8, 3),
-        (1, 0, .6, 1), (0, 0, 0, 1), (1, 3, .9, 2), (1, 0, .5, 3),
-        (1, 0, .9, 2), (1, 0, .5, 1), (0, 0, 0, 1), (1, 10, .8, 4),
-        (1, 12, .7, 2), (0, 0, 0, 1), (1, 7, .9, 2), (1, 3, .6, 5)])
-    link(sq1, osc)
-    # second sequencer pokes the filter ENVELOPE; its velocity sets how deep
-    # the cutoff opens — the new velocity->env-depth path
-    sq2 = place("sequencer", 0.05, 0.32, a_preset(1))
-    pattern(sq2, 1, [
-        (1, 0, .9), (0, 0), (0, 0), (0, 0),
-        (0, 0), (0, 0), (1, 0, .35), (0, 0),
-        (0, 0), (1, 0, .6), (0, 0), (0, 0),
-        (0, 0), (0, 0), (0, 0), (1, 0, .8)])
-    link(sq2, flt)
-    ton = place("tonality", -0.50, -0.30, a_root(9))  # A minor
-    st(ton, "subtype", 2)
-    tempo_obj(128)
-    output_obj(vol=0.8, comp=0.2)
+    dly = place("delay", 0.10, 0.10, a_time(0.5))
+    st(dly, "subtype", 2)  # pingpong
+    st(dly, "sync", 1)
+    st(dly, "feedback", 0.45)
+    sq = place("sequencer", 0.75, -0.10, a_preset(1))
+    pattern(sq, 1, [  # Bb–F–G–E, held and unanswered, 2 bars
+        (1, 3, .85, 8), (0, 0, 0, 4), (1, 10, .75, 8), (0, 0, 0, 4),
+        (1, 0, .85, 8), (0, 0, 0, 4), (1, 9, .8, 10), (0, 0, 0, 2),
+        (0, 0, 0, 4), (0, 0, 0, 4), (1, 12, .55, 4), (0, 0, 0, 4),
+        (0, 0, 0, 4), (1, 10, .5, 4), (0, 0, 0, 4), (0, 0, 0, 4)])
+    link(sq, lead)
+    ton = place("tonality", -0.48, -0.30, a_root(7))
+    st(ton, "subtype", 2)  # minor preset, then edit to G dorian
+    notes(ton, [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0])  # dorian mask
+    tempo_obj(66)
+    output_obj(vol=0.8, rev=0.45, room=0.7)
 
 def b07():  # PING — delay subtypes, pingpong, effect-envelope feedback swells
     clv = place("sampler", 0.55, -0.20, a_freq(261.6))
@@ -402,39 +412,41 @@ def b09():  # CHOIR — parallel generators, chorus, vibrato LFO, big reverb
     tempo_obj(60)
     output_obj(vol=0.8, rev=0.5, room=0.7)
 
-def b10():  # MORPH — groove drives the notes, a second sequencer drives the
-    # TIMBRE: its pitch sweeps the waveshaper main param (new in v3.4)
-    osc = place("oscillator", 0.60, -0.10, a_freq(146.83))  # D3
+def b10():  # TIDE — new-age pulse in F lydian; a second sequencer sweeps
+    # the compressor by pitch (note -> main), so the whole table breathes
+    osc = place("oscillator", 0.55, -0.10, a_freq(174.61))  # F3
     st(osc, "subtype", 2)  # saw
-    st(osc, "amp", 0.65)
-    shp = place("waveshaper", 0.35, -0.02, a_01(0.3))
-    st(shp, "subtype", 3)  # distortion
-    st(shp, "drywet", 0.85)
-    flt = place("filter", 0.14, -0.05, a_cut(2200))
-    st(flt, "subtype", 1)
-    st(flt, "res", 0.25)
-    sq1 = place("sequencer", 0.78, -0.28, a_preset(1))
-    pattern(sq1, 1, [  # driving 16th groove
-        (1, 0, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
-        (1, 3, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
-        (1, 0, .9), (1, 0, .5), (1, 0, .6), (1, 0, .5),
-        (1, 7, .9), (1, 5, .6), (1, 3, .7), (1, 0, .8)])
+    st(osc, "amp", 0.5)
+    sub(osc, 1, wave=0, amp=0.35, off=12)   # octave shimmer
+    sub(osc, 2, wave=0, amp=0.2, off=-12)
+    for k, v in (("a", 0.01), ("d", 0.25), ("s", 0.5), ("r", 0.4)):
+        st(osc, k, v)
+    shp = place("waveshaper", 0.30, -0.02, a_01(0.4))
+    st(shp, "subtype", 2)  # compressor — the tide sucks back and swells
+    st(shp, "drywet", 0.6)
+    dly = place("delay", 0.12, 0.08, a_time(0.5))
+    st(dly, "subtype", 2)  # pingpong
+    st(dly, "sync", 1)
+    st(dly, "feedback", 0.35)
+    sq1 = place("sequencer", 0.72, -0.30, a_preset(1))
+    pattern(sq1, 1, [  # breathing pulse, lydian #4 (11) as the sparkle, 2 bars
+        (1, 0, .5, 4), (1, 7, .35, 4), (1, 4, .55, 4), (1, 7, .35, 4),
+        (1, 0, .6, 4), (1, 7, .35, 4), (1, 11, .5, 4), (1, 7, .4, 4),
+        (1, 0, .65, 4), (1, 7, .4, 4), (1, 4, .55, 4), (1, 9, .45, 4),
+        (1, 6, .5, 4), (1, 4, .4, 4), (1, 7, .55, 4), (1, 4, .4, 4)])
     link(sq1, osc)
-    sq2 = place("sequencer", 0.30, 0.38, a_preset(1))
-    pattern(sq2, 1, [  # slow climb: note = distortion amount
-        (1, -12, .8, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, -5, .8, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)])
-    pattern(sq2, 2, [  # rotate to p2: full sweep up and back
-        (1, -12, .8, 8), (0, 0), (1, 0, .8, 8), (0, 0),
-        (1, 12, .8, 8), (0, 0), (0, 0), (0, 0),
-        (1, 0, .8, 8), (0, 0), (1, -5, .8, 8), (0, 0),
-        (0, 0), (0, 0), (0, 0), (0, 0)])
-    rot(sq2, a_preset(1))
+    sq2 = place("sequencer", 0.25, 0.40, a_preset(1))
+    pattern(sq2, 1, [  # the tide: compression sweeps in and out over 4 bars
+        (1, -12, .8, 8), (0, 0, 0, 8), (1, 0, .8, 8), (0, 0, 0, 8),
+        (1, 12, .8, 8), (0, 0, 0, 8), (1, 0, .8, 8), (0, 0, 0, 8),
+        (1, -5, .8, 8), (0, 0, 0, 8), (1, 5, .8, 8), (0, 0, 0, 8),
+        (0, 0, 0, 8), (0, 0, 0, 8), (0, 0, 0, 8), (0, 0, 0, 8)])
     link(sq2, shp)
-    ton = place("tonality", -0.48, -0.28, a_root(2))  # D minor
-    st(ton, "subtype", 2)
-    tempo_obj(116)
-    output_obj(vol=0.85, comp=0.25)
+    ton = place("tonality", -0.48, -0.28, a_root(5))
+    st(ton, "subtype", 1)  # major preset, then edit to F lydian
+    notes(ton, [1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0])  # lydian mask
+    tempo_obj(80)
+    output_obj(vol=0.8, rev=0.35, room=0.6)
 
 def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     ther = place("sampler", 0.55, -0.05, a_freq(277.18))
@@ -442,6 +454,8 @@ def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     load(ther, f"{D}/instruments/theremin_Cs4.wav")
     st(ther, "base", 277.18)
     st(ther, "amp", 1.0)   # smooth source, short gates: needs the headroom
+    for k, v in (("a", 0.03), ("d", 0.2), ("s", 1.0), ("r", 0.7)):
+        st(ther, k, v)  # long release: gate-off glides instead of blipping
     chor = place("modulator", 0.32, 0.0, a_01(0.35))
     st(chor, "subtype", 2)
     st(chor, "drywet", 0.35)
@@ -450,12 +464,14 @@ def b11():  # SOLO — random sequencer + pentatonic = automatic solos
     st(dly, "sync", 1)
     st(dly, "feedback", 0.55)
     seq = place("sequencer", 0.78, -0.25, a_preset(1))
-    st(seq, "subtype", 3)  # random: on/vel gate the dice, pitch is luck
-    pattern(seq, 1, [
-        (1, 0, .9), (0, 0), (1, 0, .5), (1, 0, .7),
-        (0, 0), (1, 0, .9), (0, 0), (1, 0, .4),
-        (1, 0, .8), (0, 0), (1, 0, .6), (0, 0),
-        (1, 0, .9), (1, 0, .5), (0, 0), (1, 0, .7)])
+    st(seq, "subtype", 2)  # random: velocity gates the dice, pitch is luck
+    pattern(seq, 1, [  # fully dense (the v3.4.2 feel the owner loved),
+        # dynamics by velocity, holds long enough for the theremin's
+        # slow attack to open before the gate releases
+        (1, 0, .90, 4), (1, 0, .45, 2), (1, 0, .50, 3), (1, 0, .70, 4),
+        (1, 0, .45, 2), (1, 0, .90, 4), (1, 0, .45, 2), (1, 0, .45, 5),
+        (1, 0, .80, 4), (1, 0, .45, 2), (1, 0, .60, 3), (1, 0, .45, 4),
+        (1, 0, .90, 4), (1, 0, .50, 2), (1, 0, .45, 3), (1, 0, .70, 5)])
     link(seq, ther)
     ton = place("tonality", -0.48, -0.28, a_root(9))
     st(ton, "subtype", 3)  # pentatonic: every roll is musical
@@ -494,36 +510,75 @@ def b12():  # DRIFT — multi-osc stack, per-osc drift LFOs, random-seq filter s
     st(l2, "subtype", 1)
     st(l2, "depth", 0.12)
     link(l2, o2)         # a different drift on the square
+    drone = place("oscillator", 0.44, 0.42, a_freq(55))
+    st(drone, "subtype", 1)  # sine root drone: anchors the randomness
+    st(drone, "amp", 0.3)
     seq = place("sequencer", 0.05, 0.30, a_preset(1))
-    st(seq, "subtype", 3)  # random
+    st(seq, "subtype", 2)  # random (NOT 3=drift — builder predated renumber)
     pattern(seq, 1, [
         (1, 0, .8), (0, 0), (0, 0), (0, 0),
         (1, 0, .6), (0, 0), (1, 0, .7), (0, 0),
         (0, 0), (0, 0), (1, 0, .8), (0, 0),
         (0, 0), (1, 0, .6), (0, 0), (0, 0)])
     link(seq, flt)       # sparse gates retrigger the filter envelope
-    ton = place("tonality", -0.45, -0.35, a_root(9))  # A minor
-    st(ton, "subtype", 2)
-    tempo_obj(60)
+    ton = place("tonality", -0.45, -0.35, a_root(9))
+    st(ton, "subtype", 3)  # pentatonic: lifts the haze toward new-age
+    tempo_obj(66)
     output_obj(vol=0.8, rev=0.4, room=0.7, comp=0.25)
 
-def b13():  # CRUSH — resampler, HP filter, random LFO on dry-wet
-    lop = place("loop", 0.60, -0.10, a_rate(2))
-    st(lop, "subtype", 1)
-    load(lop, f"{D}/TR909-Rough_Sd.wav")
-    st(lop, "amp", 0.7)
-    shp = place("waveshaper", 0.35, 0.0, a_01(0.6))
-    st(shp, "subtype", 1)  # resampler (bitcrush)
-    st(shp, "drywet", 0.7)
-    flt = place("filter", 0.15, -0.05, a_cut(800))
-    st(flt, "subtype", 3)  # hp
-    st(flt, "res", 0.3)
-    lfo = place("lfo", 0.42, 0.32, a_lfo(1.5))
-    st(lfo, "subtype", 4)  # random
-    st(lfo, "depth", 0.5)
-    link(lfo, shp)         # crush amount wanders
-    tempo_obj(96)
-    output_obj(vol=0.85, comp=0.35)
+def b13():  # CLAVE — world percussion: double-tresillo clave, answering
+    # rim, low tom heartbeat, 3-feel hat accents; a whisper of bitcrush
+    clv = place("sampler", 0.45, -0.30, a_freq(261.6))
+    st(clv, "subtype", 2)
+    load(clv, f"{D}/drums/clave.wav")
+    st(clv, "amp", 0.8)
+    rim = place("sampler", 0.50, 0.05, a_freq(261.6))
+    st(rim, "subtype", 2)
+    load(rim, f"{D}/TR909-Syn_Rim.wav")
+    st(rim, "amp", 0.65)
+    tom = place("sampler", 0.42, 0.40, a_freq(130))
+    st(tom, "subtype", 2)
+    load(tom, f"{D}/drums/tom.wav")
+    st(tom, "amp", 0.85)
+    hat = place("sampler", 0.10, -0.45, a_freq(261.6))
+    st(hat, "subtype", 2)
+    load(hat, f"{D}/drums/chh.wav")
+    st(hat, "amp", 0.4)
+    shp = place("waveshaper", 0.18, 0.25, a_01(0.5))
+    st(shp, "subtype", 1)  # resampler: a whisper of grit on the tom
+    st(shp, "drywet", 0.3)
+    sq1 = place("sequencer", 0.72, -0.42, a_preset(1))
+    pattern(sq1, 1, [  # double tresillo: hits at 0,3,6 / 8,11,14
+        (1, 0, .9, 3), (1, 0, .75, 3), (1, 0, .85, 2),
+        (1, 0, .9, 3), (1, 0, .75, 3), (1, 0, .85, 2),
+        (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 2),
+        (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 1), (0, 0, 0, 1),
+        (0, 0, 0, 1), (0, 0, 0, 1)])
+    link(sq1, clv)
+    sq2 = place("sequencer", 0.75, 0.10, a_preset(1))
+    pattern(sq2, 1, [  # rim answers between the clave hits
+        (0, 0, 0, 2), (1, 0, .7, 2), (0, 0, 0, 2), (0, 0, 0, 2),
+        (1, 0, .75, 2), (0, 0, 0, 2), (0, 0, 0, 2), (1, 0, .6, 2),
+        (0, 0, 0, 2), (1, 0, .7, 2), (0, 0, 0, 2), (0, 0, 0, 2),
+        (1, 0, .75, 2), (0, 0, 0, 2), (1, 0, .55, 1), (1, 0, .5, 1)])
+    link(sq2, rim)
+    sq3 = place("sequencer", 0.68, 0.52, a_preset(1))
+    pattern(sq3, 1, [  # tom heartbeat: 1, the and of 2, 3
+        (1, 0, .95, 4), (0, 0, 0, 2), (0, 0, 0, 2),
+        (1, 0, .8, 2), (0, 0, 0, 2), (1, 0, .6, 2),
+        (1, 0, .9, 4), (0, 0, 0, 2), (0, 0, 0, 2),
+        (0, 0, 0, 2), (1, 0, .7, 2), (0, 0, 0, 2),
+        (0, 0, 0, 2), (0, 0, 0, 1), (0, 0, 0, 1), (0, 0, 0, 2)])
+    link(sq3, tom)
+    sq4 = place("sequencer", -0.05, -0.62, a_preset(1))
+    pattern(sq4, 1, [  # hat 16ths, accents lean on the 3-feel
+        (1, 0, .6, 2), (1, 0, .3, 2), (1, 0, .45, 2), (1, 0, .3, 2),
+        (1, 0, .55, 2), (1, 0, .3, 2), (1, 0, .45, 2), (1, 0, .35, 2),
+        (1, 0, .6, 2), (1, 0, .3, 2), (1, 0, .45, 2), (1, 0, .3, 2),
+        (1, 0, .55, 2), (1, 0, .35, 2), (1, 0, .45, 2), (1, 0, .5, 2)])
+    link(sq4, hat)
+    tempo_obj(104)
+    output_obj(vol=0.85, comp=0.25)
 
 def b14():  # SIX — one sequencer, six authored patterns: rotation = section
     # (intro/verse/build/peak/break/outro). the arrangement performance move

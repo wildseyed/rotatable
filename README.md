@@ -6,7 +6,15 @@ round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
 <img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png" width="560" alt="the table: a sequencer drives an oscillator through a filter and a delay into the glowing output point; sampler, waveshaper, LFO, tonality, tempo and output objects share the surface">
 
-**v3.4.3** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.4.4** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.4**: preset musicality pass — the early tables leave the
+16th-grid behind: HELLO is a slow new-age pentatonic motif, KEY is a
+dorian **bass riff** on contrabass, GRIT slowed to grease tempo, ACID →
+**SHINE** (Pink Floyd atmosphere), MORPH → **TIDE** (lydian breathing),
+CRUSH → **CLAVE** (tresillo world percussion), SOLO is dense again,
+DRIFT gains a root drone · every table now has its own scale (pentatonic,
+dorian, lydian, minor-pentatonic — no more same-minor-everywhere)
 
 **new in v3.4.3**: the sequencer finally breathes — melodic voices now
 have gate time (notes release before the next step; rests are real
@@ -364,19 +372,19 @@ musical sketch that also teaches one or two concepts.
 
 | slot | name | BPM | teaches | what's in it |
 |---|---|---|---|---|
-| 1 | HELLO | 112 | proximity patching, rotation = pitch, slider gauge = amp, synced delay | saw + mono melody → tempo-locked feedback delay + tempo object |
+| 1 | HELLO | 72 | proximity patching, rotation = pitch, slider gauge = amp, pingpong delay | sine + sub-octave plays a slow C-major-pentatonic motif with long breaths into a pingpong delay — new-age first contact |
 | 2 | BEAT | 122 | sampler, hardlink (`LINK K3`), step editor, velocity ghosts, drum pinning | kick/snare/hat, each with a hardlinked 16-step sequencer; the kick's pitch steps are ignored on purpose (drum = one octave) — velocity is the dynamics |
 | 3 | KIT-808 | 124 | multiple hardlinks, mute (`LINK K1+K3`), flanger settings page | TR-909 kit + clap, each own sequencer; hat runs through a tuned flanger (`fdepth`/`mindelay`/`ffb`); muted alt-snare ready to unmute; comp 0.3 |
-| 4 | KEY | 100 | tonality snapping, root key, editable mask, follow-tonality subs | saw lead + sine bass whose sub-octave follows the scale + a *custom* harmonic-minor tonality — check its notes panel |
-| 5 | GRIT | 90 | suboscillators, distortion, LFO → shaper main | saw + 2 subs → distortion → LP; a half-note LFO wobbles the distortion *amount* — E-minor bass growl |
-| 6 | ACID | 128 | LFO controllers, filter envelope, velocity → env depth | saw → LP with a quarter-note LFO on cutoff; a second sequencer pokes the filter envelope — its velocity sets the bite's depth |
+| 4 | KEY | 92 | bass riffs, custom scale masks (dorian!), call-and-answer | contrabass plays a tresillo-driven A-dorian bass riff; a sine answers in the gaps; the tonality's notes panel shows the custom dorian mask |
+| 5 | GRIT | 76 | suboscillators, distortion, LFO → shaper main | saw + 2 subs → distortion → LP; a slow LFO wobbles the distortion *amount* under a greasy E-minor-pentatonic riff |
+| 6 | SHINE | 66 | Pink Floyd atmosphere, long-release pads, filter tide | the Bb–F–G–E motif on a long-release saw over a droning detuned twin; LP swept by a 2-bar LFO tide; pingpong echoes, big reverb |
 | 7 | PING | 100 | delay subtypes, pingpong, effect envelopes | clave + cowbell → tempo-quantized pingpong; a third sequencer's notes retrigger the delay's envelope so feedback swells |
 | 8 | SIREN | 96 | note → delay time (dub siren), effect-as-instrument | sine plucks → feedback delay at 0.8; a second sequencer plays the *delay time* — the echo is the melody |
 | 9 | CHOIR | 60 | parallel generators at the output, chorus, vibrato LFO | cello + violin a fifth apart + sub-osc drone, chorus, whole-note LFO swell, big reverb |
-| 10 | MORPH | 116 | note → waveshaper main, timbre as a sequenced parameter | driving saw groove → distortion → LP; a slow second sequencer sweeps the distortion amount by pitch (rotate it to p2 for the full sweep) |
-| 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | random sequencer → theremin → chorus → feedback delay; every dice roll is in scale |
-| 12 | DRIFT | 60 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | saw + detuned square + sine sub-bass, each with subs, into one LP filter; each osc has its own slow pitch-drift LFO; a random sequencer retriggers the filter's cutoff envelope; reverb-delay insert for space |
-| 13 | CRUSH | 96 | waveshaper resampler, HP filter, random LFO on dry-wet | double-time snare-stutter loop → bitcrusher → HP, crush amount wanders |
+| 10 | TIDE | 80 | note → waveshaper main, sequencer-driven breathing | F-lydian pulse through a compressor; a second sequencer sweeps the compression by pitch over 4 bars — the whole table breathes |
+| 11 | SOLO | 112 | random sequencer + pentatonic = automatic solos | dense random sequencer → theremin → chorus → feedback delay; velocity carries the dynamics, every dice roll is in scale |
+| 12 | DRIFT | 66 | multiple generators into one effect, per-osc drift LFOs, sequencer→effect envelopes | three detuned/stacked saws into one LP, each with its own slow pitch-drift LFO; a random sequencer reopens the filter; pentatonic haze over a root drone |
+| 13 | CLAVE | 104 | world percussion, tresillo rhythm, velocity accents | double-tresillo clave + answering rim + low tom heartbeat (a whisper of bitcrush on the tom) + hats leaning on the 3-feel |
 | 14 | SIX | 118 | pattern presets 1–6 as song sections | one saw lead → LP + a kick pulse; a single sequencer holds six authored patterns — rotate through intro/verse/build/peak/break/outro |
 | 15 | ZOO | 80 | sound design: generators don't have to be musical; drift sequencers | elephant → bandpass → pingpong call-and-response; double-time crickets as a shaker; quarter-speed bear-growl drone through the bitcrusher; frog one-shots; three coquí frogs calling at random intervals, each its own pitch and density |
 | 16 | FINALE | 122 | everything at once | 15 objects: drum kit, tuba bass, horn stabs, theremin pad, A-minor tonality, full master FX — the demo you play people |
@@ -384,8 +392,8 @@ musical sketch that also teaches one or two concepts.
 **playing the presets** — a tour, in order; each "try" uses the gestures
 from the block settings guide above:
 
-1. **HELLO** — the minimum viable table, now with space. try: rotate the
-   osc while the melody plays (E2 in ROTATE), then rotate the delay —
+1. **HELLO** — the minimum viable table, new-age edition. try: rotate the
+   osc while the motif breathes (E2 in ROTATE), then rotate the delay —
    past an 8th note the time snaps to the tempo grid on its own. move the
    sequencer far from the osc and the melody stops — proximity *is* the
    patch cable.
@@ -397,19 +405,17 @@ from the block settings guide above:
    under the hi-hat — its set page has `fdepth`, `mindelay`, `ffb`. then
    find the dimmed connection to the alt snare and unmute it in LINK
    mode (`K1+K3`).
-4. **KEY** — pitch discipline, now with a bass that obeys it too. try:
-   open the tonality's notes page and toggle degree `6` (the raised 7th
-   that makes it *harmonic* minor); the bass sub-octave follows the same
-   scale (follow-tonality on its subs page). rotate the tonality to
-   transpose the whole table.
-5. **GRIT** — the LFO as a second hand on the *amount* knob. try: the
-   LFO's slider (E3) is depth — it wobbles distortion drive, not
-   dry-wet. break its hardlink (LINK, `K3`) and it wanders to the filter
-   instead.
-6. **ACID** — velocity as a performance dimension. try: `^K3` the
-   second sequencer's steps page and edit velocities (`K1+E3`) — each
-   poke opens the filter by exactly that much. the quarter-note LFO
-   still rides the cutoff underneath.
+4. **KEY** — the bass riff table. try: open the tonality's notes page —
+   that's a hand-built *dorian* mask; toggle degree `9` off and hear the
+   riff turn minor. rotate the tonality to transpose the whole table.
+   then rotate the contrabass itself for a different riff register.
+5. **GRIT** — the LFO as a second hand on the *amount* knob, now at a
+   grease tempo. try: the LFO's slider (E3) is depth — it wobbles
+   distortion drive, not dry-wet. break its hardlink (LINK, `K3`) and it
+   wanders to the filter instead.
+6. **SHINE** — the Pink Floyd one. try: nothing for thirty seconds —
+   the motif answers itself. then ride the filter's rotation slowly, or
+   pull the delay feedback toward 0.9 and let the echoes play the room.
 7. **PING** — rhythmic echo. try: the delay's set page — `sync` off frees
    the time knob from the grid; `sweep` up for tape-style pitch glides.
    the third sequencer only exists to poke the delay's envelope.
@@ -419,21 +425,22 @@ from the block settings guide above:
    `sweep` glides the time changes like tape.
 9. **CHOIR** — patience. try: nothing, for a minute — the vibrato LFO has
    a whole-note period. then open the chorus 2d page and push depth up.
-10. **MORPH** — timbre on a timeline. try: rotate the second sequencer
-    from p1 to p2 for the full sweep, then open the shaper's 2d page and
-    watch X (amount) move on its own — a sequencer is driving it.
-11. **SOLO** — hands off. try: nothing — the random sequencer improvises
-    and the pentatonic tonality keeps every roll musical. open its steps
-    page to watch the note history appear. raise the delay's feedback
-    slider for a longer trail.
-12. **DRIFT** — width from numbers, movement from patience. try: nothing
-    at first — each osc has its own slow pitch-drift LFO and a random
-    sequencer swells the filter cutoff on sparse gates. then open the
-    filter's env page and stretch the decay for longer breathes, or raise
-    a drift LFO's depth slider into detune-wobble territory.
-13. **CRUSH** — deliberate ugliness. try: the random LFO is modulating the
-    bitcrusher's dry-wet — watch the connection dots. filter rotation
-    (HP) decides how much of the dirt survives.
+10. **TIDE** — the table breathes. try: nothing — the second sequencer
+    pumps the compressor over 4 bars. then open the tonality's notes page:
+    the #4 (degree `6`) is what makes it lydian — toggle it off mid-swell
+    and the sparkle vanishes.
+11. **SOLO** — hands off, dense again. try: nothing — the random
+    sequencer improvises and the pentatonic tonality keeps every roll
+    musical. open its steps page to watch the note history appear. raise
+    the delay's feedback slider for a longer trail.
+12. **DRIFT** — width from numbers, now anchored. try: nothing at
+    first — the root drone holds the floor while the saws drift and the
+    random sequencer reopens the filter. then raise a drift LFO's depth
+    slider into detune-wobble territory.
+13. **CLAVE** — world percussion. try: clap the tresillo along with the
+    clave (3-3-2, 3-3-2). `^K3` the hat's steps page and raise the
+    off-beat velocities; the tom's whisper of bitcrush lives on the
+    shaper's slider.
 14. **SIX** — arrangement by rotation. try: perform it — rotate the lead
     sequencer (E2 in ROTATE) through p1→p6: intro, verse, build, peak,
     breakdown, outro. then write your own six on its steps pages.

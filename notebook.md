@@ -711,3 +711,18 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   presets.py sends bool(on), and slots.lua recall migrates legacy
   `["on"]=0` → false (user-saved slots too). All 16 rebuilt + pulled;
   spot-checks show true silence in rests and real dynamic spread.
+- 2026-10-11 (v3.4.4): **preset musicality pass 2** (owner: 1/4/5/6/10/12/
+  13 "seems like an AI did these", same-scale-everywhere; wanted new-age/
+  world/Floyd/bass riffs; loved 2/3/7/8/9/14/15/16 untouched; old SOLO >
+  new SOLO). KEY INSIGHT: old SOLO was loved BECAUSE of the truthiness bug
+  (dense) — and the v3.4.3 rebuild had ALSO silently switched it to drift
+  subtype (b11's `subtype 3` predated the random/drift renumber! same bug
+  in the other session's b12: comment said "random", code said 3=drift —
+  fixed to 2, its README/commit always said random). Scale variety: HELLO
+  C-maj-pent, KEY A-dorian bass riff (contrabass!), GRIT E-min-pent slow,
+  ACID→SHINE (G-dorian Floyd motif Bb-F-G-E, pad drone, 2-bar filter tide,
+  pingpong, big reverb), MORPH→TIDE (F-lydian pulse + compressor pumped by
+  seq pitch), CRUSH→CLAVE (tresillo percussion), DRIFT +root drone and
+  pentatonic, SOLO dense + theremin env opened (slow-attack sample needs
+  long holds — gate-time blips made it whisper-quiet). README table+tour
+  updated. All rebuilt, meter-checked, pulled. Owner ear-check pending.
