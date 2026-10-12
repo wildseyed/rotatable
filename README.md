@@ -4,7 +4,16 @@ a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns
 the tangible table synth, recreated virtually: no camera, no pucks, just the
 round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
-**v3.4.2** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png" width="560" alt="the table: a sequencer drives an oscillator through a filter and a delay into the glowing output point; sampler, waveshaper, LFO, tonality, tempo and output objects share the surface">
+
+**v3.4.3** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.3**: the sequencer finally breathes — melodic voices now
+have gate time (notes release before the next step; rests are real
+silence), and a truthiness bug that played every authored "off" step is
+fixed (0 is truthy in Lua!) — all 16 factory patterns have their intended
+rests back · HELLO/KEY/GRIT/ACID melodies re-authored with varied step
+durations · E3 Y-pan in NAV inverted (feel)
 
 **new in v3.4.2**: the early factory presets were rebuilt around the v3.4
 features — HELLO/BEAT/KIT-808/KEY are richer and distinct, SUB→**GRIT**
@@ -67,18 +76,6 @@ animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
 (hold K1+K2+K3) with factory presets · synced settings panels ·
 melodic sampler with base-pitch tuning
 
-## screenshots
-
-![the table: objects patched toward the output point, tempo object
-lower-left](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png)
-
-![a chain in detail: loop, shaper, delay, filter, osc — subtype
-pictograms and signal-flow dashes](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/chain-detail.png)
-
-![the sequencer steps panel](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-steps.png)
-
-![the output object's global FX panel](https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-gfx.png)
-
 ## install
 
 on your norns, in maiden's REPL:
@@ -102,6 +99,8 @@ everything connected to the center dot is heard.
 
 ## your first patch (30 seconds)
 
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/first-patch.png" width="320" alt="an oscillator patched through a filter into the output point — two objects, two lines, sound">
+
 1. `K1+K3` → place menu → `K3` places an **oscillator** at the reticle
 2. it's already selected in MOVE mode — E2/E3 slide it near the center dot;
    a line forms → you're hearing it
@@ -123,6 +122,8 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 | L2 OBJECT | one block selected | `K3` cycles MOVE → ROTATE → LINK; `K1+K3` dive into config; `K1+K2` delete block |
 | L3 CONFIG | a block's panels | E1 page, E2/E3 edit; `K2` back |
 | SYSTEM | master menu | **hold `K1+K2+K3` for 1 s** to open; E2 scroll, `K3` select, `K2` close |
+
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/place-menu.png" width="320" alt="the L0 place menu: generators, effects, controllers and globals, one K3 away">
 
 **L2 modes**
 
@@ -186,6 +187,8 @@ all connections form by proximity — no menus, no cables:
 - everything with a path to the output point is heard; the output point
   pulses at the current tempo
 
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/chain-detail.png" width="320" alt="a chain up close: filter and delay blocks with perimeter gauges, signal flowing into the output point, an LFO driving from the side">
+
 ### tempo & sync
 
 one BPM (`rot_tempo` param, 40–240) drives everything; the tempo object
@@ -199,8 +202,12 @@ puts it on the table (rotation = BPM) and the output point pulses it:
 
 ### the sequencer
 
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-steps.png" width="320" alt="the steps panel: 16 steps with pitch bars, per-step velocity and duration">
+
 16 steps × 6 stored patterns per object (rotation switches, header shows
-`p1`–`p6`); per-step pitch (±24 st), velocity, and duration. targets:
+`p1`–`p6`); per-step pitch (±24 st), velocity, and duration. duration sets
+both the step's length in the grid and the note's gate time (a note releases
+before the next step — rests are real silence). targets:
 
 - **oscillator / sampler**: plays the note (velocity → amp, ADSR gate);
   drum samplers ignore the note's pitch (always one octave)
@@ -224,6 +231,8 @@ sampler/subs pitches. the scale itself is editable: 12 toggleable
 degrees on the notes panel; subtypes are preset loads (major/minor/
 pentatonic/chromatic) you can then customize.
 
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-notes.png" width="320" alt="the tonality notes panel: the scale as 12 toggleable degrees, major lit">
+
 ### sound design extras
 
 - **sub-oscillators** (oscillator): 4 subs × waveform/amp/detune/offset,
@@ -237,6 +246,8 @@ pentatonic/chromatic) you can then customize.
   compression on the output bus; neutral when the output object is absent
 - **midi in**: notes land on the closest object (pitched or envelope
   trigger), rotation = transpose ±24 st
+
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-subs.png" width="320" alt="the oscillator subs panel: four sub-oscillators with waveform, amp, detune and offset, plus follow-tonality"> <img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-gfx.png" width="320" alt="the output object's set panel: master reverb mix, room size and compression">
 
 **visuals**: blocks carry a subtype pictogram on their rim (orbits with
 rotation) and a perimeter arc gauge (sweep = slider value, like the
@@ -305,7 +316,8 @@ per block (rotation / slider / subtypes, then its panels):
 - **sequencer** — rotation switches 6 stored patterns (`p1`–`p6` in the
   header) / — / mono·random·drift. panels: **steps** (E2 step, E3 pitch
   ±24 st, `K1+E3` velocity, `K3` toggle), **vel**, **dur** (step length in
-  32nds, 1–8; 2 = a 16th). random subtype improvises into the tonality;
+  32nds, 1–8; 2 = a 16th — also the note's gate length). random subtype
+  improvises into the tonality;
   its steps page shows the note history it has played. drift subtype
   drops the pattern: it fires at random intervals with slight velocity
   and pitch jitter — rotation sets the maximum gap (sparseness), and its
@@ -330,6 +342,8 @@ object's rotation.
 pan outside the table edge: 16 numbered slots in a ring. the boxes are
 world-fixed like blocks — they grow as you zoom in, so they stay visible
 landing targets when navigating way zoomed in.
+
+<img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/slot-ring.png" width="320" alt="zoomed all the way out: the whole table with the 16-slot patch ring around it, every slot stored">
 
 - **long-press K3** empty slot → store the whole patch (objects, params,
   sequences, samples, links, tempo)

@@ -389,6 +389,24 @@ function Audio.seq_tick(tick)
                 engine.set(n.out, "amp", st.vel)
                 engine.trigger(n.out,
                   drum and t.freq or 440 * (2 ^ ((nn - 69) / 12)))
+                -- gate time (2026-10-11): the seq never used to close the
+                -- gate, so melodic voices legato-droned through rests.
+                -- hold 80% of the step, then release into the env's r.
+                -- drums self-terminate (perc env) — skip them.
+                if not drum then
+                  local target = n.out
+                  t._gate_seq = (t._gate_seq or 0) + 1
+                  local gs = t._gate_seq
+                  local hold = (st.dur or 2) * (60 / params:get("rot_tempo") / 8) * 0.8
+                  clock.run(function()
+                    clock.sleep(hold)
+                    -- a newer note on the same voice supersedes this
+                    local tn = nodes[target]
+                    if tn and tn._gate_seq == gs then
+                      engine.set(target, "gate", 0)
+                    end
+                  end)
+                end
               else
                 -- effect/loop target: envelope retrigger; the note number
                 -- (60 = center) drives waveshaper/delay main param engine-

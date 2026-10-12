@@ -1,5 +1,5 @@
 -- rotatable
--- v3.4.2 @wildseyed
+-- v3.4.3 @wildseyed
 -- github.com/wildseyed/rotatable
 --
 -- a reactable emulator:
@@ -230,11 +230,20 @@ function init()
 
   -- watchdog: if the clock still ends up stopped (init race, metro freed
   -- elsewhere), restart it loudly instead of leaving a dead table
+  local last_tick = 0
   watchdog_metro = metro.init(function()
-    if seq_metro and not seq_metro.is_running then
+    if not seq_metro then return end
+    if not seq_metro.is_running then
       print("rotatable: seq metro was stopped — restarting")
       pcall(function() seq_metro:start() end)
+    elseif seq_tick_n == last_tick then
+      -- reports running but the callback hasn't fired for a full second
+      -- (found 2026-10-11: metro froze mid-session; table played a single
+      -- sustained tone — this variant dodged the is_running check)
+      print("rotatable: seq metro frozen at tick " .. last_tick .. " — restarting")
+      pcall(function() seq_metro:stop(); seq_metro:start() end)
     end
+    last_tick = seq_tick_n
   end, 1, -1)
   watchdog_metro:start()
 

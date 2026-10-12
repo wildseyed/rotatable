@@ -495,7 +495,7 @@ function UI.enc(n, d)
     elseif n == 3 then
       slot_focus = nil
       cam_target = nil
-      cam.y = cam.y + d * 0.01 * (48 / cam.zoom)
+      cam.y = cam.y - d * 0.01 * (48 / cam.zoom) -- inverted (owner, 2026-10-11)
     end
   elseif level == "L0" then
     local items = menu_selectables()
