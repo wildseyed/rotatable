@@ -691,3 +691,23 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   OSC bursts). Watchdog now also compares the tick count between its 1s
   beats: unchanged while is_running → print + stop/start the metro.
   Deployed, ticking, no false positives.
+- 2026-10-11 (v3.4.3): **sequencer gate time** (owner heard "fixed
+  durations, dull repetition" — diagnosis: correct). Root cause: the seq
+  NEVER closed the gate on melodic voices (only MIDI note-off did), so
+  osc/sampler lines legato-droned through rests; plus my factory patterns
+  used uniform dur=2. Fix in `Audio.seq_tick`: non-drum pitched triggers
+  now hold 80% of the step's dur, then gate 0 (env r shapes the tail);
+  stale-clock guard via per-voice counter so a fast note can't be cut by
+  an older note's timer. Verified: 1-note/bar pattern pulses with true
+  silence between (amp 0.35→0.00). Re-authored HELLO/KEY/GRIT/ACID lead
+  patterns with varied durs (all sum to 32 32nds = 1 bar, so voices stay
+  in phase); drums unchanged (perc env self-terminates). Kept presets
+  improve automatically (their rests now work). ALSO in this release:
+  E3 Y-pan inversion in NAV (owner). LATE-BREAKING, the real root cause of the "dull" complaint: **0 is
+  TRUTHY in lua** and presets.py pattern rows use int 0 for off → api.py
+  sent them through as-is → every authored "rest" PLAYED. All 16 factory
+  patterns machine-gunned their off-steps since v3.1. Fixed in three
+  places: api.py coerces on to a real boolean (0/False/None → false),
+  presets.py sends bool(on), and slots.lua recall migrates legacy
+  `["on"]=0` → false (user-saved slots too). All 16 rebuilt + pulled;
+  spot-checks show true silence in rests and real dynamic spread.

@@ -160,6 +160,15 @@ function Slots.recall(i)
     elseif e.steps then
       o.patterns[1] = e.steps -- v1 slot format: single pattern -> preset 1
     end
+    -- v3.4.3 migration: pre-fix REST writes stored step `on` as int 0/1,
+    -- and 0 is TRUTHY in lua — those "rests" played as notes
+    if o.patterns then
+      for _, pat in pairs(o.patterns) do
+        for _, s in ipairs(pat) do
+          if s.on == 0 then s.on = false end
+        end
+      end
+    end
     if e.subs then o.subs = e.subs end
     if e.notes then o.notes = e.notes end
     if e.sample then Audio.load_sample(o, e.sample) end

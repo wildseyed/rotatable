@@ -52,7 +52,9 @@ ACTIONS = {
     "/load":   lambda p: "T.load(%d, '%s')" % (p["id"], p["path"]),
     "/step":   lambda p: "T.step(%d, %d, %s, %s, %s, %s)" % (
         p["id"], p["step"],
-        str(p["on"]).lower() if "on" in p else "nil",
+        # lua truthiness: 0 is TRUTHY — coerce int 0/1 to real booleans
+        # (presets.py patterns use ints; without this, "off" steps play)
+        ("true" if p["on"] not in (False, 0, None) else "false") if "on" in p else "nil",
         p.get("pitch", "nil"), p.get("vel", "nil"), p.get("dur", "nil")),
     "/key":    lambda p: "T.key(%d, %d)" % (p["n"], p["z"]),
     "/enc":    lambda p: "T.enc(%d, %d)" % (p["n"], p["d"]),

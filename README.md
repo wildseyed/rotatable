@@ -6,7 +6,14 @@ round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
 <img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png" width="560" alt="the table: a sequencer drives an oscillator through a filter and a delay into the glowing output point; sampler, waveshaper, LFO, tonality, tempo and output objects share the surface">
 
-**v3.4.2** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+**v3.4.3** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
+
+**new in v3.4.3**: the sequencer finally breathes — melodic voices now
+have gate time (notes release before the next step; rests are real
+silence), and a truthiness bug that played every authored "off" step is
+fixed (0 is truthy in Lua!) — all 16 factory patterns have their intended
+rests back · HELLO/KEY/GRIT/ACID melodies re-authored with varied step
+durations · E3 Y-pan in NAV inverted (feel)
 
 **new in v3.4.2**: the early factory presets were rebuilt around the v3.4
 features — HELLO/BEAT/KIT-808/KEY are richer and distinct, SUB→**GRIT**
@@ -198,7 +205,9 @@ puts it on the table (rotation = BPM) and the output point pulses it:
 <img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/panel-steps.png" width="320" alt="the steps panel: 16 steps with pitch bars, per-step velocity and duration">
 
 16 steps × 6 stored patterns per object (rotation switches, header shows
-`p1`–`p6`); per-step pitch (±24 st), velocity, and duration. targets:
+`p1`–`p6`); per-step pitch (±24 st), velocity, and duration. duration sets
+both the step's length in the grid and the note's gate time (a note releases
+before the next step — rests are real silence). targets:
 
 - **oscillator / sampler**: plays the note (velocity → amp, ADSR gate);
   drum samplers ignore the note's pitch (always one octave)
@@ -307,7 +316,8 @@ per block (rotation / slider / subtypes, then its panels):
 - **sequencer** — rotation switches 6 stored patterns (`p1`–`p6` in the
   header) / — / mono·random·drift. panels: **steps** (E2 step, E3 pitch
   ±24 st, `K1+E3` velocity, `K3` toggle), **vel**, **dur** (step length in
-  32nds, 1–8; 2 = a 16th). random subtype improvises into the tonality;
+  32nds, 1–8; 2 = a 16th — also the note's gate length). random subtype
+  improvises into the tonality;
   its steps page shows the note history it has played. drift subtype
   drops the pattern: it fires at random intervals with slight velocity
   and pitch jitter — rotation sets the maximum gap (sparseness), and its

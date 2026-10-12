@@ -51,7 +51,7 @@ def mute(a, b):   api("/mute", {"a": a, "b": b})
 def save(i):      lua(f"T.save_slot({i})")
 
 def step(i, s, on, pitch=0, vel=0.8, dur=2):
-    api("/step", {"id": i, "step": s, "on": on, "pitch": pitch,
+    api("/step", {"id": i, "step": s, "on": bool(on), "pitch": pitch,
                   "vel": vel, "dur": dur})
 
 def pattern(i, preset, rows):
@@ -111,10 +111,10 @@ def b01():  # HELLO — proximity patching, rotation, slider, synced-delay space
     seq = place("sequencer", 0.62, 0.25, a_preset(1))
     st(seq, "subtype", 1)  # mono
     pattern(seq, 1, [
-        (1, 0, .9), (0, 0), (1, 4, .7), (0, 0),
-        (1, 7, .9), (0, 0), (1, 12, .8), (1, 7, .6),
-        (1, 4, .9), (0, 0), (1, 7, .7), (0, 0),
-        (1, 14, .8), (0, 0), (1, 12, .9, 4), (0, 0)])
+        (1, 0, .9, 3), (0, 0, 0, 1), (1, 4, .7, 2), (0, 0, 0, 2),
+        (1, 7, .9, 4), (0, 0, 0, 1), (1, 12, .8, 2), (1, 7, .6, 1),
+        (1, 4, .9, 2), (0, 0, 0, 1), (1, 7, .7, 2), (0, 0, 0, 1),
+        (1, 14, .8, 2), (0, 0, 0, 2), (1, 12, .9, 4), (0, 0, 0, 2)])
     link(seq, osc)
     tempo_obj(112)
     output_obj(vol=0.8, rev=0.2, room=0.45)
@@ -216,16 +216,17 @@ def b04():  # KEY — harmonic-minor mask editing, subfollow bass, root rotation
     sq1 = place("sequencer", 0.68, -0.28, a_preset(1))
     # line leans on b6 (8) and nat7 (11) — only harmonic minor has both
     pattern(sq1, 1, [
-        (1, 0, .9), (0, 0), (1, 3, .7), (1, 7, .8),
-        (1, 8, .9), (0, 0), (1, 7, .6), (0, 0),
-        (1, 11, .9), (0, 0), (1, 8, .7), (1, 7, .8),
-        (1, 3, .8), (0, 0), (1, 0, .9, 4), (0, 0)])
+        (1, 0, .9, 3), (0, 0, 0, 1), (1, 3, .7, 2), (1, 7, .8, 2),
+        (1, 8, .9, 4), (0, 0, 0, 1), (1, 7, .6, 2), (0, 0, 0, 1),
+        (1, 11, .9, 3), (0, 0, 0, 1), (1, 8, .7, 1), (1, 7, .8, 2),
+        (1, 3, .8, 2), (0, 0, 0, 1), (1, 0, .9, 4), (0, 0, 0, 2)])
     link(sq1, lead)
     sq2 = place("sequencer", 0.55, 0.48, a_preset(1))
     pattern(sq2, 1, [  # sparse roots and fifths under the lead
-        (1, 0, .85, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
-        (1, 7, .8, 4), (0, 0), (1, 3, .7, 4), (0, 0),
-        (1, 0, .85, 6), (0, 0), (0, 0), (0, 0)])
+        (1, 0, .85, 4), (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 2),
+        (1, 7, .8, 3), (0, 0, 0, 1), (1, 3, .75, 3), (0, 0, 0, 1),
+        (1, 0, .85, 3), (0, 0, 0, 1), (0, 0, 0, 2), (1, -2, .7, 2),
+        (0, 0, 0, 2), (0, 0, 0, 2), (0, 0, 0, 1), (0, 0, 0, 1)])
     link(sq2, bass)
     ton = place("tonality", -0.45, -0.25, a_root(0))
     st(ton, "subtype", 2)  # minor — then customize into harmonic minor
@@ -254,10 +255,10 @@ def b05():  # GRIT — sub-bass stack, distortion, LFO -> shaper main (new!)
     link(lfo, shp)         # wobbles the distortion AMOUNT (note: main, not dry-wet)
     seq = place("sequencer", 0.62, 0.30, a_preset(1))
     pattern(seq, 1, [
-        (1, 0, .95, 4), (0, 0), (0, 0), (1, 3, .6),
-        (0, 0), (1, 0, .85), (0, 0), (1, 5, .6),
-        (1, 0, .95, 4), (0, 0), (0, 0), (1, 3, .65),
-        (0, 0), (1, 7, .8), (1, 5, .6), (1, 0, .75)])
+        (1, 0, .95, 5), (0, 0, 0, 1), (0, 0, 0, 1), (1, 3, .6, 1),
+        (0, 0, 0, 1), (1, 0, .85, 3), (0, 0, 0, 1), (1, 5, .6, 1),
+        (1, 0, .95, 4), (0, 0, 0, 1), (0, 0, 0, 1), (1, 3, .65, 2),
+        (0, 0, 0, 1), (1, 7, .8, 1), (1, 5, .6, 2), (1, 0, .75, 6)])
     link(seq, osc)
     ton = place("tonality", -0.45, -0.35, a_root(4))  # E minor
     st(ton, "subtype", 2)
@@ -281,10 +282,10 @@ def b06():  # ACID — LFO cutoff ride + seq->filter env bites (velocity = depth
     link(lfo, flt)
     sq1 = place("sequencer", 0.66, 0.28, a_preset(1))
     pattern(sq1, 1, [
-        (1, 0, .9), (1, 0, .5), (0, 0), (1, 12, .8),
-        (1, 0, .6), (0, 0), (1, 3, .9), (1, 0, .5),
-        (1, 0, .9), (1, 0, .5), (0, 0), (1, 10, .8),
-        (1, 12, .7), (0, 0), (1, 7, .9), (1, 3, .6)])
+        (1, 0, .9, 2), (1, 0, .5, 1), (0, 0, 0, 1), (1, 12, .8, 3),
+        (1, 0, .6, 1), (0, 0, 0, 1), (1, 3, .9, 2), (1, 0, .5, 3),
+        (1, 0, .9, 2), (1, 0, .5, 1), (0, 0, 0, 1), (1, 10, .8, 4),
+        (1, 12, .7, 2), (0, 0, 0, 1), (1, 7, .9, 2), (1, 3, .6, 5)])
     link(sq1, osc)
     # second sequencer pokes the filter ENVELOPE; its velocity sets how deep
     # the cutoff opens — the new velocity->env-depth path
