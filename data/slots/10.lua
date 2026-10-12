@@ -1,7 +1,7 @@
 return {
 -- Table: {1}
 {
-   ["tempo"]=116,
+   ["tempo"]=80,
    ["objects"]={2},
    ["v"]=3,
    ["mutes"]={3},
@@ -30,31 +30,31 @@ return {
 {
    ["subtype"]=2,
    ["type"]="oscillator",
-   ["angle"]=2.2252580024778,
+   ["angle"]=2.6179404626957,
    ["y"]=-0.1,
    ["subs"]={15},
    ["params"]={16},
-   ["x"]=0.6,
+   ["x"]=0.55,
    ["env"]={17},
 },
 -- Table: {6}
 {
-   ["subtype"]=3,
+   ["subtype"]=2,
    ["type"]="waveshaper",
-   ["angle"]=1.8849555921539,
+   ["angle"]=2.5132741228718,
    ["y"]=-0.02,
    ["params"]={18},
-   ["x"]=0.35,
+   ["x"]=0.3,
    ["env"]={19},
 },
 -- Table: {7}
 {
-   ["subtype"]=1,
-   ["type"]="filter",
-   ["angle"]=4.4144069487754,
-   ["y"]=-0.05,
+   ["subtype"]=2,
+   ["type"]="delay",
+   ["angle"]=4.6392021784586,
+   ["y"]=0.08,
    ["params"]={20},
-   ["x"]=0.14,
+   ["x"]=0.12,
    ["env"]={21},
 },
 -- Table: {8}
@@ -63,9 +63,9 @@ return {
    ["patterns"]={22},
    ["type"]="sequencer",
    ["angle"]=0.52368605660773,
-   ["y"]=-0.28,
+   ["y"]=-0.3,
    ["params"]={23},
-   ["x"]=0.78,
+   ["x"]=0.72,
    ["env"]={24},
 },
 -- Table: {9}
@@ -74,16 +74,16 @@ return {
    ["patterns"]={25},
    ["type"]="sequencer",
    ["angle"]=0.52368605660773,
-   ["y"]=0.38,
+   ["y"]=0.4,
    ["params"]={26},
-   ["x"]=0.3,
+   ["x"]=0.25,
    ["env"]={27},
 },
 -- Table: {10}
 {
-   ["subtype"]=2,
+   ["subtype"]=1,
    ["type"]="tonality",
-   ["angle"]=1.3089969389957,
+   ["angle"]=2.8797932657906,
    ["y"]=-0.28,
    ["notes"]={28},
    ["params"]={29},
@@ -94,7 +94,7 @@ return {
 {
    ["subtype"]=1,
    ["type"]="tempo",
-   ["angle"]=2.3876104167282,
+   ["angle"]=1.2566370614359,
    ["y"]=0.62,
    ["params"]={31},
    ["x"]=0.62,
@@ -104,7 +104,7 @@ return {
 {
    ["subtype"]=1,
    ["type"]="output",
-   ["angle"]=5.3407075111026,
+   ["angle"]=5.0265482457437,
    ["y"]=0.62,
    ["params"]={33},
    ["x"]=-0.62,
@@ -112,13 +112,13 @@ return {
 },
 -- Table: {13}
 {
-   2,
-   5,
+   1,
+   4,
 },
 -- Table: {14}
 {
-   1,
-   4,
+   2,
+   5,
 },
 -- Table: {15}
 {
@@ -130,20 +130,20 @@ return {
 },
 -- Table: {16}
 {
-   ["freq"]=146.83,
-   ["amp"]=0.65,
+   ["freq"]=174.61,
+   ["amp"]=0.5,
 },
 -- Table: {17}
 {
-   ["r"]=0.3,
+   ["r"]=0.4,
    ["a"]=0.01,
-   ["d"]=0.1,
-   ["s"]=0.7,
+   ["d"]=0.25,
+   ["s"]=0.5,
 },
 -- Table: {18}
 {
-   ["drywet"]=0.85,
-   ["main"]=0.3,
+   ["drywet"]=0.6,
+   ["main"]=0.4,
 },
 -- Table: {19}
 {
@@ -154,8 +154,11 @@ return {
 },
 -- Table: {20}
 {
-   ["res"]=0.25,
-   ["cutoff"]=2200.0,
+   ["sweep"]=0.2,
+   ["room"]=0.4,
+   ["sync"]=1,
+   ["feedback"]=0.35,
+   ["time"]=0.45454545454545,
 },
 -- Table: {21}
 {
@@ -214,18 +217,18 @@ return {
    true,
    false,
    true,
+   false,
+   true,
    true,
    false,
    true,
    false,
-   true,
    false,
-   true,
    [0]=true,
 },
 -- Table: {29}
 {
-   ["root"]=2,
+   ["root"]=5,
 },
 -- Table: {30}
 {
@@ -246,9 +249,9 @@ return {
 },
 -- Table: {33}
 {
-   ["rev"]=0.0,
-   ["comp"]=0.25,
-   ["room"]=0.5,
+   ["rev"]=0.35,
+   ["comp"]=0.0,
+   ["room"]=0.6,
    ["volume"]=0.8,
 },
 -- Table: {34}
@@ -261,14 +264,14 @@ return {
 -- Table: {35}
 {
    ["det"]=0,
-   ["amp"]=0,
-   ["off"]=-12,
+   ["amp"]=0.35,
+   ["off"]=12,
    ["wave"]=0,
 },
 -- Table: {36}
 {
    ["det"]=0,
-   ["amp"]=0,
+   ["amp"]=0.2,
    ["off"]=-12,
    ["wave"]=0,
 },
@@ -517,113 +520,113 @@ return {
 -- Table: {51}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.9,
+   ["dur"]=4,
+   ["vel"]=0.5,
    ["on"]=true,
 },
 -- Table: {52}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.35,
    ["on"]=true,
 },
 -- Table: {53}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.6,
+   ["pitch"]=4,
+   ["dur"]=4,
+   ["vel"]=0.55,
    ["on"]=true,
 },
 -- Table: {54}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.35,
    ["on"]=true,
 },
 -- Table: {55}
 {
-   ["pitch"]=3,
-   ["dur"]=2,
-   ["vel"]=0.9,
+   ["pitch"]=0,
+   ["dur"]=4,
+   ["vel"]=0.6,
    ["on"]=true,
 },
 -- Table: {56}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.35,
    ["on"]=true,
 },
 -- Table: {57}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.6,
+   ["pitch"]=11,
+   ["dur"]=4,
+   ["vel"]=0.5,
    ["on"]=true,
 },
 -- Table: {58}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.4,
    ["on"]=true,
 },
 -- Table: {59}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.9,
+   ["dur"]=4,
+   ["vel"]=0.65,
    ["on"]=true,
 },
 -- Table: {60}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.4,
    ["on"]=true,
 },
 -- Table: {61}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.6,
+   ["pitch"]=4,
+   ["dur"]=4,
+   ["vel"]=0.55,
    ["on"]=true,
 },
 -- Table: {62}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.5,
+   ["pitch"]=9,
+   ["dur"]=4,
+   ["vel"]=0.45,
    ["on"]=true,
 },
 -- Table: {63}
 {
-   ["pitch"]=7,
-   ["dur"]=2,
-   ["vel"]=0.9,
+   ["pitch"]=6,
+   ["dur"]=4,
+   ["vel"]=0.5,
    ["on"]=true,
 },
 -- Table: {64}
 {
-   ["pitch"]=5,
-   ["dur"]=2,
-   ["vel"]=0.6,
+   ["pitch"]=4,
+   ["dur"]=4,
+   ["vel"]=0.4,
    ["on"]=true,
 },
 -- Table: {65}
 {
-   ["pitch"]=3,
-   ["dur"]=2,
-   ["vel"]=0.7,
+   ["pitch"]=7,
+   ["dur"]=4,
+   ["vel"]=0.55,
    ["on"]=true,
 },
 -- Table: {66}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["pitch"]=4,
+   ["dur"]=4,
+   ["vel"]=0.4,
    ["on"]=true,
 },
 -- Table: {67}
@@ -1196,50 +1199,50 @@ return {
 -- Table: {148}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {149}
 {
    ["pitch"]=0,
-   ["dur"]=2,
+   ["dur"]=8,
    ["vel"]=0.8,
-   ["on"]=false,
+   ["on"]=true,
 },
 -- Table: {150}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {151}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
+   ["pitch"]=12,
+   ["dur"]=8,
    ["vel"]=0.8,
-   ["on"]=false,
+   ["on"]=true,
 },
 -- Table: {152}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {153}
 {
    ["pitch"]=0,
-   ["dur"]=2,
+   ["dur"]=8,
    ["vel"]=0.8,
-   ["on"]=false,
+   ["on"]=true,
 },
 -- Table: {154}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {155}
@@ -1252,58 +1255,58 @@ return {
 -- Table: {156}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {157}
 {
-   ["pitch"]=0,
-   ["dur"]=2,
+   ["pitch"]=5,
+   ["dur"]=8,
    ["vel"]=0.8,
-   ["on"]=false,
+   ["on"]=true,
 },
 -- Table: {158}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {159}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {160}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {161}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {162}
 {
    ["pitch"]=0,
-   ["dur"]=2,
-   ["vel"]=0.8,
+   ["dur"]=8,
+   ["vel"]=0,
    ["on"]=false,
 },
 -- Table: {163}
 {
-   ["pitch"]=-12,
-   ["dur"]=8,
+   ["pitch"]=0,
+   ["dur"]=2,
    ["vel"]=0.8,
-   ["on"]=true,
+   ["on"]=false,
 },
 -- Table: {164}
 {
@@ -1315,9 +1318,9 @@ return {
 -- Table: {165}
 {
    ["pitch"]=0,
-   ["dur"]=8,
+   ["dur"]=2,
    ["vel"]=0.8,
-   ["on"]=true,
+   ["on"]=false,
 },
 -- Table: {166}
 {
@@ -1328,10 +1331,10 @@ return {
 },
 -- Table: {167}
 {
-   ["pitch"]=12,
-   ["dur"]=8,
+   ["pitch"]=0,
+   ["dur"]=2,
    ["vel"]=0.8,
-   ["on"]=true,
+   ["on"]=false,
 },
 -- Table: {168}
 {
@@ -1357,9 +1360,9 @@ return {
 -- Table: {171}
 {
    ["pitch"]=0,
-   ["dur"]=8,
+   ["dur"]=2,
    ["vel"]=0.8,
-   ["on"]=true,
+   ["on"]=false,
 },
 -- Table: {172}
 {
@@ -1370,10 +1373,10 @@ return {
 },
 -- Table: {173}
 {
-   ["pitch"]=-5,
-   ["dur"]=8,
+   ["pitch"]=0,
+   ["dur"]=2,
    ["vel"]=0.8,
-   ["on"]=true,
+   ["on"]=false,
 },
 -- Table: {174}
 {
