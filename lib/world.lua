@@ -116,10 +116,13 @@ function World.add(type, x, y, angle)
     y = y or 0,
     angle = angle or 0,
     params = default_params(type),
-    -- effects get a percussive env (idle-neutral param envelopes);
-    -- generators the classic ADSR
+    -- effects get a percussive env (idle-neutral param envelopes); loop gets
+    -- s=1 (full rest volume — its env only articulates on seq/MIDI retrig);
+    -- other generators the classic ADSR
     env = World.TYPES[type].category == "effect"
       and { a = 0.01, d = 0.4, s = 0, r = 0.3 }
+      or type == "loop"
+      and { a = 0.01, d = 0.1, s = 1, r = 0.3 }
       or { a = 0.01, d = 0.1, s = 0.7, r = 0.3 },
   }
   if type == "sequencer" then

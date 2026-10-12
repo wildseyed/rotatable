@@ -609,7 +609,9 @@ function UI.enc(n, d)
       if n == 2 then field_idx = util.clamp(field_idx + d, 1, #ENV_FIELDS)
       elseif n == 3 then
         local f = ENV_FIELDS[field_idx]
-        selected.env[f] = util.clamp(selected.env[f] + d * 0.02, 0, 4)
+        -- sustain is a LEVEL (0..1); a/d/r are seconds (0..4)
+        selected.env[f] = util.clamp(selected.env[f] + d * 0.02, 0,
+          f == "s" and 1 or 4)
       end
     end
   end
@@ -804,7 +806,8 @@ local function draw_l3()
     for i, f in ipairs(ENV_FIELDS) do
       local x = 20 + (i - 1) * 26
       local v = selected.env[f]
-      local h = util.clamp(v / 4, 0, 1) * 38
+      -- s is a 0..1 level; a/d/r are 0..4 s
+      local h = util.clamp(v / (f == "s" and 1 or 4), 0, 1) * 38
       screen.level(i == field_idx and 15 or 6)
       screen.rect(x, 52 - h, 8, h)
       screen.stroke()

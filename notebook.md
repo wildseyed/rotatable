@@ -726,3 +726,26 @@ Remaining deferred work is listed in `plan/phase-5/integration.md`.)
   pentatonic, SOLO dense + theremin env opened (slow-attack sample needs
   long holds — gate-time blips made it whisper-quiet). README table+tour
   updated. All rebuilt, meter-checked, pulled. Owner ear-check pending.
+- 2026-10-11 (v3.5, phase 13): **envelope + follow-tonality fixes** from the
+  day's two code investigations (owner-approved plan in plan/phase-13/).
+  Sampler was the last retriggerable envelope without `t_retrig` (gotcha 15
+  had covered osc+effects only): first note played flat at sustain (gate
+  defaulted 1), legato/dense notes never re-articulated. Now gate=0 default
+  + t_retrig on trigger/loadbuf. Env page sustain was edited on a 0..4
+  SECOND scale though it's a LEVEL — clamped 0..1 (+slot migration, +env in
+  T.state). Loop gained its spec §3.2 amplitude ADSR (was dead UI; s=1
+  default = free-running unchanged, articulates on seq/MIDI/reload retrig).
+  Drift seq now sets vel for effect targets. Follow-tonality: resync
+  centralized in Audio.sync_object (any tonality sync re-snaps follow subs)
+  + World.remove resyncs after removal + T.notes syncs — fixes placement/
+  removal/API/recall paths; DRIFT (slot 12) had tonality after all oscs so
+  its follow subs were NEVER snapped (recall order + build order in
+  presets.py both wrong). All device-verified via REST harness (sampler
+  ramp 0.074→0.349 at a=1.5; rotation retrig dip 0.329→0.066; loop reload
+  retrig 0.059→0.211 vs baseline 0.193). e2e green after fixing a stale
+  assertion (random seq subtype 3→2, stale since the v3.2.2 renumber).
+  Test lessons: ws /lua replies need {braces} to surface through api.py;
+  per-line REPL means patch-with-globals only (a broken resync patch
+  aborted slot recall at 10/12 objects — recall is not error-isolated);
+  envelope tests need STEADY samples (birds' chirps mask the env). Owner
+  listening check pending; uncommitted.

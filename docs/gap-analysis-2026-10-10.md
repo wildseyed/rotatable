@@ -119,9 +119,11 @@ Classified as:
   grid sequencer remains possible future work (§9 decision 9).
 - ~~GAP: sequencer → loop does nothing~~ **FIXED 2026-10-11 (phase 12):**
   loop added to `SEQ_TARGETS`; oneshot loops retrig per step (the engine
-  `\loop` trigger branch already existed). Partial: the manual's loop
+  `\loop` trigger branch already existed). ~~Partial: the manual's loop
   *amplitude envelope* would need an ADSR in `rot_loop` (it has none) —
-  deferred.
+  deferred.~~ **CLOSED 2026-10-11 (phase 13):** `rot_loop` gained a full
+  amplitude ADSR (t_retrig on seq/MIDI/reload, vel depth, s=1 default =
+  free-running loops unchanged). Device-verified.
 - ~~GAP: drum sampler pitch-follows sequencer notes~~ **FIXED 2026-10-11
   (phase 12):** drum subtype now triggers at the rotation-set pitch
   regardless of note, per sampler.md:29. Decay-duration verified.
@@ -225,7 +227,8 @@ scope; noted only for completeness.
    effects. Surfaced + fixed a latent engine bug: gate-edge retrig never
    worked (same-control-period); now `t_retrig` TrigControl.
 3. ~~**Sequencer → loop envelope** (§5)~~ — **DONE 2026-10-11** (oneshot
-   retrig; full loop ADSR deferred).
+   retrig; ~~full loop ADSR deferred~~ full loop ADSR landed in phase 13,
+   same day).
 4. ~~**LFO → main parameter for waveshaper** (§4)~~ — **DONE 2026-10-11**
    (+ fixed the rest-halving drywet quirk on mod/input; decision 8
    re-anchored: unipolar dipper, rest = set value).

@@ -152,7 +152,7 @@ check("seq position advances", r1 != r2, f"{r1} -> {r2}")
 post("/rotate", {"id": seq, "angle": 0})  # back to preset 1 (penta default)
 r = lua(f'print("{{"..T.seq_state({seq}).."}}")')
 check("rotate back to preset 1", "preset=1" in r, r)
-post("/set", {"id": seq, "param": "subtype", "value": 3})  # random
+post("/set", {"id": seq, "param": "subtype", "value": 2})  # random
 time.sleep(3)
 r = lua(f'print("{{"..T.seq_state({seq}).."}}")')
 check("random subtype improvises (hist>0)", "hist=0" not in r, r)

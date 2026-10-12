@@ -60,6 +60,17 @@ add new files as work evolves, and keep this index stable.*
   loop semantics, parameter-lock N/A, song-switch wipe-rebuild. **Every
   gap-analysis item is now FIXED, DECIDED, or RESOLVED.**
 
+### v3.5 (2026-10-11, on device; owner listening check pending)
+- [x] **Phase 13 — Envelope + follow-tonality fixes** → `plan/phase-13/` —
+      from the 2026-10-11 code investigations:
+      [envelope-fixes](plan/phase-13/envelope-fixes.md) (sampler ADSR
+      retrigger via `t_retrig` + gate default 0; sustain 0..1 UI scale +
+      slot migration; drift-seq `vel`; loop amplitude ADSR implemented per
+      spec §3.2) and [follow-tonality](plan/phase-13/follow-tonality.md)
+      (resync centralized in `Audio.sync_object`; fixes placement/removal/
+      API/recall paths incl. DRIFT slot 12). All device-verified via REST
+      harness, e2e green (incl. fixing a v3.2.2-stale e2e assertion)
+
 ## Parking lot (undecided / later)
 
 - Grid/MIDI controller support
