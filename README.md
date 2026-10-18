@@ -8,6 +8,8 @@ round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
 
 **v3.4.4** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
+<a href="https://www.buymeacoffee.com/wildseyed" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 **new in v3.4.4**: preset musicality pass — the early tables leave the
 16th-grid behind: HELLO is a slow new-age pentatonic motif, KEY is a
 dorian **bass riff** on contrabass, GRIT slowed to grease tempo, ACID →
