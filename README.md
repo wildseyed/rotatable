@@ -1,90 +1,21 @@
 # rotatable
 
-a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns —
-the tangible table synth, recreated virtually: no camera, no pucks, just the
-round table on screen, patched by proximity, driven by 3 encoders + 3 keys.
+a [Reactable](https://en.wikipedia.org/wiki/Reactable) emulator for monome norns.
+
+the Reactable (Reactable Systems, Barcelona, 2003–2014) was a tangible music
+table: acrylic pucks on a camera-tracked glowing surface became synth modules
+— generators, effects, controllers — patched together by proximity and turned
+by hand. Björk took one on tour; the company is gone and the tables are
+museum pieces. **rotatable** recreates it virtually on norns: no camera, no
+pucks — the round table lives on the 128×64 screen, driven by 3 encoders +
+3 keys, with the original's sound-object set running as a SuperCollider
+engine.
 
 <img src="https://raw.githubusercontent.com/wildseyed/rotatable/main/press/table-wide.png" width="560" alt="the table: a sequencer drives an oscillator through a filter and a delay into the glowing output point; sampler, waveshaper, LFO, tonality, tempo and output objects share the surface">
 
 **v3.4.4** · [github](https://github.com/wildseyed/rotatable) · [discussion](https://github.com/wildseyed/rotatable/discussions)
 
 <a href="https://www.buymeacoffee.com/wildseyed" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
-**new in v3.4.4**: preset musicality pass — the early tables leave the
-16th-grid behind: HELLO is a slow new-age pentatonic motif, KEY is a
-dorian **bass riff** on contrabass, GRIT slowed to grease tempo, ACID →
-**SHINE** (Pink Floyd atmosphere), MORPH → **TIDE** (lydian breathing),
-CRUSH → **CLAVE** (tresillo world percussion), SOLO is dense again,
-DRIFT gains a root drone · every table now has its own scale (pentatonic,
-dorian, lydian, minor-pentatonic — no more same-minor-everywhere)
-
-**new in v3.4.3**: the sequencer finally breathes — melodic voices now
-have gate time (notes release before the next step; rests are real
-silence), and a truthiness bug that played every authored "off" step is
-fixed (0 is truthy in Lua!) — all 16 factory patterns have their intended
-rests back · HELLO/KEY/GRIT/ACID melodies re-authored with varied step
-durations · E3 Y-pan in NAV inverted (feel)
-
-**new in v3.4.2**: the early factory presets were rebuilt around the v3.4
-features — HELLO/BEAT/KIT-808/KEY are richer and distinct, SUB→**GRIT**
-(LFO wobbles distortion amount), ACID gains velocity-driven filter bites,
-and three tables replaced: WASH→**SIREN** (a sequencer plays the delay
-*time* — the echo is the melody), RIFF→**MORPH** (a sequencer sweeps the
-distortion amount), PLUCK→**SIX** (six authored patterns, rotation =
-song section)
-
-**new in v3.4.1**: delay rotation is now the original's hybrid — continuous
-near zero, snapping to tempo-grid values past an 8th note · new LFOs start
-beat-locked (the Reactable LFO is always synced; free-running is one
-toggle away) · the REST bridge's `/state` now reports every object's live
-params · docs: behavior-spec decisions 16–19 (loop semantics, parameter
-lock, song-switch, sync defaults) close out the gap analysis
-
-**new in v3.4.0**: Reactable-fidelity pass (full gap analysis against the
-original manual) — samplers + oneshot loops sound the moment their sample
-lands; sampler rotation retriggers · sequencer notes drive effects: pitch
-sweeps the waveshaper amount and delay time, velocity scales effect
-envelope depth · sequencers retrigger oneshot loops · LFO modulates the
-waveshaper's main parameter · chorus rotation = depth; new modulator
-settings page (chorus rate; flanger depth/min-delay/feedback) · drum
-sampler pins sequencer notes to one octave · pitch readout on
-oscillator/sampler (semitone arc + octave ring) · the slider is now a
-perimeter arc gauge around each block · REST bridge for AI agents
-(permanent, see dev)
-
-**new in v3.3.0**: **drift sequencer subtype** — no pattern, fires at random
-intervals (gap range in seconds on its set page, rotation = sparseness) with
-per-call velocity/pitch jitter, for untimed texture like frogs, rain, crowd
-murmur · ZOO preset gains three coquí frogs, each its own call, pitch, and
-density · bundled samples now sync on every launch, so library additions
-reach existing installs
-
-**new in v3.2.3**: norns file-layout conformance — factory presets moved out
-of the SELECT menu (no more `rotatable/presets/slots/*` entries), and the
-bundled sample library now installs to `~/dust/audio/rotatable/` on first
-run, so it shows up in the loop browser like every other script's samples
-
-**new in v3.1**: **16 factory presets** — a tutorial arc of full musical
-tables, with a bundled sample library (synthesized drums, orchestral
-instruments, animal sounds; sources in `presets/audio/SOURCES.md`) ·
-K1+E1 preset navigation (the camera flies slot to slot; K3 loads) ·
-stability: sequencer-clock watchdog, engine-leak fix · block settings
-guide + guided preset tour below
-
-**new in v3**: the slider — every block shows a value dot on its right
-side (E3 in ROTATE, K1+E3 fine-tune) · tempo object: rotation = BPM on
-the table · global FX on the output object (master reverb + compression)
-· oscillator sub-oscillators (4 subs + follow-tonality) · tonality scale
-editing (12 toggleable degrees) · effect envelopes — sequencer/MIDI notes
-sweep filter cutoff, delay feedback, dry-wet
-
-**new in v2**: 13 object types (adds sampler, audio-in, waveshaper,
-tonality, midi-in) · tempo sync everywhere (LFO multiply, delay quantize +
-sweep, loop bar-entry) · sequencer: 6 patterns per object, per-step
-velocity + duration, random subtype · subtype pictograms on every block,
-animated signal flow, tempo pulse, per-object VU meters · SYSTEM menu
-(hold K1+K2+K3) with factory presets · synced settings panels ·
-melodic sampler with base-pitch tuning
 
 ## install
 
