@@ -84,6 +84,74 @@ the UI is a hierarchy; `K3` acts, `K2` backs out, `K1` modifies.
 > them — works in ROTATE mode and on every config (L3) page; the subtype
 > name shows in the status line / panel header.
 
+## cheat sheet
+
+every control, in every mode — including the combos that currently do
+nothing (marked **— free**; they fall through to the unshifted action or
+nothing at all, so they're open real estate for new ideas). `K1` is a held
+shift only: its short tap always belongs to the norns system menu, and
+**hold `K1+K2+K3` for 1 s** opens the SYSTEM menu from anywhere.
+
+**NAV** (flying over the table; the reticle at screen center is your hand)
+
+| control | action |
+|---|---|
+| E1 | zoom (CW in / CCW out) |
+| E2 | pan X |
+| E3 | pan Y (inverted) |
+| K1+E1 | slot focus prev/next — the camera flies to each patch slot |
+| K1+E2 | — free (pans X, same as E2) |
+| K1+E3 | — free (pans Y, same as E3) |
+| K2 | — free (only cancels an armed table-clear) |
+| K3 | select nearest object → MOVE · on a slot ring: tap = recall, hold = store (empty) / delete (occupied) |
+| K1+K2 | arm table-clear (`K3` confirms, `K2` cancels) |
+| K1+K3 | open the PLACE menu |
+
+**MOVE** (block glides with physics; connections form/break live)
+
+| control | action |
+|---|---|
+| E1 | hop selection to next/prev object (camera follows) |
+| E2 | glide X (impulse + friction; soft wall at the rim) |
+| E3 | glide Y |
+| K1+E1 | hop selection (same as E1) |
+| K1+E2 | — free (glides X, same as E2) |
+| K1+E3 | — free (glides Y, same as E3) |
+| K2 | back to NAV |
+| K3 | → ROTATE |
+| K1+K2 | delete the block → NAV |
+| K1+K3 | → CONFIG panels |
+
+**ROTATE** (the original's two-axis gesture: rotation + finger dot)
+
+| control | action |
+|---|---|
+| E1 | hop selection |
+| E2 | rotation = main param (generators retrigger on turn) |
+| E3 | the slider: amp / dry-wet / feedback / depth per type |
+| K1+E1 | hop selection (same as E1) |
+| K1+E2 | cycle subtype |
+| K1+E3 | fine-adjust the slider |
+| K2 | → MOVE |
+| K3 | → LINK |
+| K1+K2 | delete the block |
+| K1+K3 | → CONFIG panels |
+
+**LINK** (explicit connection surgery)
+
+| control | action |
+|---|---|
+| E1 | hop selection |
+| E2 | choose target (cycles objects by proximity) |
+| E3 | — free |
+| K1+E1 | hop selection (same as E1) |
+| K1+E2 | — free (cycles target, same as E2) |
+| K1+E3 | — free |
+| K2 | → ROTATE |
+| K3 | toggle hardlink to target (bright double line) |
+| K1+K2 | delete the block |
+| K1+K3 | toggle mute of that connection (dimmed) |
+
 ## object reference
 
 | object | role | rotation (E2) | E3 | subtypes (K1+E2) |
